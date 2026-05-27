@@ -3,27 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Catálogo 3D | Productos ficticios</title>
+    <title>Joyeria 3D | Auria Atelier</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111217'/%3E%3Cpath d='M18 46 31 12h6l9 34h-7l-2-8H26l-3 8h-5Zm10-14h8l-3-12h-1l-4 12Z' fill='%23d6f735'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111217'/%3E%3Cpath d='M32 10 48 27 32 54 16 27 32 10Zm0 8-7 8h14l-7-8Zm-8 14 8 14 8-14H24Z' fill='%23d6b35d'/%3E%3C/svg%3E"
     />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar" aria-label="Barra superior">
-        <a class="brand" href="/" aria-label="ARQ Studio">
-          <span class="brand-mark">A3</span>
+        <a class="brand" href="/" aria-label="Auria Atelier">
+          <span class="brand-mark">AA</span>
           <span>
-            <strong>ARQ Studio</strong>
-            <small>Catálogo 3D</small>
+            <strong>Auria Atelier</strong>
+            <small>Vitrina 3D</small>
           </span>
         </a>
-        <nav class="top-actions" aria-label="Acciones del catálogo">
+        <nav class="top-actions" aria-label="Acciones del catalogo">
           <button class="icon-button" type="button" id="reset-view" aria-label="Reiniciar vista">
             <i data-lucide="rotate-ccw"></i>
           </button>
-          <button class="icon-button" type="button" id="toggle-spin" aria-label="Pausar rotación">
+          <button class="icon-button" type="button" id="toggle-spin" aria-label="Pausar rotacion">
             <i data-lucide="pause"></i>
           </button>
         </nav>
@@ -32,8 +32,8 @@
       <main class="product-layout">
         <aside class="catalog-panel" aria-label="Productos">
           <div class="panel-heading">
-            <span class="eyebrow">Colección</span>
-            <h1>Productos ficticios con vista 3D</h1>
+            <span class="eyebrow">Coleccion</span>
+            <h1>Joyas ficticias con vista 3D</h1>
           </div>
 
           <div class="product-list" id="product-list" role="listbox" aria-label="Seleccionar producto"></div>
@@ -43,28 +43,28 @@
           <canvas id="product-canvas"></canvas>
 
           <div class="viewer-topline">
-            <span id="active-category">Audio inmersivo</span>
-            <span id="active-model">AUR-H01</span>
+            <span id="active-category">Anillos de autor</span>
+            <span id="active-model">AUR-R01</span>
           </div>
 
           <div class="product-callout">
-            <span id="product-tag">Nuevo</span>
-            <h2 id="active-name">Halo Arc</h2>
-            <p id="active-description">Auriculares de estudio con estructura flotante y cápsulas acolchadas.</p>
+            <span id="product-tag">Alta joya</span>
+            <h2 id="active-name">Solara Ring</h2>
+            <p id="active-description">Anillo escultorico con aro pulido, engaste elevado y gema facetada.</p>
           </div>
 
-          <div class="control-strip" aria-label="Personalización">
+          <div class="control-strip" aria-label="Personalizacion">
             <div class="control-group">
-              <span class="control-label">Color</span>
-              <div class="swatches" id="color-swatches" aria-label="Colores disponibles"></div>
+              <span class="control-label">Metal</span>
+              <div class="swatches" id="color-swatches" aria-label="Metales disponibles"></div>
             </div>
 
             <div class="control-group">
               <span class="control-label">Acabado</span>
               <div class="segmented" id="finish-options" aria-label="Acabado del material">
-                <button type="button" data-finish="matte" class="active">Mate</button>
-                <button type="button" data-finish="gloss">Brillo</button>
-                <button type="button" data-finish="metal">Metal</button>
+                <button type="button" data-finish="satin">Satin</button>
+                <button type="button" data-finish="polished" class="active">Pulido</button>
+                <button type="button" data-finish="signature">Firma</button>
               </div>
             </div>
           </div>
@@ -72,7 +72,7 @@
 
         <aside class="detail-panel" aria-label="Detalles del producto">
           <div class="price-row">
-            <span id="active-price">$189</span>
+            <span id="active-price">$2,480</span>
             <span class="availability">Disponible</span>
           </div>
 
@@ -80,10 +80,10 @@
 
           <button class="primary-action" type="button">
             <i data-lucide="shopping-bag"></i>
-            Añadir a muestra
+            Reservar muestra
           </button>
 
-          <div class="feature-list" id="feature-list" aria-label="Características destacadas"></div>
+          <div class="feature-list" id="feature-list" aria-label="Caracteristicas destacadas"></div>
         </aside>
       </main>
     </div>

@@ -1,13 +1,12 @@
 import './styles.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import {
-  AudioLines,
   BadgeCheck,
-  Box,
-  Camera,
-  CircleDollarSign,
+  Circle,
+  Crown,
+  Diamond,
+  Gem,
   Layers3,
   Pause,
   Play,
@@ -17,119 +16,122 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Watch,
   createIcons,
 } from 'lucide';
 
 const products = [
   {
-    id: 'halo-arc',
-    name: 'Halo Arc',
-    category: 'Audio inmersivo',
-    model: 'AUR-H01',
-    tag: 'Nuevo',
-    price: '$189',
-    description: 'Auriculares de estudio con estructura flotante y capsulas acolchadas.',
-    icon: 'audio-lines',
-    colors: ['#14b8a6', '#ff4f8b', '#d6f735', '#111217'],
+    id: 'solara-ring',
+    name: 'Solara Ring',
+    category: 'Anillos de autor',
+    model: 'AUR-R01',
+    tag: 'Alta joya',
+    price: '$2,480',
+    description: 'Anillo escultorico con aro pulido, engaste elevado y gema facetada color esmeralda.',
+    icon: 'gem',
+    gem: '#0f8f7f',
+    colors: ['#d6b35d', '#d9dde1', '#c78b7a', '#1f2328'],
     specs: [
-      ['Autonomia', '38 h'],
-      ['Peso', '284 g'],
-      ['Audio', 'Hi-Fi 48 kHz'],
-      ['Carga', 'USB-C'],
+      ['Metal', 'Oro 18K'],
+      ['Gema', 'Esmeralda'],
+      ['Talla', 'Brillante'],
+      ['Peso', '6.2 g'],
     ],
     features: [
-      ['Cancelacion activa', 'Aislamiento adaptativo para sesiones extensas.'],
-      ['Diadema flexible', 'Arco ligero con memoria de forma.'],
-      ['Audio espacial', 'Escena sonora amplia para video y musica.'],
+      ['Engaste alto', 'La gema queda suspendida para capturar luz lateral.'],
+      ['Aro confort', 'Interior redondeado para uso diario.'],
+      ['Pulido espejo', 'Superficie brillante con contraste de sombra fina.'],
     ],
-    build: buildHeadphones,
+    build: buildRing,
   },
   {
-    id: 'luma-pod',
-    name: 'Luma Pod',
-    category: 'Hogar conectado',
-    model: 'LUM-P08',
-    tag: 'Edicion luz',
-    price: '$129',
-    description: 'Altavoz de mesa con anillo luminoso y cuerpo acustico vertical.',
-    icon: 'box',
-    colors: ['#7c3aed', '#22c55e', '#f43f5e', '#0f172a'],
+    id: 'luna-necklace',
+    name: 'Luna Drop',
+    category: 'Collares con dije',
+    model: 'AUR-N08',
+    tag: 'Edicion gala',
+    price: '$3,150',
+    description: 'Collar de eslabones finos con dije central tipo lagrima y corona de microgemas.',
+    icon: 'diamond',
+    gem: '#2f5fd0',
+    colors: ['#d9dde1', '#d6b35d', '#e7e2dc', '#111217'],
     specs: [
-      ['Potencia', '42 W'],
-      ['Radio', '360 grados'],
-      ['Conexion', 'Wi-Fi 6'],
-      ['Control', 'Voz + app'],
+      ['Largo', '45 cm'],
+      ['Dije', 'Zafiro'],
+      ['Cierre', 'Invisible'],
+      ['Microgemas', '18 piezas'],
     ],
     features: [
-      ['Sonido circular', 'Difusor acustico para salas medianas.'],
-      ['Luz ambiental', 'Corona LED sincronizada con el contenido.'],
-      ['Base antideslizante', 'Agarre firme en madera, vidrio y metal.'],
+      ['Caida precisa', 'Cadena curva pensada para centrar el dije.'],
+      ['Dije facetado', 'Volumen de lagrima con brillo profundo.'],
+      ['Cierre oculto', 'Sistema posterior limpio para una vista continua.'],
     ],
-    build: buildSpeaker,
+    build: buildNecklace,
   },
   {
-    id: 'nova-cam',
-    name: 'Nova Cam',
-    category: 'Creator gear',
-    model: 'NVC-M4',
-    tag: 'Prototipo',
-    price: '$249',
-    description: 'Camara compacta para creadores con lente modular y asa magnetica.',
-    icon: 'camera',
-    colors: ['#2563eb', '#f97316', '#06b6d4', '#18181b'],
+    id: 'rosa-earrings',
+    name: 'Rosa Orbit',
+    category: 'Aretes colgantes',
+    model: 'AUR-E04',
+    tag: 'Par firmado',
+    price: '$1,920',
+    description: 'Aretes dobles con aro delicado, perla superior y gema colgante en tono rubi.',
+    icon: 'crown',
+    gem: '#b91c45',
+    colors: ['#c78b7a', '#d6b35d', '#d9dde1', '#2b1f24'],
     specs: [
-      ['Sensor', '1/1.3 in'],
-      ['Video', '6K HDR'],
-      ['Montura', 'Magnetica'],
-      ['Pantalla', 'Articulada'],
+      ['Largo', '32 mm'],
+      ['Gema', 'Rubi'],
+      ['Perla', 'Cultivada'],
+      ['Par', '7.8 g'],
     ],
     features: [
-      ['Lente modular', 'Anillos de enfoque intercambiables.'],
-      ['Grip plano', 'Cuerpo estable para tomas a mano.'],
-      ['Perfil creator', 'Color listo para redes y streaming.'],
+      ['Movimiento leve', 'Dije inferior separado para reflejos al caminar.'],
+      ['Aro oval', 'Silueta fina que enmarca la piedra central.'],
+      ['Perla satelital', 'Punto de luz superior con brillo suave.'],
     ],
-    build: buildCamera,
+    build: buildEarrings,
   },
   {
-    id: 'pulse-loop',
-    name: 'Pulse Loop',
-    category: 'Wearable',
-    model: 'PLS-W12',
-    tag: 'Ligero',
-    price: '$159',
-    description: 'Reloj deportivo con pantalla curva, correa ventilada y sensor continuo.',
-    icon: 'watch',
-    colors: ['#ef4444', '#0ea5e9', '#84cc16', '#27272a'],
+    id: 'astra-bracelet',
+    name: 'Astra Cuff',
+    category: 'Brazaletes',
+    model: 'AUR-B12',
+    tag: 'Serie limitada',
+    price: '$2,760',
+    description: 'Brazalete rigido con perfil ovalado y constelacion de gemas sobre el borde frontal.',
+    icon: 'circle',
+    gem: '#7c3aed',
+    colors: ['#d6b35d', '#d9dde1', '#c78b7a', '#13151a'],
     specs: [
-      ['Bateria', '9 dias'],
-      ['Resistencia', '5 ATM'],
-      ['Sensor', 'BioPulse'],
-      ['Peso', '37 g'],
+      ['Diametro', '58 mm'],
+      ['Perfil', 'Ovalado'],
+      ['Gemas', 'Amatista'],
+      ['Acabado', 'Pulido'],
     ],
     features: [
-      ['Correa ventilada', 'Textura flexible para entrenamiento diario.'],
-      ['Pantalla curva', 'Cristal elevado con lectura rapida.'],
-      ['Lectura continua', 'Metricas de pulso, sueno y recuperacion.'],
+      ['Cuff rigido', 'Volumen oval que mantiene una forma arquitectonica.'],
+      ['Gemas graduales', 'Piedras de distinto tamano sobre el arco frontal.'],
+      ['Borde suave', 'Cantos redondeados para una sensacion ligera.'],
     ],
-    build: buildWatch,
+    build: buildBracelet,
   },
 ];
 
 const state = {
   product: products[0],
   color: products[0].colors[0],
-  finish: 'matte',
+  finish: 'polished',
   spinning: true,
   productGroup: null,
 };
 
 const iconRegistry = {
-  AudioLines,
   BadgeCheck,
-  Box,
-  Camera,
-  CircleDollarSign,
+  Circle,
+  Crown,
+  Diamond,
+  Gem,
   Layers3,
   Pause,
   Play,
@@ -139,7 +141,6 @@ const iconRegistry = {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Watch,
 };
 
 createIcons({ icons: iconRegistry });
@@ -157,13 +158,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(stage.clientWidth, stage.clientHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.08;
+renderer.toneMappingExposure = 1.2;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#eef2f5');
-scene.fog = new THREE.Fog('#eef2f5', 8, 18);
+scene.background = new THREE.Color('#edf3f1');
+scene.fog = new THREE.Fog('#edf3f1', 8, 18);
 
 const camera = new THREE.PerspectiveCamera(36, stage.clientWidth / stage.clientHeight, 0.1, 100);
 camera.position.set(3.9, 2.25, 5.2);
@@ -171,16 +172,16 @@ camera.position.set(3.9, 2.25, 5.2);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.72;
+controls.autoRotateSpeed = 0.62;
 controls.enablePan = false;
 controls.minDistance = 3.2;
 controls.maxDistance = 8.5;
-controls.target.set(0, 0.45, 0);
+controls.target.set(0, 0.34, 0);
 
-const hemiLight = new THREE.HemisphereLight('#ffffff', '#b9c4cc', 2.3);
+const hemiLight = new THREE.HemisphereLight('#ffffff', '#b7c7c1', 2.45);
 scene.add(hemiLight);
 
-const keyLight = new THREE.DirectionalLight('#ffffff', 4.5);
+const keyLight = new THREE.DirectionalLight('#ffffff', 4.8);
 keyLight.position.set(4, 6, 5);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048, 2048);
@@ -192,19 +193,19 @@ keyLight.shadow.camera.top = 5;
 keyLight.shadow.camera.bottom = -5;
 scene.add(keyLight);
 
-const rimLight = new THREE.PointLight('#ff4f8b', 14, 8);
-rimLight.position.set(-3.8, 2.2, -2.4);
-scene.add(rimLight);
+const goldLight = new THREE.PointLight('#d6b35d', 9, 8);
+goldLight.position.set(-3.5, 2.3, -2.2);
+scene.add(goldLight);
 
-const cyanLight = new THREE.PointLight('#14b8a6', 10, 7);
-cyanLight.position.set(3, 1.4, -3.5);
-scene.add(cyanLight);
+const emeraldLight = new THREE.PointLight('#0f8f7f', 7, 7);
+emeraldLight.position.set(3.2, 1.4, -3.4);
+scene.add(emeraldLight);
 
 const floor = new THREE.Mesh(
   new THREE.CircleGeometry(4.5, 96),
   new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    roughness: 0.58,
+    color: '#fbfcfa',
+    roughness: 0.5,
     metalness: 0,
   }),
 );
@@ -215,7 +216,7 @@ scene.add(floor);
 
 const floorRing = new THREE.Mesh(
   new THREE.TorusGeometry(2.25, 0.012, 12, 160),
-  new THREE.MeshBasicMaterial({ color: '#111217', transparent: true, opacity: 0.22 }),
+  new THREE.MeshBasicMaterial({ color: '#b99a4d', transparent: true, opacity: 0.34 }),
 );
 floorRing.rotation.x = -Math.PI / 2;
 floorRing.position.y = -1.215;
@@ -223,9 +224,9 @@ scene.add(floorRing);
 
 function productMaterial(color, finish = state.finish) {
   const finishMap = {
-    matte: { roughness: 0.72, metalness: 0.08, clearcoat: 0.06 },
-    gloss: { roughness: 0.18, metalness: 0.1, clearcoat: 0.85 },
-    metal: { roughness: 0.32, metalness: 0.78, clearcoat: 0.28 },
+    satin: { roughness: 0.42, metalness: 0.88, clearcoat: 0.18 },
+    polished: { roughness: 0.16, metalness: 0.92, clearcoat: 0.7 },
+    signature: { roughness: 0.22, metalness: 1, clearcoat: 0.92 },
   };
 
   return new THREE.MeshPhysicalMaterial({
@@ -237,28 +238,31 @@ function productMaterial(color, finish = state.finish) {
 function darkMaterial() {
   return new THREE.MeshStandardMaterial({
     color: '#17181d',
-    roughness: 0.64,
-    metalness: 0.16,
+    roughness: 0.56,
+    metalness: 0.24,
   });
 }
 
-function softMaterial(color = '#e7ebef') {
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness: 0.84,
-    metalness: 0.02,
-  });
-}
-
-function glassMaterial(color = '#dff8ff') {
+function pearlMaterial(color = '#f5f1ea') {
   return new THREE.MeshPhysicalMaterial({
     color,
-    roughness: 0.08,
+    roughness: 0.3,
     metalness: 0,
-    transmission: 0.24,
+    clearcoat: 0.76,
+    sheen: 0.35,
+  });
+}
+
+function gemMaterial(color = '#0f8f7f') {
+  return new THREE.MeshPhysicalMaterial({
+    color,
+    roughness: 0.05,
+    metalness: 0,
+    transmission: 0.28,
     transparent: true,
-    opacity: 0.72,
-    clearcoat: 0.9,
+    opacity: 0.84,
+    clearcoat: 1,
+    ior: 1.68,
   });
 }
 
@@ -273,7 +277,7 @@ function addMesh(group, geometry, material, options = {}) {
   return mesh;
 }
 
-function addEdgeOutline(group, mesh, color = '#ffffff', opacity = 0.18) {
+function addEdgeOutline(group, mesh, color = '#ffffff', opacity = 0.2) {
   const edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(mesh.geometry, 24),
     new THREE.LineBasicMaterial({ color, transparent: true, opacity }),
@@ -285,189 +289,206 @@ function addEdgeOutline(group, mesh, color = '#ffffff', opacity = 0.18) {
   return edges;
 }
 
-function buildHeadphones(color, finish) {
+function addGem(group, color, options = {}) {
+  const gem = addMesh(group, new THREE.OctahedronGeometry(options.size ?? 0.28, 0), gemMaterial(color), options);
+  addEdgeOutline(group, gem, '#ffffff', 0.28);
+  return gem;
+}
+
+function buildRing(color, finish, product) {
   const group = new THREE.Group();
-  const main = productMaterial(color, finish);
-  const dark = darkMaterial();
-  const cushion = softMaterial('#23252c');
-  const metal = new THREE.MeshStandardMaterial({ color: '#e6edf2', roughness: 0.28, metalness: 0.72 });
+  const metal = productMaterial(color, finish);
+  const shadow = darkMaterial();
+
+  const band = addMesh(group, new THREE.TorusGeometry(0.88, 0.085, 32, 128), metal, {
+    y: -0.08,
+    sx: 1.04,
+    sy: 0.86,
+  });
+  addEdgeOutline(group, band, '#ffffff', 0.16);
+
+  addMesh(group, new THREE.TorusGeometry(0.66, 0.018, 18, 96), shadow, {
+    y: -0.08,
+    z: 0.02,
+    sx: 1.04,
+    sy: 0.86,
+  });
+
+  const setting = addMesh(group, new THREE.CylinderGeometry(0.34, 0.44, 0.2, 8), metal, {
+    y: 0.76,
+    z: 0,
+    rx: Math.PI / 2,
+    rz: Math.PI / 8,
+  });
+  addEdgeOutline(group, setting, '#ffffff', 0.2);
+
+  addGem(group, product.gem, {
+    size: 0.38,
+    y: 0.93,
+    z: 0.1,
+    sx: 0.95,
+    sy: 1.08,
+    sz: 0.72,
+    rz: Math.PI / 4,
+  });
+
+  [-0.24, 0.24].forEach((x) => {
+    addMesh(group, new THREE.CylinderGeometry(0.032, 0.032, 0.28, 16), metal, {
+      x,
+      y: 0.78,
+      z: 0.12,
+      rx: 0.42,
+      rz: x > 0 ? -0.18 : 0.18,
+    });
+  });
+
+  group.position.y = -0.12;
+  return group;
+}
+
+function buildNecklace(color, finish, product) {
+  const group = new THREE.Group();
+  const metal = productMaterial(color, finish);
+  const gem = gemMaterial(product.gem);
+  const pearl = pearlMaterial('#faf6ed');
 
   const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-1.32, 0, 0),
-    new THREE.Vector3(-1.05, 1.14, -0.05),
-    new THREE.Vector3(0, 1.62, -0.16),
-    new THREE.Vector3(1.05, 1.14, -0.05),
-    new THREE.Vector3(1.32, 0, 0),
+    new THREE.Vector3(-1.36, 0.95, 0),
+    new THREE.Vector3(-1.03, 0.18, 0.02),
+    new THREE.Vector3(-0.38, -0.42, 0.03),
+    new THREE.Vector3(0, -0.58, 0.04),
+    new THREE.Vector3(0.38, -0.42, 0.03),
+    new THREE.Vector3(1.03, 0.18, 0.02),
+    new THREE.Vector3(1.36, 0.95, 0),
   ]);
-  addMesh(group, new THREE.TubeGeometry(curve, 80, 0.065, 18, false), main);
 
-  const innerCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-1.05, 0.08, 0.06),
-    new THREE.Vector3(-0.72, 1.02, 0),
-    new THREE.Vector3(0, 1.3, -0.08),
-    new THREE.Vector3(0.72, 1.02, 0),
-    new THREE.Vector3(1.05, 0.08, 0.06),
-  ]);
-  addMesh(group, new THREE.TubeGeometry(innerCurve, 70, 0.035, 14, false), metal);
+  addMesh(group, new THREE.TubeGeometry(curve, 120, 0.027, 14, false), metal);
+
+  for (let i = 0; i <= 22; i += 1) {
+    const point = curve.getPoint(i / 22);
+    addMesh(group, new THREE.SphereGeometry(i % 2 === 0 ? 0.045 : 0.034, 14, 14), metal, {
+      x: point.x,
+      y: point.y,
+      z: point.z + 0.045,
+    });
+  }
+
+  addMesh(group, new THREE.TorusGeometry(0.2, 0.022, 16, 64), metal, { y: -0.55, z: 0.04 });
+  addMesh(group, new THREE.SphereGeometry(0.075, 20, 20), pearl, { y: -0.73, z: 0.07 });
+
+  const pendant = addMesh(group, new THREE.OctahedronGeometry(0.42, 1), gem, {
+    y: -1.02,
+    z: 0.08,
+    sx: 0.78,
+    sy: 1.18,
+    sz: 0.58,
+  });
+  addEdgeOutline(group, pendant, '#ffffff', 0.24);
+
+  [-0.26, -0.13, 0, 0.13, 0.26].forEach((x, index) => {
+    addMesh(group, new THREE.SphereGeometry(0.045 + index * 0.003, 16, 16), gemMaterial('#ffffff'), {
+      x,
+      y: -0.72 + Math.abs(x) * 0.22,
+      z: 0.16,
+    });
+  });
+
+  group.position.y = 0.05;
+  return group;
+}
+
+function buildEarrings(color, finish, product) {
+  const group = new THREE.Group();
+  const metal = productMaterial(color, finish);
+  const pearl = pearlMaterial();
+
+  [-0.62, 0.62].forEach((side) => {
+    const hookCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(side - 0.12, 0.98, 0),
+      new THREE.Vector3(side + 0.02, 1.18, 0.03),
+      new THREE.Vector3(side + 0.18, 1.02, 0.02),
+      new THREE.Vector3(side + 0.08, 0.82, 0),
+    ]);
+    addMesh(group, new THREE.TubeGeometry(hookCurve, 42, 0.023, 12, false), metal);
+
+    addMesh(group, new THREE.SphereGeometry(0.14, 24, 24), pearl, { x: side, y: 0.62, z: 0.06 });
+
+    const hoop = addMesh(group, new THREE.TorusGeometry(0.36, 0.031, 20, 96), metal, {
+      x: side,
+      y: 0.14,
+      z: 0,
+      sy: 1.16,
+    });
+    addEdgeOutline(group, hoop, '#ffffff', 0.14);
+
+    addMesh(group, new THREE.CylinderGeometry(0.018, 0.018, 0.38, 14), metal, {
+      x: side,
+      y: -0.36,
+      z: 0.06,
+    });
+
+    addGem(group, product.gem, {
+      size: 0.27,
+      x: side,
+      y: -0.66,
+      z: 0.09,
+      sx: 0.82,
+      sy: 1.18,
+      sz: 0.58,
+      rz: Math.PI / 4,
+    });
+  });
+
+  group.position.y = -0.05;
+  return group;
+}
+
+function buildBracelet(color, finish, product) {
+  const group = new THREE.Group();
+  const metal = productMaterial(color, finish);
+  const inner = darkMaterial();
+
+  const cuff = addMesh(group, new THREE.TorusGeometry(0.96, 0.1, 32, 160), metal, {
+    y: 0.05,
+    sx: 1.46,
+    sy: 0.66,
+    rx: -0.08,
+  });
+  addEdgeOutline(group, cuff, '#ffffff', 0.14);
+
+  addMesh(group, new THREE.TorusGeometry(0.73, 0.017, 18, 140), inner, {
+    y: 0.05,
+    z: 0.04,
+    sx: 1.46,
+    sy: 0.66,
+    rx: -0.08,
+  });
+
+  const gemAngles = [38, 56, 74, 92, 110, 128, 146];
+  gemAngles.forEach((degree, index) => {
+    const angle = THREE.MathUtils.degToRad(degree);
+    const size = index === 3 ? 0.14 : 0.095 + Math.abs(3 - index) * -0.006;
+    addGem(group, product.gem, {
+      size,
+      x: Math.cos(angle) * 1.38,
+      y: Math.sin(angle) * 0.64 + 0.05,
+      z: 0.16,
+      sx: 1,
+      sy: 0.92,
+      sz: 0.72,
+      rz: angle,
+    });
+  });
 
   [-1, 1].forEach((side) => {
-    const cup = addMesh(
-      group,
-      new THREE.CylinderGeometry(0.5, 0.58, 0.34, 64),
-      main,
-      { x: side * 1.16, y: -0.12, z: 0, rx: Math.PI / 2 },
-    );
-    addEdgeOutline(group, cup, '#ffffff', 0.2);
-
-    addMesh(group, new THREE.TorusGeometry(0.39, 0.08, 20, 64), cushion, {
-      x: side * 1.16,
-      y: -0.12,
-      z: 0.2,
-    });
-    addMesh(group, new THREE.CylinderGeometry(0.3, 0.3, 0.05, 48), dark, {
-      x: side * 1.16,
-      y: -0.12,
-      z: 0.24,
-      rx: Math.PI / 2,
-    });
-    addMesh(group, new RoundedBoxGeometry(0.22, 0.52, 0.16, 5, 0.04), metal, {
-      x: side * 1.07,
-      y: 0.45,
-      z: -0.02,
-      rz: side * 0.18,
+    addMesh(group, new THREE.SphereGeometry(0.13, 24, 24), metal, {
+      x: side * 1.42,
+      y: 0.07,
+      z: 0.04,
     });
   });
 
-  group.position.y = -0.1;
-  return group;
-}
-
-function buildSpeaker(color, finish) {
-  const group = new THREE.Group();
-  const main = productMaterial(color, finish);
-  const dark = darkMaterial();
-  const pale = softMaterial('#f6f8fb');
-  const glow = new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    emissive: color,
-    emissiveIntensity: 0.65,
-    roughness: 0.18,
-  });
-
-  const body = addMesh(group, new THREE.CylinderGeometry(0.72, 0.82, 1.95, 96), main, { y: 0 });
-  addEdgeOutline(group, body, '#ffffff', 0.16);
-  addMesh(group, new THREE.CylinderGeometry(0.58, 0.58, 0.08, 96), pale, { y: 1.02 });
-  addMesh(group, new THREE.TorusGeometry(0.72, 0.038, 18, 96), glow, { y: 0.98, rx: Math.PI / 2 });
-  addMesh(group, new THREE.CylinderGeometry(0.66, 0.72, 0.12, 96), dark, { y: -1.02 });
-
-  const grille = new THREE.Group();
-  const dotGeo = new THREE.SphereGeometry(0.025, 10, 10);
-  const dotMat = new THREE.MeshStandardMaterial({ color: '#111217', roughness: 0.52 });
-  for (let row = -4; row <= 4; row += 1) {
-    for (let col = -3; col <= 3; col += 1) {
-      if (Math.abs(row) + Math.abs(col) > 7) continue;
-      const dot = new THREE.Mesh(dotGeo, dotMat);
-      dot.position.set(col * 0.135, row * 0.13, 0.743);
-      dot.castShadow = false;
-      grille.add(dot);
-    }
-  }
-  group.add(grille);
-
-  const dial = addMesh(group, new THREE.CylinderGeometry(0.2, 0.24, 0.08, 48), dark, { y: 1.1 });
-  dial.rotation.y = Math.PI / 7;
-
-  return group;
-}
-
-function buildCamera(color, finish) {
-  const group = new THREE.Group();
-  const main = productMaterial(color, finish);
-  const dark = darkMaterial();
-  const glass = glassMaterial('#a7f3ff');
-  const metal = new THREE.MeshStandardMaterial({ color: '#cbd5df', roughness: 0.25, metalness: 0.82 });
-
-  const body = addMesh(group, new RoundedBoxGeometry(1.86, 1.14, 0.55, 8, 0.12), main, { y: 0.06 });
-  addEdgeOutline(group, body, '#ffffff', 0.18);
-  addMesh(group, new RoundedBoxGeometry(0.56, 0.28, 0.25, 5, 0.08), dark, {
-    x: -0.52,
-    y: 0.78,
-    z: -0.02,
-  });
-  addMesh(group, new RoundedBoxGeometry(0.52, 0.15, 0.18, 4, 0.05), metal, {
-    x: 0.44,
-    y: 0.72,
-    z: -0.02,
-  });
-
-  addMesh(group, new THREE.CylinderGeometry(0.5, 0.5, 0.28, 72), dark, {
-    x: 0.2,
-    y: 0.02,
-    z: 0.42,
-    rx: Math.PI / 2,
-  });
-  addMesh(group, new THREE.CylinderGeometry(0.38, 0.42, 0.24, 72), metal, {
-    x: 0.2,
-    y: 0.02,
-    z: 0.58,
-    rx: Math.PI / 2,
-  });
-  addMesh(group, new THREE.CylinderGeometry(0.27, 0.3, 0.14, 72), glass, {
-    x: 0.2,
-    y: 0.02,
-    z: 0.78,
-    rx: Math.PI / 2,
-  });
-  addMesh(group, new THREE.TorusGeometry(0.43, 0.025, 16, 72), main, {
-    x: 0.2,
-    y: 0.02,
-    z: 0.73,
-  });
-
-  addMesh(group, new THREE.CylinderGeometry(0.1, 0.1, 0.08, 32), glass, {
-    x: -0.7,
-    y: 0.3,
-    z: 0.32,
-    rx: Math.PI / 2,
-  });
-  group.rotation.y = -0.18;
-  return group;
-}
-
-function buildWatch(color, finish) {
-  const group = new THREE.Group();
-  const main = productMaterial(color, finish);
-  const dark = darkMaterial();
-  const glass = glassMaterial('#d8fbff');
-
-  addMesh(group, new RoundedBoxGeometry(0.78, 2.2, 0.22, 8, 0.16), main, { y: 0.02, z: -0.06 });
-  const face = addMesh(group, new RoundedBoxGeometry(1.14, 1.18, 0.28, 10, 0.22), dark, { y: 0.02, z: 0.06 });
-  addEdgeOutline(group, face, '#ffffff', 0.22);
-  addMesh(group, new RoundedBoxGeometry(0.88, 0.86, 0.055, 9, 0.16), glass, { y: 0.02, z: 0.24 });
-  addMesh(group, new THREE.TorusGeometry(0.25, 0.012, 12, 64), main, { x: -0.18, y: 0.05, z: 0.285 });
-  addMesh(group, new THREE.BoxGeometry(0.36, 0.035, 0.035), softMaterial('#ffffff'), {
-    x: 0.18,
-    y: 0.12,
-    z: 0.292,
-  });
-  addMesh(group, new THREE.BoxGeometry(0.24, 0.035, 0.035), softMaterial('#d6f735'), {
-    x: 0.12,
-    y: -0.08,
-    z: 0.292,
-  });
-
-  [-0.72, 0.72].forEach((y) => {
-    for (let x = -0.21; x <= 0.21; x += 0.21) {
-      addMesh(group, new THREE.CylinderGeometry(0.035, 0.035, 0.03, 18), dark, {
-        x,
-        y,
-        z: 0.08,
-        rx: Math.PI / 2,
-      });
-    }
-  });
-
-  group.rotation.x = -0.08;
+  group.position.y = -0.08;
   return group;
 }
 
@@ -493,7 +514,7 @@ function renderProduct() {
     });
   }
 
-  state.productGroup = state.product.build(state.color, state.finish);
+  state.productGroup = state.product.build(state.color, state.finish, state.product);
   state.productGroup.rotation.y = -0.35;
   scene.add(state.productGroup);
 }
@@ -510,7 +531,7 @@ function renderProductList() {
           aria-selected="${product.id === state.product.id}"
           data-product="${product.id}"
         >
-          <span class="product-thumb" style="--thumb-color: ${product.colors[0]}">
+          <span class="product-thumb" style="--thumb-color: ${product.gem}">
             <i data-lucide="${product.icon}"></i>
           </span>
           <span class="product-copy">
@@ -540,7 +561,7 @@ function renderSwatches() {
           type="button"
           style="--swatch-color: ${color}"
           data-color="${color}"
-          aria-label="Color ${color}"
+          aria-label="Metal ${color}"
         ></button>
       `,
     )
@@ -570,7 +591,7 @@ function renderSpecs() {
 }
 
 function renderFeatures() {
-  const icons = ['shield-check', 'layers-3', 'scan-line'];
+  const icons = ['shield-check', 'sparkles', 'badge-check'];
   const featureList = document.querySelector('#feature-list');
   featureList.innerHTML = state.product.features
     .map(
@@ -615,7 +636,7 @@ function renderUI() {
 
 document.querySelector('#reset-view').addEventListener('click', () => {
   camera.position.set(3.9, 2.25, 5.2);
-  controls.target.set(0, 0.45, 0);
+  controls.target.set(0, 0.34, 0);
   controls.update();
 });
 

@@ -1,6 +1,6 @@
-# Pagina de productos 3D
+# Joyeria 3D - Auria Atelier
 
-Demo de catalogo de productos ficticios con visualizacion 3D interactiva.
+Demo de vitrina de joyeria ficticia con productos 3D interactivos: anillo, collar, aretes y brazalete.
 
 ## Ejecutar localmente
 
