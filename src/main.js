@@ -2,6 +2,7 @@ import './styles.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
+  ArrowRight,
   BadgeCheck,
   Circle,
   Crown,
@@ -127,6 +128,7 @@ const state = {
 };
 
 const iconRegistry = {
+  ArrowRight,
   BadgeCheck,
   Circle,
   Crown,
@@ -145,6 +147,8 @@ const iconRegistry = {
 
 createIcons({ icons: iconRegistry });
 
+const heroCanvas = document.querySelector('#hero-canvas');
+const heroStage = document.querySelector('.hero-section');
 const canvas = document.querySelector('#product-canvas');
 const stage = document.querySelector('.viewer-stage');
 const renderer = new THREE.WebGLRenderer({
@@ -492,6 +496,109 @@ function buildBracelet(color, finish, product) {
   return group;
 }
 
+function createHeroExperience() {
+  if (!heroCanvas || !heroStage) return null;
+
+  const heroRenderer = new THREE.WebGLRenderer({
+    canvas: heroCanvas,
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: true,
+  });
+  heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  heroRenderer.setSize(heroStage.clientWidth, heroStage.clientHeight);
+  heroRenderer.outputColorSpace = THREE.SRGBColorSpace;
+  heroRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+  heroRenderer.toneMappingExposure = 1.16;
+  heroRenderer.shadowMap.enabled = true;
+  heroRenderer.shadowMap.type = THREE.PCFShadowMap;
+
+  const heroScene = new THREE.Scene();
+  heroScene.background = new THREE.Color('#eef5f1');
+  heroScene.fog = new THREE.Fog('#eef5f1', 8, 18);
+
+  const heroCamera = new THREE.PerspectiveCamera(34, heroStage.clientWidth / heroStage.clientHeight, 0.1, 100);
+  heroCamera.position.set(3.5, 2.1, 5.6);
+  heroCamera.lookAt(0.42, -0.05, 0);
+
+  heroScene.add(new THREE.HemisphereLight('#ffffff', '#b8c5bd', 2.2));
+
+  const heroKey = new THREE.DirectionalLight('#ffffff', 4.7);
+  heroKey.position.set(4, 5.8, 4.5);
+  heroKey.castShadow = true;
+  heroKey.shadow.mapSize.set(2048, 2048);
+  heroKey.shadow.camera.near = 0.5;
+  heroKey.shadow.camera.far = 16;
+  heroKey.shadow.camera.left = -5;
+  heroKey.shadow.camera.right = 5;
+  heroKey.shadow.camera.top = 5;
+  heroKey.shadow.camera.bottom = -5;
+  heroScene.add(heroKey);
+
+  const warm = new THREE.PointLight('#d6b35d', 8, 8);
+  warm.position.set(-3.2, 2.4, -2.2);
+  heroScene.add(warm);
+
+  const cool = new THREE.PointLight('#0f8f7f', 6, 7);
+  cool.position.set(3.1, 1.6, -3.4);
+  heroScene.add(cool);
+
+  const heroFloor = new THREE.Mesh(
+    new THREE.CircleGeometry(4.8, 96),
+    new THREE.MeshStandardMaterial({ color: '#fbfcfa', roughness: 0.55, metalness: 0 }),
+  );
+  heroFloor.rotation.x = -Math.PI / 2;
+  heroFloor.position.y = -1.25;
+  heroFloor.receiveShadow = true;
+  heroScene.add(heroFloor);
+
+  const heroRing = new THREE.Mesh(
+    new THREE.TorusGeometry(2.18, 0.014, 12, 160),
+    new THREE.MeshBasicMaterial({ color: '#d6b35d', transparent: true, opacity: 0.34 }),
+  );
+  heroRing.rotation.x = -Math.PI / 2;
+  heroRing.position.y = -1.22;
+  heroScene.add(heroRing);
+
+  const heroGroup = new THREE.Group();
+  const ring = products[0].build('#d6b35d', 'signature', products[0]);
+  ring.position.set(-0.92, -0.18, 0.18);
+  ring.rotation.set(-0.18, 0.24, -0.28);
+  ring.scale.set(1.16, 1.16, 1.16);
+  heroGroup.add(ring);
+
+  const earrings = products[2].build('#c78b7a', 'polished', products[2]);
+  earrings.position.set(1.02, -0.05, -0.24);
+  earrings.rotation.set(0.08, -0.28, 0.18);
+  earrings.scale.set(0.92, 0.92, 0.92);
+  heroGroup.add(earrings);
+
+  const cuff = products[3].build('#d9dde1', 'satin', products[3]);
+  cuff.position.set(0.28, -0.92, -0.72);
+  cuff.rotation.set(0.34, 0.18, -0.08);
+  cuff.scale.set(0.9, 0.9, 0.9);
+  heroGroup.add(cuff);
+
+  heroScene.add(heroGroup);
+
+  const heroResizeObserver = new ResizeObserver(() => {
+    const width = heroStage.clientWidth;
+    const height = heroStage.clientHeight;
+    heroCamera.aspect = width / height;
+    heroCamera.updateProjectionMatrix();
+    heroRenderer.setSize(width, height);
+  });
+  heroResizeObserver.observe(heroStage);
+
+  return {
+    camera: heroCamera,
+    floorRing: heroRing,
+    group: heroGroup,
+    renderer: heroRenderer,
+    scene: heroScene,
+  };
+}
+
 function setProduct(product) {
   state.product = product;
   state.color = product.colors[0];
@@ -663,8 +770,16 @@ const resizeObserver = new ResizeObserver(() => {
 });
 resizeObserver.observe(stage);
 
+const heroExperience = createHeroExperience();
+
 function animate() {
   requestAnimationFrame(animate);
+  if (heroExperience) {
+    heroExperience.group.rotation.y += 0.0018;
+    heroExperience.group.position.y = Math.sin(performance.now() * 0.0011) * 0.026;
+    heroExperience.floorRing.rotation.z -= 0.0017;
+    heroExperience.renderer.render(heroExperience.scene, heroExperience.camera);
+  }
   if (state.productGroup) {
     state.productGroup.position.y = Math.sin(performance.now() * 0.0014) * 0.035;
     floorRing.rotation.z += 0.003;

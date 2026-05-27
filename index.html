@@ -12,79 +12,192 @@
   <body>
     <div class="app-shell">
       <header class="topbar" aria-label="Barra superior">
-        <a class="brand" href="/" aria-label="Auria Atelier">
+        <a class="brand" href="#inicio" aria-label="Auria Atelier">
           <span class="brand-mark">AA</span>
           <span>
             <strong>Auria Atelier</strong>
-            <small>Vitrina 3D</small>
+            <small>Joyeria inmersiva</small>
           </span>
         </a>
-        <nav class="top-actions" aria-label="Acciones del catalogo">
-          <button class="icon-button" type="button" id="reset-view" aria-label="Reiniciar vista">
-            <i data-lucide="rotate-ccw"></i>
-          </button>
-          <button class="icon-button" type="button" id="toggle-spin" aria-label="Pausar rotacion">
-            <i data-lucide="pause"></i>
-          </button>
+
+        <nav class="site-nav" aria-label="Navegacion principal">
+          <a href="#coleccion">Coleccion</a>
+          <a href="#atelier">Atelier</a>
+          <a href="#experiencia">Experiencia</a>
         </nav>
+
+        <div class="top-actions" aria-label="Acciones del catalogo">
+          <a class="nav-cta" href="#coleccion">Ver joyas</a>
+        </div>
       </header>
 
-      <main class="product-layout">
-        <aside class="catalog-panel" aria-label="Productos">
-          <div class="panel-heading">
-            <span class="eyebrow">Coleccion</span>
-            <h1>Joyas ficticias con vista 3D</h1>
-          </div>
+      <main>
+        <section class="hero-section" id="inicio" aria-label="Auria Atelier">
+          <canvas id="hero-canvas"></canvas>
+          <div class="hero-shade"></div>
 
-          <div class="product-list" id="product-list" role="listbox" aria-label="Seleccionar producto"></div>
-        </aside>
-
-        <section class="viewer-stage" aria-label="Visor 3D del producto">
-          <canvas id="product-canvas"></canvas>
-
-          <div class="viewer-topline">
-            <span id="active-category">Anillos de autor</span>
-            <span id="active-model">AUR-R01</span>
-          </div>
-
-          <div class="product-callout">
-            <span id="product-tag">Alta joya</span>
-            <h2 id="active-name">Solara Ring</h2>
-            <p id="active-description">Anillo escultorico con aro pulido, engaste elevado y gema facetada.</p>
-          </div>
-
-          <div class="control-strip" aria-label="Personalizacion">
-            <div class="control-group">
-              <span class="control-label">Metal</span>
-              <div class="swatches" id="color-swatches" aria-label="Metales disponibles"></div>
+          <div class="hero-content">
+            <span class="eyebrow">Nueva coleccion 2026</span>
+            <h1>Auria Atelier</h1>
+            <p>
+              Joyas ficticias de alta precision con una vitrina digital que permite explorar volumen,
+              metal y brillo antes de reservar una muestra.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-link" href="#coleccion">
+                Ver coleccion 3D
+                <i data-lucide="arrow-right"></i>
+              </a>
+              <a class="secondary-link" href="#atelier">Conocer el atelier</a>
             </div>
+          </div>
 
-            <div class="control-group">
-              <span class="control-label">Acabado</span>
-              <div class="segmented" id="finish-options" aria-label="Acabado del material">
-                <button type="button" data-finish="satin">Satin</button>
-                <button type="button" data-finish="polished" class="active">Pulido</button>
-                <button type="button" data-finish="signature">Firma</button>
-              </div>
+          <div class="hero-proof" aria-label="Indicadores">
+            <div>
+              <strong>4</strong>
+              <span>Piezas de muestra</span>
+            </div>
+            <div>
+              <strong>18K</strong>
+              <span>Metales ficticios</span>
+            </div>
+            <div>
+              <strong>3D</strong>
+              <span>Vista interactiva</span>
             </div>
           </div>
         </section>
 
-        <aside class="detail-panel" aria-label="Detalles del producto">
-          <div class="price-row">
-            <span id="active-price">$2,480</span>
-            <span class="availability">Disponible</span>
+        <section class="trust-rail" aria-label="Servicios de compra">
+          <span>Reserva privada</span>
+          <span>Vista 3D por pieza</span>
+          <span>Metales personalizables</span>
+          <span>Envio asegurado ficticio</span>
+        </section>
+
+        <section class="editorial-band" id="experiencia">
+          <div class="section-kicker">Experiencia</div>
+          <div class="editorial-copy">
+            <h2>Una tienda de joyas pensada para mirar de cerca.</h2>
+            <p>
+              La compra empieza con una landing elegante y continua en un catalogo donde cada pieza se
+              puede girar, cambiar de metal y revisar con sus detalles tecnicos.
+            </p>
+          </div>
+        </section>
+
+        <section class="catalog-section" id="coleccion" aria-label="Catalogo de joyas">
+          <div class="section-heading">
+            <span class="eyebrow">Catalogo</span>
+            <h2>Coleccion 3D</h2>
+            <p>Selecciona una joya, ajusta su metal y explora la pieza desde el visor interactivo.</p>
           </div>
 
-          <dl class="spec-grid" id="spec-grid"></dl>
+          <div class="product-layout">
+            <aside class="catalog-panel" aria-label="Productos">
+              <div class="panel-heading">
+                <span class="eyebrow">Piezas</span>
+                <h3>Joyas ficticias con vista 3D</h3>
+              </div>
 
-          <button class="primary-action" type="button">
-            <i data-lucide="shopping-bag"></i>
-            Reservar muestra
-          </button>
+              <div class="product-list" id="product-list" role="listbox" aria-label="Seleccionar producto"></div>
+            </aside>
 
-          <div class="feature-list" id="feature-list" aria-label="Caracteristicas destacadas"></div>
-        </aside>
+            <section class="viewer-stage" aria-label="Visor 3D del producto">
+              <canvas id="product-canvas"></canvas>
+
+              <div class="viewer-topline">
+                <span id="active-category">Anillos de autor</span>
+                <span id="active-model">AUR-R01</span>
+              </div>
+
+              <div class="viewer-actions" aria-label="Controles del visor 3D">
+                <button class="icon-button" type="button" id="reset-view" aria-label="Reiniciar vista 3D">
+                  <i data-lucide="rotate-ccw"></i>
+                </button>
+                <button class="icon-button" type="button" id="toggle-spin" aria-label="Pausar rotacion 3D">
+                  <i data-lucide="pause"></i>
+                </button>
+              </div>
+
+              <div class="product-callout">
+                <span id="product-tag">Alta joya</span>
+                <h2 id="active-name">Solara Ring</h2>
+                <p id="active-description">Anillo escultorico con aro pulido, engaste elevado y gema facetada.</p>
+              </div>
+
+              <div class="control-strip" aria-label="Personalizacion">
+                <div class="control-group">
+                  <span class="control-label">Metal</span>
+                  <div class="swatches" id="color-swatches" aria-label="Metales disponibles"></div>
+                </div>
+
+                <div class="control-group">
+                  <span class="control-label">Acabado</span>
+                  <div class="segmented" id="finish-options" aria-label="Acabado del material">
+                    <button type="button" data-finish="satin">Satin</button>
+                    <button type="button" data-finish="polished" class="active">Pulido</button>
+                    <button type="button" data-finish="signature">Firma</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="detail-panel" aria-label="Detalles del producto">
+              <div class="price-row">
+                <span id="active-price">$2,480</span>
+                <span class="availability">Disponible</span>
+              </div>
+
+              <dl class="spec-grid" id="spec-grid"></dl>
+
+              <button class="primary-action" type="button">
+                <i data-lucide="shopping-bag"></i>
+                Reservar muestra
+              </button>
+
+              <div class="feature-list" id="feature-list" aria-label="Caracteristicas destacadas"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="atelier-section" id="atelier">
+          <div class="atelier-copy">
+            <span class="eyebrow">Atelier</span>
+            <h2>Del boceto al brillo final.</h2>
+            <p>
+              Auria Atelier combina lenguaje de joyeria clasica con una experiencia digital mas clara:
+              primero se inspira, luego se explora la pieza y finalmente se reserva la muestra.
+            </p>
+          </div>
+
+          <div class="process-list" aria-label="Proceso">
+            <div>
+              <span>01</span>
+              <strong>Diseño de silueta</strong>
+              <p>Proporciones pensadas para verse bien en fotografia, detalle y rotacion 3D.</p>
+            </div>
+            <div>
+              <span>02</span>
+              <strong>Material y gema</strong>
+              <p>Metales, piedras y acabados ficticios se pueden comparar sin cambiar de pantalla.</p>
+            </div>
+            <div>
+              <span>03</span>
+              <strong>Reserva asistida</strong>
+              <p>La ficha conserva precio, especificaciones y rasgos clave para tomar decision.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="cta-section" aria-label="Reserva">
+          <span class="eyebrow">Cita privada</span>
+          <h2>Encuentra la pieza que quieras mirar en 3D.</h2>
+          <a class="primary-link" href="#coleccion">
+            Explorar catalogo
+            <i data-lucide="arrow-right"></i>
+          </a>
+        </section>
       </main>
     </div>
 
