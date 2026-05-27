@@ -3,101 +3,165 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Joyeria 3D | Auria Atelier</title>
+    <title>Auria Atelier | Joyeria 3D</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111217'/%3E%3Cpath d='M32 10 48 27 32 54 16 27 32 10Zm0 8-7 8h14l-7-8Zm-8 14 8 14 8-14H24Z' fill='%23d6b35d'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101412'/%3E%3Cpath d='M32 9 49 26 32 55 15 26 32 9Zm0 8-8 9h16l-8-9Zm-9 16 9 15 9-15H23Z' fill='%23d7b46a'/%3E%3C/svg%3E"
     />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar" aria-label="Barra superior">
         <a class="brand" href="#inicio" aria-label="Auria Atelier">
-          <span class="brand-mark">AA</span>
-          <span>
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+              <path d="M32 7 51 26 32 58 13 26 32 7Z" />
+              <path d="M32 16 24 26h16l-8-10Z" />
+              <path d="M23 33 32 49l9-16H23Z" />
+            </svg>
+          </span>
+          <span class="brand-copy">
             <strong>Auria Atelier</strong>
-            <small>Joyeria inmersiva</small>
+            <small>Jewelry Lab 3D</small>
           </span>
         </a>
 
         <nav class="site-nav" aria-label="Navegacion principal">
-          <a href="#coleccion">Coleccion</a>
+          <a href="#referencias">Referencias</a>
+          <a href="#coleccion">Visor 3D</a>
+          <a href="#paleta">Paleta</a>
           <a href="#atelier">Atelier</a>
-          <a href="#experiencia">Experiencia</a>
         </nav>
 
-        <div class="top-actions" aria-label="Acciones del catalogo">
-          <a class="nav-cta" href="#coleccion">Ver joyas</a>
+        <div class="top-actions" aria-label="Acciones principales">
+          <a class="nav-cta" href="#coleccion">Subir modelo</a>
         </div>
       </header>
 
       <main>
+        <section class="announcement-banner" aria-label="Aviso de coleccion">
+          <span>Nuevo flujo: referencias 2D limpias + carga local de modelos GLB/GLTF</span>
+          <a href="#referencias">Descargar imagenes</a>
+        </section>
+
         <section class="hero-section" id="inicio" aria-label="Auria Atelier">
           <canvas id="hero-canvas"></canvas>
           <div class="hero-shade"></div>
 
           <div class="hero-content">
-            <span class="eyebrow">Nueva coleccion 2026</span>
-            <h1>Auria Atelier</h1>
+            <span class="eyebrow">Auria Atelier 2026</span>
+            <h1>Joyas que se exploran antes de tocarse.</h1>
             <p>
-              Joyas ficticias de alta precision con una vitrina digital que permite explorar volumen,
-              metal y brillo antes de reservar una muestra.
+              Una tienda de joyeria con identidad elegante, banners de coleccion y un visor preparado
+              para cargar tus modelos 3D reales cuando los tengas listos.
             </p>
             <div class="hero-actions">
               <a class="primary-link" href="#coleccion">
-                Ver coleccion 3D
+                Probar visor 3D
                 <i data-lucide="arrow-right"></i>
               </a>
-              <a class="secondary-link" href="#atelier">Conocer el atelier</a>
+              <a class="secondary-link" href="#referencias">Ver referencias</a>
             </div>
           </div>
 
           <div class="hero-proof" aria-label="Indicadores">
             <div>
               <strong>4</strong>
-              <span>Piezas de muestra</span>
+              <span>Referencias listas</span>
             </div>
             <div>
-              <strong>18K</strong>
-              <span>Metales ficticios</span>
+              <strong>GLB</strong>
+              <span>Carga local 3D</span>
             </div>
             <div>
-              <strong>3D</strong>
-              <span>Vista interactiva</span>
+              <strong>AA</strong>
+              <span>Logo y paleta</span>
             </div>
           </div>
         </section>
 
-        <section class="trust-rail" aria-label="Servicios de compra">
-          <span>Reserva privada</span>
-          <span>Vista 3D por pieza</span>
-          <span>Metales personalizables</span>
-          <span>Envio asegurado ficticio</span>
+        <section class="campaign-strip" aria-label="Banners de campana">
+          <article class="campaign-card is-dark">
+            <span>Modelado</span>
+            <strong>Imagenes limpias para construir cada pieza en 3D.</strong>
+          </article>
+          <article class="campaign-card">
+            <span>Experiencia</span>
+            <strong>El cliente compara metal, acabado y ficha sin salir del catalogo.</strong>
+          </article>
+          <article class="campaign-card is-gold">
+            <span>Conversion</span>
+            <strong>Banners, CTA y microinteracciones para invitar a recorrer toda la pagina.</strong>
+          </article>
         </section>
 
-        <section class="editorial-band" id="experiencia">
-          <div class="section-kicker">Experiencia</div>
-          <div class="editorial-copy">
-            <h2>Una tienda de joyas pensada para mirar de cerca.</h2>
+        <section class="palette-section" id="paleta" aria-label="Identidad visual">
+          <div class="section-heading">
+            <span class="eyebrow">Identidad</span>
+            <h2>Logo, colores y tono visual.</h2>
             <p>
-              La compra empieza con una landing elegante y continua en un catalogo donde cada pieza se
-              puede girar, cambiar de metal y revisar con sus detalles tecnicos.
+              La marca queda construida alrededor de un monograma tipo gema: negro joyero,
+              oro champagne, esmeralda profunda, rubi y marfil para fondos comerciales.
             </p>
           </div>
+
+          <div class="palette-grid" id="palette-grid" aria-label="Paleta de color">
+            <button type="button" style="--chip: #101412" data-color="#101412">
+              <span></span>
+              <strong>Obsidiana</strong>
+              <small>#101412</small>
+            </button>
+            <button type="button" style="--chip: #d7b46a" data-color="#d7b46a">
+              <span></span>
+              <strong>Oro champagne</strong>
+              <small>#d7b46a</small>
+            </button>
+            <button type="button" style="--chip: #0f6f63" data-color="#0f6f63">
+              <span></span>
+              <strong>Esmeralda</strong>
+              <small>#0f6f63</small>
+            </button>
+            <button type="button" style="--chip: #a91d46" data-color="#a91d46">
+              <span></span>
+              <strong>Rubi</strong>
+              <small>#a91d46</small>
+            </button>
+            <button type="button" style="--chip: #f6f1e7" data-color="#f6f1e7">
+              <span></span>
+              <strong>Marfil</strong>
+              <small>#f6f1e7</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="reference-section" id="referencias" aria-label="Imagenes de referencia de joyas">
+          <div class="section-heading">
+            <span class="eyebrow">Imagenes para modelado</span>
+            <h2>Referencias en fondo blanco.</h2>
+            <p>
+              Estas imagenes quedan disponibles como punto de partida para modelar tus piezas.
+              Cuando tengas los archivos 3D, puedes cargarlos en el visor del catalogo.
+            </p>
+          </div>
+
+          <div class="reference-grid" id="reference-grid"></div>
         </section>
 
         <section class="catalog-section" id="coleccion" aria-label="Catalogo de joyas">
           <div class="section-heading">
-            <span class="eyebrow">Catalogo</span>
-            <h2>Coleccion 3D</h2>
-            <p>Selecciona una joya, ajusta su metal y explora la pieza desde el visor interactivo.</p>
+            <span class="eyebrow">Catalogo interactivo</span>
+            <h2>Visor preparado para tus modelos 3D.</h2>
+            <p>
+              Selecciona una joya y carga un archivo `.glb` o `.gltf`. Mientras no haya modelo
+              propio, la pagina muestra una pieza 3D provisional para mantener la experiencia viva.
+            </p>
           </div>
 
           <div class="product-layout">
             <aside class="catalog-panel" aria-label="Productos">
               <div class="panel-heading">
                 <span class="eyebrow">Piezas</span>
-                <h3>Joyas ficticias con vista 3D</h3>
+                <h3>Catalogo base</h3>
               </div>
 
               <div class="product-list" id="product-list" role="listbox" aria-label="Seleccionar producto"></div>
@@ -126,6 +190,15 @@
                 <p id="active-description">Anillo escultorico con aro pulido, engaste elevado y gema facetada.</p>
               </div>
 
+              <div class="model-loader" id="model-dropzone">
+                <input id="model-upload" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+                <div>
+                  <span class="control-label">Modelo 3D</span>
+                  <strong id="model-status">Vista provisional activa</strong>
+                </div>
+                <label for="model-upload">Cargar GLB/GLTF</label>
+              </div>
+
               <div class="control-strip" aria-label="Personalizacion">
                 <div class="control-group">
                   <span class="control-label">Metal</span>
@@ -144,6 +217,10 @@
             </section>
 
             <aside class="detail-panel" aria-label="Detalles del producto">
+              <div class="reference-preview">
+                <img id="active-reference" src="/reference-images/solara-ring.png" alt="Referencia de Solara Ring" />
+              </div>
+
               <div class="price-row">
                 <span id="active-price">$2,480</span>
                 <span class="availability">Disponible</span>
@@ -151,50 +228,76 @@
 
               <dl class="spec-grid" id="spec-grid"></dl>
 
-              <button class="primary-action" type="button">
+              <button class="primary-action" type="button" id="reserve-action">
                 <i data-lucide="shopping-bag"></i>
                 Reservar muestra
               </button>
+
+              <a class="download-reference" id="download-reference" href="/reference-images/solara-ring.png" download>
+                Descargar referencia
+              </a>
 
               <div class="feature-list" id="feature-list" aria-label="Caracteristicas destacadas"></div>
             </aside>
           </div>
         </section>
 
+        <section class="interaction-section" aria-label="Experiencia de compra">
+          <div class="section-heading">
+            <span class="eyebrow">Interaccion</span>
+            <h2>Motivos para seguir explorando.</h2>
+          </div>
+
+          <div class="interactive-panels">
+            <details open>
+              <summary>Comparar antes de reservar</summary>
+              <p>Cambia metal, acabado y pieza para mantener la decision dentro del mismo recorrido.</p>
+            </details>
+            <details>
+              <summary>Subir modelos propios</summary>
+              <p>Cuando tengas el modelado 3D, arrastra o carga un GLB/GLTF en el visor seleccionado.</p>
+            </details>
+            <details>
+              <summary>Usar referencias limpias</summary>
+              <p>Las imagenes de joyas estan guardadas en fondo blanco para ayudarte con el modelado.</p>
+            </details>
+          </div>
+        </section>
+
         <section class="atelier-section" id="atelier">
           <div class="atelier-copy">
             <span class="eyebrow">Atelier</span>
-            <h2>Del boceto al brillo final.</h2>
+            <h2>Del modelado al escaparate.</h2>
             <p>
-              Auria Atelier combina lenguaje de joyeria clasica con una experiencia digital mas clara:
-              primero se inspira, luego se explora la pieza y finalmente se reserva la muestra.
+              La pagina ya queda lista para reemplazar referencias por modelos reales y convertir
+              el catalogo en una experiencia de venta inmersiva.
             </p>
           </div>
 
           <div class="process-list" aria-label="Proceso">
             <div>
               <span>01</span>
-              <strong>Diseño de silueta</strong>
-              <p>Proporciones pensadas para verse bien en fotografia, detalle y rotacion 3D.</p>
+              <strong>Referencia visual</strong>
+              <p>Imagen limpia para modelar forma, volumen, piedras y proporciones.</p>
             </div>
             <div>
               <span>02</span>
-              <strong>Material y gema</strong>
-              <p>Metales, piedras y acabados ficticios se pueden comparar sin cambiar de pantalla.</p>
+              <strong>Modelo 3D propio</strong>
+              <p>Exporta GLB para una carga mas estable en el navegador.</p>
             </div>
             <div>
               <span>03</span>
-              <strong>Reserva asistida</strong>
-              <p>La ficha conserva precio, especificaciones y rasgos clave para tomar decision.</p>
+              <strong>Catalogo interactivo</strong>
+              <p>El cliente revisa la pieza, cambia opciones y permanece en la pagina.</p>
             </div>
           </div>
         </section>
 
         <section class="cta-section" aria-label="Reserva">
-          <span class="eyebrow">Cita privada</span>
-          <h2>Encuentra la pieza que quieras mirar en 3D.</h2>
+          <span class="eyebrow">Siguiente paso</span>
+          <h2>Modela las piezas y subelas al visor cuando esten listas.</h2>
           <a class="primary-link" href="#coleccion">
-            Explorar catalogo
+            Ir al visor 3D
             <i data-lucide="arrow-right"></i>
           </a>
         </section>

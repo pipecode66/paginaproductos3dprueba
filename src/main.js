@@ -1,12 +1,16 @@
 import './styles.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   ArrowRight,
   BadgeCheck,
+  Box,
+  Check,
   Circle,
   Crown,
   Diamond,
+  Download,
   Gem,
   Layers3,
   Pause,
@@ -17,6 +21,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Upload,
   createIcons,
 } from 'lucide';
 
@@ -31,6 +36,8 @@ const products = [
     description: 'Anillo escultorico con aro pulido, engaste elevado y gema facetada color esmeralda.',
     icon: 'gem',
     gem: '#0f8f7f',
+    reference: '/reference-images/solara-ring.png',
+    modelHint: 'solara-ring.glb',
     colors: ['#d6b35d', '#d9dde1', '#c78b7a', '#1f2328'],
     specs: [
       ['Metal', 'Oro 18K'],
@@ -55,6 +62,8 @@ const products = [
     description: 'Collar de eslabones finos con dije central tipo lagrima y corona de microgemas.',
     icon: 'diamond',
     gem: '#2f5fd0',
+    reference: '/reference-images/luna-drop-necklace.png',
+    modelHint: 'luna-drop-necklace.glb',
     colors: ['#d9dde1', '#d6b35d', '#e7e2dc', '#111217'],
     specs: [
       ['Largo', '45 cm'],
@@ -79,6 +88,8 @@ const products = [
     description: 'Aretes dobles con aro delicado, perla superior y gema colgante en tono rubi.',
     icon: 'crown',
     gem: '#b91c45',
+    reference: '/reference-images/rosa-orbit-earrings.png',
+    modelHint: 'rosa-orbit-earrings.glb',
     colors: ['#c78b7a', '#d6b35d', '#d9dde1', '#2b1f24'],
     specs: [
       ['Largo', '32 mm'],
@@ -103,6 +114,8 @@ const products = [
     description: 'Brazalete rigido con perfil ovalado y constelacion de gemas sobre el borde frontal.',
     icon: 'circle',
     gem: '#7c3aed',
+    reference: '/reference-images/astra-cuff-bracelet.png',
+    modelHint: 'astra-cuff-bracelet.glb',
     colors: ['#d6b35d', '#d9dde1', '#c78b7a', '#13151a'],
     specs: [
       ['Diametro', '58 mm'],
@@ -125,14 +138,18 @@ const state = {
   finish: 'polished',
   spinning: true,
   productGroup: null,
+  customModels: new Map(),
 };
 
 const iconRegistry = {
   ArrowRight,
   BadgeCheck,
+  Box,
+  Check,
   Circle,
   Crown,
   Diamond,
+  Download,
   Gem,
   Layers3,
   Pause,
@@ -143,6 +160,7 @@ const iconRegistry = {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Upload,
 };
 
 createIcons({ icons: iconRegistry });
@@ -151,6 +169,7 @@ const heroCanvas = document.querySelector('#hero-canvas');
 const heroStage = document.querySelector('.hero-section');
 const canvas = document.querySelector('#product-canvas');
 const stage = document.querySelector('.viewer-stage');
+const gltfLoader = new GLTFLoader();
 const renderer = new THREE.WebGLRenderer({
   canvas,
   antialias: true,
@@ -606,22 +625,38 @@ function setProduct(product) {
   renderUI();
 }
 
-function renderProduct() {
-  if (state.productGroup) {
-    scene.remove(state.productGroup);
-    state.productGroup.traverse((node) => {
-      if (node.geometry) node.geometry.dispose();
-      if (node.material) {
-        if (Array.isArray(node.material)) {
-          node.material.forEach((material) => material.dispose());
-        } else {
-          node.material.dispose();
-        }
+function disposeObject(group) {
+  group.traverse((node) => {
+    if (node.geometry) node.geometry.dispose();
+    if (node.material) {
+      if (Array.isArray(node.material)) {
+        node.material.forEach((material) => material.dispose());
+      } else {
+        node.material.dispose();
       }
-    });
-  }
+    }
+  });
+}
 
-  state.productGroup = state.product.build(state.color, state.finish, state.product);
+function clearCurrentProduct() {
+  if (!state.productGroup) return;
+  scene.remove(state.productGroup);
+  if (state.productGroup.userData.disposeOnRemove) {
+    disposeObject(state.productGroup);
+  }
+  state.productGroup = null;
+}
+
+function renderProduct() {
+  clearCurrentProduct();
+
+  if (state.customModels.has(state.product.id)) {
+    state.productGroup = state.customModels.get(state.product.id).group;
+    state.productGroup.userData.disposeOnRemove = false;
+  } else {
+    state.productGroup = state.product.build(state.color, state.finish, state.product);
+    state.productGroup.userData.disposeOnRemove = true;
+  }
   state.productGroup.rotation.y = -0.35;
   scene.add(state.productGroup);
 }
@@ -638,12 +673,13 @@ function renderProductList() {
           aria-selected="${product.id === state.product.id}"
           data-product="${product.id}"
         >
-          <span class="product-thumb" style="--thumb-color: ${product.gem}">
-            <i data-lucide="${product.icon}"></i>
+          <span class="product-thumb product-image-thumb" style="--thumb-color: ${product.gem}">
+            <img src="${product.reference}" alt="" />
           </span>
           <span class="product-copy">
             <strong>${product.name}</strong>
             <span>${product.category}</span>
+            <small>${state.customModels.has(product.id) ? 'Modelo cargado' : 'Referencia lista'}</small>
           </span>
         </button>
       `,
@@ -656,6 +692,31 @@ function renderProductList() {
       setProduct(product);
     });
   });
+}
+
+function renderReferenceGallery() {
+  const grid = document.querySelector('#reference-grid');
+  if (!grid) return;
+
+  grid.innerHTML = products
+    .map(
+      (product) => `
+        <article class="reference-card">
+          <a href="${product.reference}" download>
+            <img src="${product.reference}" alt="Referencia de ${product.name}" />
+          </a>
+          <div>
+            <span>${product.category}</span>
+            <strong>${product.name}</strong>
+            <a href="${product.reference}" download>
+              <i data-lucide="download"></i>
+              Descargar PNG
+            </a>
+          </div>
+        </article>
+      `,
+    )
+    .join('');
 }
 
 function renderSwatches() {
@@ -723,6 +784,18 @@ function renderFinishOptions() {
   });
 }
 
+function renderModelStatus() {
+  const modelStatus = document.querySelector('#model-status');
+  const uploadInput = document.querySelector('#model-upload');
+  const model = state.customModels.get(state.product.id);
+  if (modelStatus) {
+    modelStatus.textContent = model ? `Modelo cargado: ${model.fileName}` : `Vista provisional activa: ${state.product.modelHint}`;
+  }
+  if (uploadInput) {
+    uploadInput.value = '';
+  }
+}
+
 function renderUI() {
   document.querySelector('#active-category').textContent = state.product.category;
   document.querySelector('#active-model').textContent = state.product.model;
@@ -730,15 +803,148 @@ function renderUI() {
   document.querySelector('#active-name').textContent = state.product.name;
   document.querySelector('#active-description').textContent = state.product.description;
   document.querySelector('#active-price').textContent = state.product.price;
+  document.querySelector('#active-reference').src = state.product.reference;
+  document.querySelector('#active-reference').alt = `Referencia de ${state.product.name}`;
+  document.querySelector('#download-reference').href = state.product.reference;
+  document.querySelector('#download-reference').setAttribute('download', `${state.product.id}-reference.png`);
   document.querySelector('#toggle-spin').setAttribute('aria-label', state.spinning ? 'Pausar rotacion' : 'Activar rotacion');
   document.querySelector('#toggle-spin').innerHTML = `<i data-lucide="${state.spinning ? 'pause' : 'play'}"></i>`;
 
   renderProductList();
+  renderReferenceGallery();
   renderSwatches();
   renderSpecs();
   renderFeatures();
   renderFinishOptions();
+  renderModelStatus();
   createIcons({ icons: iconRegistry });
+}
+
+function normalizeImportedModel(model) {
+  const wrapper = new THREE.Group();
+  wrapper.add(model);
+
+  model.traverse((node) => {
+    if (node.isMesh) {
+      node.castShadow = true;
+      node.receiveShadow = true;
+      if (node.material) {
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        materials.forEach((material) => {
+          material.needsUpdate = true;
+        });
+      }
+    }
+  });
+
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
+  model.position.sub(center);
+  model.scale.setScalar(2.25 / maxDimension);
+  wrapper.userData.disposeOnRemove = false;
+  return wrapper;
+}
+
+function replaceCustomModel(productId, fileName, objectUrl, group) {
+  const previous = state.customModels.get(productId);
+  if (previous) {
+    scene.remove(previous.group);
+    disposeObject(previous.group);
+    URL.revokeObjectURL(previous.objectUrl);
+  }
+
+  state.customModels.set(productId, { fileName, objectUrl, group });
+}
+
+function loadModelFile(file) {
+  if (!file) return;
+  const extension = file.name.split('.').pop().toLowerCase();
+  const modelStatus = document.querySelector('#model-status');
+  if (!['glb', 'gltf'].includes(extension)) {
+    if (modelStatus) modelStatus.textContent = 'Formato no compatible. Usa GLB o GLTF.';
+    return;
+  }
+
+  if (modelStatus) modelStatus.textContent = `Cargando ${file.name}...`;
+  const objectUrl = URL.createObjectURL(file);
+  const productId = state.product.id;
+
+  gltfLoader.load(
+    objectUrl,
+    (gltf) => {
+      const group = normalizeImportedModel(gltf.scene);
+      replaceCustomModel(productId, file.name, objectUrl, group);
+      renderProduct();
+      renderUI();
+    },
+    undefined,
+    () => {
+      URL.revokeObjectURL(objectUrl);
+      if (modelStatus) {
+        modelStatus.textContent = 'No se pudo cargar. Recomendado: exporta un GLB con texturas embebidas.';
+      }
+    },
+  );
+}
+
+function setupModelLoader() {
+  const uploadInput = document.querySelector('#model-upload');
+  const dropzone = document.querySelector('#model-dropzone');
+  if (!uploadInput || !dropzone) return;
+
+  uploadInput.addEventListener('change', (event) => {
+    loadModelFile(event.target.files?.[0]);
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.classList.add('is-dragging');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('is-dragging');
+    });
+  });
+
+  dropzone.addEventListener('drop', (event) => {
+    loadModelFile(event.dataTransfer?.files?.[0]);
+  });
+}
+
+function setupPageInteractions() {
+  document.querySelectorAll('#palette-grid [data-color]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const color = button.dataset.color;
+      try {
+        await navigator.clipboard.writeText(color);
+        button.classList.add('copied');
+        setTimeout(() => button.classList.remove('copied'), 1200);
+      } catch {
+        button.classList.add('copied');
+        setTimeout(() => button.classList.remove('copied'), 1200);
+      }
+    });
+  });
+
+  const reserveAction = document.querySelector('#reserve-action');
+  if (reserveAction) {
+    reserveAction.addEventListener('click', () => {
+      reserveAction.classList.add('is-confirmed');
+      reserveAction.innerHTML = '<i data-lucide="check"></i> Muestra reservada';
+      createIcons({ icons: iconRegistry });
+      setTimeout(() => {
+        reserveAction.classList.remove('is-confirmed');
+        reserveAction.innerHTML = '<i data-lucide="shopping-bag"></i> Reservar muestra';
+        createIcons({ icons: iconRegistry });
+      }, 1800);
+    });
+  }
 }
 
 document.querySelector('#reset-view').addEventListener('click', () => {
@@ -771,6 +977,8 @@ const resizeObserver = new ResizeObserver(() => {
 resizeObserver.observe(stage);
 
 const heroExperience = createHeroExperience();
+setupModelLoader();
+setupPageInteractions();
 
 function animate() {
   requestAnimationFrame(animate);
