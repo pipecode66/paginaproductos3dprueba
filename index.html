@@ -3,346 +3,292 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auria Atelier | Joyeria 360</title>
+    <meta
+      name="description"
+      content="Auria Atelier: joyeria contemporanea en oro, esmeraldas y amatistas con vision 360."
+    />
+    <title>Auria Atelier | Joyeria contemporanea</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101412'/%3E%3Cpath d='M32 9 49 26 32 55 15 26 32 9Zm0 8-8 9h16l-8-9Zm-9 16 9 15 9-15H23Z' fill='%23d7b46a'/%3E%3C/svg%3E"
     />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar" aria-label="Barra superior">
-        <a class="brand" href="#inicio" aria-label="Auria Atelier">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img">
-              <path d="M32 7 51 26 32 58 13 26 32 7Z" />
-              <path d="M32 16 24 26h16l-8-10Z" />
-              <path d="M23 33 32 49l9-16H23Z" />
-            </svg>
-          </span>
-          <span class="brand-copy">
-            <strong>Auria Atelier</strong>
-            <small>Jewelry Vision 360</small>
-          </span>
-        </a>
+    <header class="site-header">
+      <a class="brand" href="#inicio" aria-label="Auria Atelier, inicio">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <path d="M32 7 51 26 32 58 13 26 32 7Z" />
+            <path d="M32 16 24 26h16l-8-10Z" />
+            <path d="M23 33 32 49l9-16H23Z" />
+          </svg>
+        </span>
+        <span>
+          <strong>Auria Atelier</strong>
+          <small>Joyeria contemporanea</small>
+        </span>
+      </a>
 
-        <nav class="site-nav" aria-label="Navegacion principal">
-          <a href="#vision-360">Vision 360</a>
-          <a href="#coleccion">Catalogo</a>
-          <a href="#paleta">Paleta</a>
-          <a href="#atelier">Atelier</a>
-        </nav>
+      <nav class="desktop-nav" aria-label="Navegacion principal">
+        <a href="#coleccion">Coleccion</a>
+        <a href="#vision-360">Vision 360</a>
+        <a href="#atelier">Atelier</a>
+        <a href="#servicio">Servicio</a>
+      </nav>
 
-        <div class="top-actions" aria-label="Acciones principales">
-          <a class="nav-cta" href="#coleccion">Explorar 360</a>
+      <div class="header-actions">
+        <button class="icon-button" type="button" aria-label="Buscar">
+          <i data-lucide="search"></i>
+        </button>
+        <button class="cart-button" type="button" aria-label="Abrir bolsa de compra">
+          <i data-lucide="shopping-bag"></i>
+          <span id="cart-count">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="announcement">
+        <span>Envio nacional asegurado</span>
+        <span>Certificado de autenticidad incluido</span>
+        <span>Asesoria personalizada</span>
+      </div>
+
+      <section class="hero" id="inicio">
+        <img
+          class="hero-product"
+          src="/product-images/solara-ring.png"
+          alt="Anillo Solara de oro con esmeralda"
+        />
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+          <span class="eyebrow">Coleccion Esencia</span>
+          <h1>Auria Atelier</h1>
+          <p>
+            Joyas de lineas puras, metales nobles y gemas que conservan su caracter desde cualquier angulo.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#vision-360">
+              Explorar la coleccion
+              <i data-lucide="arrow-right"></i>
+            </a>
+            <a class="text-link" href="#atelier">Conocer el atelier</a>
+          </div>
         </div>
-      </header>
 
-      <main>
-        <section class="announcement-banner" aria-label="Aviso de coleccion">
-          <span>Nueva experiencia: gira cada joya y observa sus detalles desde cualquier angulo</span>
-          <a href="#coleccion">Probar vision 360</a>
-        </section>
+        <div class="hero-note">
+          <span>Pieza destacada</span>
+          <strong>Solara Esmeralda</strong>
+          <small>Oro amarillo 18K</small>
+        </div>
+      </section>
 
-        <section class="hero-section" id="inicio" aria-label="Auria Atelier">
-          <canvas id="hero-canvas"></canvas>
-          <div class="hero-shade"></div>
+      <section class="signature-rail" aria-label="Atributos de Auria Atelier">
+        <div>
+          <i data-lucide="gem"></i>
+          <span>Gemas seleccionadas</span>
+        </div>
+        <div>
+          <i data-lucide="shield-check"></i>
+          <span>Compra protegida</span>
+        </div>
+        <div>
+          <i data-lucide="sparkles"></i>
+          <span>Acabado artesanal</span>
+        </div>
+        <div>
+          <i data-lucide="package-check"></i>
+          <span>Presentacion de lujo</span>
+        </div>
+      </section>
 
-          <div class="hero-content">
-            <span class="eyebrow">Auria Atelier 2026</span>
-            <h1>Joyas que se exploran antes de tocarse.</h1>
-            <p>
-              Una tienda de joyeria con identidad elegante, banners de coleccion y una experiencia
-              360 para recorrer cada pieza antes de reservarla.
-            </p>
-            <div class="hero-actions">
-              <a class="primary-link" href="#coleccion">
-                Explorar en 360
-                <i data-lucide="arrow-right"></i>
-              </a>
-              <a class="secondary-link" href="#referencias">Ver referencias</a>
-            </div>
-          </div>
+      <section class="collection-section" id="coleccion">
+        <div class="section-heading">
+          <span class="eyebrow">Coleccion actual</span>
+          <h2>Dos piezas. Dos formas de llevar la luz.</h2>
+          <p>
+            Una seleccion precisa de joyas concebidas para acompañar momentos cotidianos y celebraciones.
+          </p>
+        </div>
 
-          <div class="hero-proof" aria-label="Indicadores">
-            <div>
-              <strong>360</strong>
-              <span>Giro interactivo</span>
-            </div>
-            <div>
-              <strong>2</strong>
-              <span>Joyas disponibles</span>
-            </div>
-            <div>
-              <strong>AA</strong>
-              <span>Logo y paleta</span>
-            </div>
-          </div>
-        </section>
+        <div class="collection-grid" id="collection-grid"></div>
+      </section>
 
-        <section class="campaign-strip" aria-label="Banners de campana">
-          <article class="campaign-card is-dark">
-            <span>Modelado</span>
-            <strong>Vistas consistentes para presentar cada pieza desde todos sus angulos.</strong>
-          </article>
-          <article class="campaign-card">
-            <span>Experiencia</span>
-            <strong>El cliente gira, acerca y compara cada joya sin salir del catalogo.</strong>
-          </article>
-          <article class="campaign-card is-gold">
-            <span>Conversion</span>
-            <strong>Banners, CTA y microinteracciones para invitar a recorrer toda la pagina.</strong>
-          </article>
-        </section>
+      <section class="viewer-section" id="vision-360">
+        <div class="viewer-heading">
+          <span class="eyebrow">Vision 360</span>
+          <h2>Observa cada detalle.</h2>
+          <p>Desliza horizontalmente sobre la joya o utiliza el control inferior.</p>
+        </div>
 
-        <section class="palette-section" id="paleta" aria-label="Identidad visual">
-          <div class="section-heading">
-            <span class="eyebrow">Identidad</span>
-            <h2>Logo, colores y tono visual.</h2>
-            <p>
-              La marca queda construida alrededor de un monograma tipo gema: negro joyero,
-              oro champagne, esmeralda profunda, rubi y marfil para fondos comerciales.
-            </p>
-          </div>
+        <div class="commerce-layout">
+          <aside class="product-selector" aria-label="Seleccionar joya">
+            <span class="selector-label">Coleccion</span>
+            <div id="product-selector-list"></div>
+          </aside>
 
-          <div class="palette-grid" id="palette-grid" aria-label="Paleta de color">
-            <button type="button" style="--chip: #101412" data-color="#101412">
-              <span></span>
-              <strong>Obsidiana</strong>
-              <small>#101412</small>
-            </button>
-            <button type="button" style="--chip: #d7b46a" data-color="#d7b46a">
-              <span></span>
-              <strong>Oro champagne</strong>
-              <small>#d7b46a</small>
-            </button>
-            <button type="button" style="--chip: #0f6f63" data-color="#0f6f63">
-              <span></span>
-              <strong>Esmeralda</strong>
-              <small>#0f6f63</small>
-            </button>
-            <button type="button" style="--chip: #a91d46" data-color="#a91d46">
-              <span></span>
-              <strong>Rubi</strong>
-              <small>#a91d46</small>
-            </button>
-            <button type="button" style="--chip: #f6f1e7" data-color="#f6f1e7">
-              <span></span>
-              <strong>Marfil</strong>
-              <small>#f6f1e7</small>
-            </button>
-          </div>
-        </section>
-
-        <section class="reference-section" id="referencias" aria-label="Imagenes de referencia de joyas">
-          <div class="section-heading">
-            <span class="eyebrow">Imagenes para modelado</span>
-            <h2>Referencias en fondo blanco.</h2>
-            <p>
-              Estas imagenes quedan disponibles como punto de partida para modelar tus piezas.
-              Cuando tengas los archivos 3D, puedes cargarlos en el visor del catalogo.
-            </p>
-          </div>
-
-          <div class="reference-grid" id="reference-grid"></div>
-        </section>
-
-        <section class="turntable-section" id="vision-360" aria-label="Concepto de vision 360">
-          <div class="turntable-copy">
-            <span class="eyebrow">Concepto multivista</span>
-            <h2>Una misma joya, ocho puntos de vista.</h2>
-            <p>
-              Esta lamina generada con IA sirve para mostrar la idea al cliente. La version
-              interactiva del catalogo utiliza el objeto real para conservar forma, piedra,
-              engaste y proporciones durante todo el giro.
-            </p>
-
-            <div class="turntable-facts" aria-label="Resumen de la experiencia">
+          <section class="spin-viewer" aria-label="Vista de producto en 360 grados">
+            <div class="viewer-toolbar">
+              <span class="viewer-counter">
+                <strong id="angle-value">000°</strong>
+                <small>Vision completa</small>
+              </span>
               <div>
-                <strong>8</strong>
-                <span>Vistas de concepto</span>
-              </div>
-              <div>
-                <strong>360</strong>
-                <span>Rotacion continua</span>
-              </div>
-              <div>
-                <strong>GLB</strong>
-                <span>Geometria consistente</span>
-              </div>
-            </div>
-          </div>
-
-          <figure class="turntable-figure">
-            <img
-              src="/reference-images/solara-ring-360-concept.png"
-              alt="Ocho vistas consistentes de un anillo de oro con esmeralda"
-            />
-            <figcaption>Concepto IA para planear la secuencia de producto.</figcaption>
-          </figure>
-        </section>
-
-        <section class="catalog-section" id="coleccion" aria-label="Catalogo de joyas">
-          <div class="section-heading">
-            <span class="eyebrow">Catalogo interactivo</span>
-            <h2>Vision 360 lista para presentar.</h2>
-            <p>
-              El anillo Solara y el brazalete Astra ya cargan sus modelos automaticamente.
-              Las piezas futuras pueden agregarse mediante archivos GLB o GLTF.
-            </p>
-          </div>
-
-          <div class="product-layout">
-            <aside class="catalog-panel" aria-label="Productos">
-              <div class="panel-heading">
-                <span class="eyebrow">Piezas</span>
-                <h3>Catalogo base</h3>
-              </div>
-
-              <div class="product-list" id="product-list" role="listbox" aria-label="Seleccionar producto"></div>
-            </aside>
-
-            <section class="viewer-stage" aria-label="Visor 360 del producto">
-              <canvas id="product-canvas"></canvas>
-
-              <div class="viewer-topline">
-                <span id="active-category">Anillos de autor</span>
-                <span id="active-model">AUR-R01</span>
-              </div>
-
-              <div class="vision-badge" aria-label="Vision de producto en 360 grados">
-                <span>360</span>
-                <small id="angle-value">000 grados</small>
-              </div>
-
-              <div class="viewer-actions" aria-label="Controles del visor 3D">
-                <button class="icon-button" type="button" id="reset-view" aria-label="Reiniciar vista 3D">
+                <button class="icon-button" type="button" id="reset-view" aria-label="Volver a la vista frontal">
                   <i data-lucide="rotate-ccw"></i>
                 </button>
-                <button class="icon-button" type="button" id="toggle-spin" aria-label="Pausar rotacion 3D">
+                <button class="icon-button" type="button" id="toggle-spin" aria-label="Pausar rotacion">
                   <i data-lucide="pause"></i>
                 </button>
               </div>
+            </div>
 
-              <div class="product-callout">
-                <span id="product-tag">Alta joya</span>
-                <h2 id="active-name">Solara Ring</h2>
-                <p id="active-description">Anillo escultorico con aro pulido, engaste elevado y gema facetada.</p>
+            <div class="spin-stage" id="spin-stage" tabindex="0">
+              <img
+                id="spin-image"
+                src="/360/solara/frame-01.jpg"
+                alt="Vista 360 del anillo Solara Esmeralda"
+                draggable="false"
+              />
+              <div class="drag-cue" id="drag-cue">
+                <i data-lucide="move-horizontal"></i>
+                <span>Desliza para girar</span>
               </div>
+            </div>
 
-              <div class="model-loader" id="model-dropzone">
-                <input id="model-upload" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
-                <div>
-                  <span class="control-label">Activo 360</span>
-                  <strong id="model-status">Preparando producto</strong>
-                </div>
-                <label for="model-upload">Cambiar modelo</label>
-              </div>
+            <div class="frame-control">
+              <span>0°</span>
+              <input
+                id="frame-range"
+                type="range"
+                min="0"
+                max="35"
+                value="0"
+                step="1"
+                aria-label="Angulo de la joya"
+              />
+              <span>350°</span>
+            </div>
+          </section>
 
-              <div class="control-strip" aria-label="Personalizacion">
-                <div class="control-group">
-                  <span class="control-label">Metal</span>
-                  <div class="swatches" id="color-swatches" aria-label="Metales disponibles"></div>
-                </div>
-
-                <div class="control-group">
-                  <span class="control-label">Acabado</span>
-                  <div class="segmented" id="finish-options" aria-label="Acabado del material">
-                    <button type="button" data-finish="satin">Satin</button>
-                    <button type="button" data-finish="polished" class="active">Pulido</button>
-                    <button type="button" data-finish="signature">Firma</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <aside class="detail-panel" aria-label="Detalles del producto">
-              <div class="reference-preview">
-                <img id="active-reference" src="/reference-images/solara-ring.png" alt="Referencia de Solara Ring" />
-              </div>
-
-              <div class="price-row">
-                <span id="active-price">$2,480</span>
-                <span class="availability">Disponible</span>
-              </div>
-
-              <dl class="spec-grid" id="spec-grid"></dl>
-
-              <button class="primary-action" type="button" id="reserve-action">
-                <i data-lucide="shopping-bag"></i>
-                Reservar muestra
-              </button>
-
-              <a class="download-reference" id="download-reference" href="/reference-images/solara-ring.png" download>
-                Descargar referencia
-              </a>
-
-              <div class="feature-list" id="feature-list" aria-label="Caracteristicas destacadas"></div>
-            </aside>
-          </div>
-        </section>
-
-        <section class="interaction-section" aria-label="Experiencia de compra">
-          <div class="section-heading">
-            <span class="eyebrow">Interaccion</span>
-            <h2>Motivos para seguir explorando.</h2>
-          </div>
-
-          <div class="interactive-panels">
-            <details open>
-              <summary>Comparar antes de reservar</summary>
-              <p>Cambia metal, acabado y pieza para mantener la decision dentro del mismo recorrido.</p>
-            </details>
-            <details>
-              <summary>Vision 360 por producto</summary>
-              <p>Los modelos disponibles se cargan automaticamente y mantienen una rotacion uniforme.</p>
-            </details>
-            <details>
-              <summary>Usar referencias limpias</summary>
-              <p>Las imagenes de joyas estan guardadas en fondo blanco para ayudarte con el modelado.</p>
-            </details>
-          </div>
-        </section>
-
-        <section class="atelier-section" id="atelier">
-          <div class="atelier-copy">
-            <span class="eyebrow">Atelier</span>
-            <h2>De la imagen al giro completo.</h2>
-            <p>
-              La pagina combina referencias multivista y modelos reales para convertir el catalogo
-              en una experiencia de compra mas cercana al producto.
+          <aside class="purchase-panel">
+            <span class="product-category" id="active-category">Anillo de autor</span>
+            <h2 id="active-name">Solara Esmeralda</h2>
+            <p class="product-description" id="active-description">
+              Esmeralda de corte rectangular sostenida por cuatro garras sobre un aro de oro amarillo.
             </p>
-          </div>
 
-          <div class="process-list" aria-label="Proceso">
-            <div>
-              <span>01</span>
-              <strong>Referencia visual</strong>
-              <p>Imagen limpia para modelar forma, volumen, piedras y proporciones.</p>
+            <div class="price-line">
+              <strong id="active-price">$9.800.000 COP</strong>
+              <span>Disponible</span>
             </div>
-            <div>
-              <span>02</span>
-              <strong>Secuencia consistente</strong>
-              <p>El giro se construye con el objeto real o una toma controlada del producto.</p>
-            </div>
-            <div>
-              <span>03</span>
-              <strong>Catalogo 360</strong>
-              <p>El cliente gira la pieza, revisa detalles y permanece en la pagina.</p>
-            </div>
-          </div>
-        </section>
 
-        <section class="cta-section" aria-label="Reserva">
-          <span class="eyebrow">Siguiente paso</span>
-          <h2>Presenta cada pieza desde el angulo que el cliente quiera ver.</h2>
-          <a class="primary-link" href="#coleccion">
-            Probar vision 360
+            <dl class="product-specs" id="product-specs"></dl>
+
+            <label class="option-field" for="product-option">
+              <span id="option-label">Talla</span>
+              <select id="product-option"></select>
+            </label>
+
+            <div class="purchase-actions">
+              <button class="buy-button" type="button" id="add-to-cart">
+                <i data-lucide="shopping-bag"></i>
+                Agregar a la bolsa
+              </button>
+              <button class="favorite-button" type="button" id="favorite-button" aria-label="Agregar a favoritos">
+                <i data-lucide="heart"></i>
+              </button>
+            </div>
+
+            <div class="purchase-benefits">
+              <div>
+                <i data-lucide="truck"></i>
+                <span>Entrega asegurada en Colombia</span>
+              </div>
+              <div>
+                <i data-lucide="badge-check"></i>
+                <span>Certificado de materiales y gema</span>
+              </div>
+              <div>
+                <i data-lucide="refresh-cw"></i>
+                <span>Cambios durante 15 dias</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="atelier-section" id="atelier">
+        <div class="atelier-image">
+          <img src="/product-images/astra-cuff-bracelet.png" alt="Brazalete Astra Amatista" />
+        </div>
+        <div class="atelier-copy">
+          <span class="eyebrow">El atelier</span>
+          <h2>Diseñadas para permanecer.</h2>
+          <p>
+            En Auria seleccionamos metales nobles y gemas con identidad propia. Cada silueta busca equilibrio,
+            comodidad y una presencia capaz de acompañarte durante años.
+          </p>
+          <a class="text-link" href="#servicio">
+            Descubrir nuestros servicios
             <i data-lucide="arrow-right"></i>
           </a>
-        </section>
-      </main>
-    </div>
+        </div>
+      </section>
+
+      <section class="service-section" id="servicio">
+        <article>
+          <span>01</span>
+          <i data-lucide="message-circle"></i>
+          <h3>Asesoria privada</h3>
+          <p>Te acompañamos en la seleccion de talla, gema y ocasion.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <i data-lucide="ruler"></i>
+          <h3>Ajuste de talla</h3>
+          <p>Servicio de ajuste disponible para el anillo Solara.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <i data-lucide="sparkles"></i>
+          <h3>Cuidado Auria</h3>
+          <p>Limpieza y revision profesional para conservar el brillo de tu joya.</p>
+        </article>
+      </section>
+
+      <section class="contact-section">
+        <span class="eyebrow">Atencion personalizada</span>
+        <h2>Encuentra la pieza que habla de ti.</h2>
+        <a class="primary-button is-light" href="mailto:atelier@auria.co">
+          Contactar una asesora
+          <i data-lucide="arrow-right"></i>
+        </a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="#inicio">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <path d="M32 7 51 26 32 58 13 26 32 7Z" />
+            <path d="M32 16 24 26h16l-8-10Z" />
+            <path d="M23 33 32 49l9-16H23Z" />
+          </svg>
+        </span>
+        <span>
+          <strong>Auria Atelier</strong>
+          <small>Joyeria contemporanea</small>
+        </span>
+      </a>
+      <div class="footer-links">
+        <a href="#coleccion">Coleccion</a>
+        <a href="#servicio">Servicios</a>
+        <a href="mailto:atelier@auria.co">Contacto</a>
+      </div>
+      <small>© 2026 Auria Atelier. Todos los derechos reservados.</small>
+    </footer>
 
     <script type="module" src="/src/main.js"></script>
   </body>
