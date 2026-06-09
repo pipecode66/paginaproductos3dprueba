@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auria Atelier | Joyeria 3D</title>
+    <title>Auria Atelier | Joyeria 360</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101412'/%3E%3Cpath d='M32 9 49 26 32 55 15 26 32 9Zm0 8-8 9h16l-8-9Zm-9 16 9 15 9-15H23Z' fill='%23d7b46a'/%3E%3C/svg%3E"
@@ -22,26 +22,26 @@
           </span>
           <span class="brand-copy">
             <strong>Auria Atelier</strong>
-            <small>Jewelry Lab 3D</small>
+            <small>Jewelry Vision 360</small>
           </span>
         </a>
 
         <nav class="site-nav" aria-label="Navegacion principal">
-          <a href="#referencias">Referencias</a>
-          <a href="#coleccion">Visor 3D</a>
+          <a href="#vision-360">Vision 360</a>
+          <a href="#coleccion">Catalogo</a>
           <a href="#paleta">Paleta</a>
           <a href="#atelier">Atelier</a>
         </nav>
 
         <div class="top-actions" aria-label="Acciones principales">
-          <a class="nav-cta" href="#coleccion">Subir modelo</a>
+          <a class="nav-cta" href="#coleccion">Explorar 360</a>
         </div>
       </header>
 
       <main>
         <section class="announcement-banner" aria-label="Aviso de coleccion">
-          <span>Nuevo flujo: referencias 2D limpias + carga local de modelos GLB/GLTF</span>
-          <a href="#referencias">Descargar imagenes</a>
+          <span>Nueva experiencia: gira cada joya y observa sus detalles desde cualquier angulo</span>
+          <a href="#coleccion">Probar vision 360</a>
         </section>
 
         <section class="hero-section" id="inicio" aria-label="Auria Atelier">
@@ -52,12 +52,12 @@
             <span class="eyebrow">Auria Atelier 2026</span>
             <h1>Joyas que se exploran antes de tocarse.</h1>
             <p>
-              Una tienda de joyeria con identidad elegante, banners de coleccion y un visor preparado
-              para cargar tus modelos 3D reales cuando los tengas listos.
+              Una tienda de joyeria con identidad elegante, banners de coleccion y una experiencia
+              360 para recorrer cada pieza antes de reservarla.
             </p>
             <div class="hero-actions">
               <a class="primary-link" href="#coleccion">
-                Probar visor 3D
+                Explorar en 360
                 <i data-lucide="arrow-right"></i>
               </a>
               <a class="secondary-link" href="#referencias">Ver referencias</a>
@@ -66,12 +66,12 @@
 
           <div class="hero-proof" aria-label="Indicadores">
             <div>
-              <strong>4</strong>
-              <span>Referencias listas</span>
+              <strong>360</strong>
+              <span>Giro interactivo</span>
             </div>
             <div>
-              <strong>GLB</strong>
-              <span>Carga local 3D</span>
+              <strong>2</strong>
+              <span>Joyas disponibles</span>
             </div>
             <div>
               <strong>AA</strong>
@@ -83,11 +83,11 @@
         <section class="campaign-strip" aria-label="Banners de campana">
           <article class="campaign-card is-dark">
             <span>Modelado</span>
-            <strong>Imagenes limpias para construir cada pieza en 3D.</strong>
+            <strong>Vistas consistentes para presentar cada pieza desde todos sus angulos.</strong>
           </article>
           <article class="campaign-card">
             <span>Experiencia</span>
-            <strong>El cliente compara metal, acabado y ficha sin salir del catalogo.</strong>
+            <strong>El cliente gira, acerca y compara cada joya sin salir del catalogo.</strong>
           </article>
           <article class="campaign-card is-gold">
             <span>Conversion</span>
@@ -147,13 +147,48 @@
           <div class="reference-grid" id="reference-grid"></div>
         </section>
 
+        <section class="turntable-section" id="vision-360" aria-label="Concepto de vision 360">
+          <div class="turntable-copy">
+            <span class="eyebrow">Concepto multivista</span>
+            <h2>Una misma joya, ocho puntos de vista.</h2>
+            <p>
+              Esta lamina generada con IA sirve para mostrar la idea al cliente. La version
+              interactiva del catalogo utiliza el objeto real para conservar forma, piedra,
+              engaste y proporciones durante todo el giro.
+            </p>
+
+            <div class="turntable-facts" aria-label="Resumen de la experiencia">
+              <div>
+                <strong>8</strong>
+                <span>Vistas de concepto</span>
+              </div>
+              <div>
+                <strong>360</strong>
+                <span>Rotacion continua</span>
+              </div>
+              <div>
+                <strong>GLB</strong>
+                <span>Geometria consistente</span>
+              </div>
+            </div>
+          </div>
+
+          <figure class="turntable-figure">
+            <img
+              src="/reference-images/solara-ring-360-concept.png"
+              alt="Ocho vistas consistentes de un anillo de oro con esmeralda"
+            />
+            <figcaption>Concepto IA para planear la secuencia de producto.</figcaption>
+          </figure>
+        </section>
+
         <section class="catalog-section" id="coleccion" aria-label="Catalogo de joyas">
           <div class="section-heading">
             <span class="eyebrow">Catalogo interactivo</span>
-            <h2>Visor preparado para tus modelos 3D.</h2>
+            <h2>Vision 360 lista para presentar.</h2>
             <p>
-              Selecciona una joya y carga un archivo `.glb` o `.gltf`. Mientras no haya modelo
-              propio, la pagina muestra una pieza 3D provisional para mantener la experiencia viva.
+              El anillo Solara y el brazalete Astra ya cargan sus modelos automaticamente.
+              Las piezas futuras pueden agregarse mediante archivos GLB o GLTF.
             </p>
           </div>
 
@@ -167,12 +202,17 @@
               <div class="product-list" id="product-list" role="listbox" aria-label="Seleccionar producto"></div>
             </aside>
 
-            <section class="viewer-stage" aria-label="Visor 3D del producto">
+            <section class="viewer-stage" aria-label="Visor 360 del producto">
               <canvas id="product-canvas"></canvas>
 
               <div class="viewer-topline">
                 <span id="active-category">Anillos de autor</span>
                 <span id="active-model">AUR-R01</span>
+              </div>
+
+              <div class="vision-badge" aria-label="Vision de producto en 360 grados">
+                <span>360</span>
+                <small id="angle-value">000 grados</small>
               </div>
 
               <div class="viewer-actions" aria-label="Controles del visor 3D">
@@ -193,10 +233,10 @@
               <div class="model-loader" id="model-dropzone">
                 <input id="model-upload" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
                 <div>
-                  <span class="control-label">Modelo 3D</span>
-                  <strong id="model-status">Vista provisional activa</strong>
+                  <span class="control-label">Activo 360</span>
+                  <strong id="model-status">Preparando producto</strong>
                 </div>
-                <label for="model-upload">Cargar GLB/GLTF</label>
+                <label for="model-upload">Cambiar modelo</label>
               </div>
 
               <div class="control-strip" aria-label="Personalizacion">
@@ -254,8 +294,8 @@
               <p>Cambia metal, acabado y pieza para mantener la decision dentro del mismo recorrido.</p>
             </details>
             <details>
-              <summary>Subir modelos propios</summary>
-              <p>Cuando tengas el modelado 3D, arrastra o carga un GLB/GLTF en el visor seleccionado.</p>
+              <summary>Vision 360 por producto</summary>
+              <p>Los modelos disponibles se cargan automaticamente y mantienen una rotacion uniforme.</p>
             </details>
             <details>
               <summary>Usar referencias limpias</summary>
@@ -267,10 +307,10 @@
         <section class="atelier-section" id="atelier">
           <div class="atelier-copy">
             <span class="eyebrow">Atelier</span>
-            <h2>Del modelado al escaparate.</h2>
+            <h2>De la imagen al giro completo.</h2>
             <p>
-              La pagina ya queda lista para reemplazar referencias por modelos reales y convertir
-              el catalogo en una experiencia de venta inmersiva.
+              La pagina combina referencias multivista y modelos reales para convertir el catalogo
+              en una experiencia de compra mas cercana al producto.
             </p>
           </div>
 
@@ -282,22 +322,22 @@
             </div>
             <div>
               <span>02</span>
-              <strong>Modelo 3D propio</strong>
-              <p>Exporta GLB para una carga mas estable en el navegador.</p>
+              <strong>Secuencia consistente</strong>
+              <p>El giro se construye con el objeto real o una toma controlada del producto.</p>
             </div>
             <div>
               <span>03</span>
-              <strong>Catalogo interactivo</strong>
-              <p>El cliente revisa la pieza, cambia opciones y permanece en la pagina.</p>
+              <strong>Catalogo 360</strong>
+              <p>El cliente gira la pieza, revisa detalles y permanece en la pagina.</p>
             </div>
           </div>
         </section>
 
         <section class="cta-section" aria-label="Reserva">
           <span class="eyebrow">Siguiente paso</span>
-          <h2>Modela las piezas y subelas al visor cuando esten listas.</h2>
+          <h2>Presenta cada pieza desde el angulo que el cliente quiera ver.</h2>
           <a class="primary-link" href="#coleccion">
-            Ir al visor 3D
+            Probar vision 360
             <i data-lucide="arrow-right"></i>
           </a>
         </section>

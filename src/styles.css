@@ -409,6 +409,7 @@ a {
 .catalog-section,
 .palette-section,
 .reference-section,
+.turntable-section,
 .interaction-section {
   padding: 72px clamp(20px, 5vw, 72px);
 }
@@ -518,6 +519,85 @@ a {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+}
+
+.turntable-section {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.64fr) minmax(520px, 1.36fr);
+  gap: clamp(34px, 5vw, 80px);
+  align-items: center;
+  color: #ffffff;
+  background: #101412;
+}
+
+.turntable-copy h2 {
+  max-width: 9em;
+  margin: 12px 0 20px;
+  font-size: 4rem;
+  line-height: 0.94;
+}
+
+.turntable-copy p {
+  max-width: 38rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+.turntable-copy .eyebrow {
+  color: var(--gold);
+}
+
+.turntable-facts {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.turntable-facts div {
+  min-width: 0;
+  padding: 18px 12px 0 0;
+}
+
+.turntable-facts strong,
+.turntable-facts span {
+  display: block;
+}
+
+.turntable-facts strong {
+  color: var(--gold);
+  font-size: 1.7rem;
+}
+
+.turntable-facts span {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.turntable-figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.turntable-figure img {
+  width: 100%;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.turntable-figure figcaption {
+  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-align: right;
 }
 
 .reference-card {
@@ -744,6 +824,45 @@ a {
   z-index: 4;
   display: inline-flex;
   gap: 8px;
+}
+
+.vision-badge {
+  --angle-progress: 0%;
+  width: 88px;
+  height: 88px;
+  position: absolute;
+  top: 78px;
+  left: clamp(18px, 3vw, 34px);
+  z-index: 4;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at center, #101412 61%, transparent 63%),
+    conic-gradient(var(--gold) var(--angle-progress), rgba(16, 20, 18, 0.16) 0);
+  box-shadow: 0 14px 36px rgba(16, 20, 18, 0.18);
+  pointer-events: none;
+}
+
+.vision-badge span,
+.vision-badge small {
+  display: block;
+}
+
+.vision-badge span {
+  font-size: 1.22rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.vision-badge small {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.62rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .product-callout {
@@ -1210,8 +1329,18 @@ a {
 
   .editorial-band,
   .editorial-copy,
+  .turntable-section,
   .atelier-section {
     grid-template-columns: 1fr;
+  }
+
+  .turntable-figure {
+    order: -1;
+  }
+
+  .turntable-copy h2 {
+    max-width: 12em;
+    font-size: 3.25rem;
   }
 
   .editorial-copy h2,
@@ -1286,7 +1415,7 @@ a {
 
   .model-loader {
     width: min(420px, calc(100% - 36px));
-    top: 72px;
+    top: 178px;
     left: 18px;
     right: auto;
   }
@@ -1363,6 +1492,7 @@ a {
   .catalog-section,
   .palette-section,
   .reference-section,
+  .turntable-section,
   .interaction-section {
     padding: 54px 18px;
   }
@@ -1389,12 +1519,51 @@ a {
   }
 
   .model-loader {
+    width: auto;
+    max-width: 180px;
+    min-height: 44px;
+    padding: 10px 12px;
+    top: 78px;
+    left: auto;
+    right: 18px;
     grid-template-columns: 1fr;
-    top: 88px;
+  }
+
+  .model-loader .control-label,
+  .model-loader label {
+    display: none;
+  }
+
+  .model-loader strong {
+    margin: 0;
+    font-size: 0.78rem;
   }
 
   .product-callout {
-    bottom: 340px;
+    top: 330px;
+    bottom: auto;
+  }
+
+  .product-callout h2 {
+    font-size: 2.65rem;
+  }
+
+  .product-callout p {
+    font-size: 0.96rem;
+    line-height: 1.45;
+  }
+
+  .turntable-copy h2 {
+    font-size: 2.7rem;
+  }
+
+  .turntable-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .turntable-facts div {
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .reference-grid,

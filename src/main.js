@@ -38,6 +38,8 @@ const products = [
     gem: '#0f8f7f',
     reference: '/reference-images/solara-ring.png',
     modelHint: 'solara-ring.glb',
+    modelUrl: '/3dmodels/gold ring with emerald 3d model.glb',
+    modelFileName: 'gold ring with emerald 3d model.glb',
     colors: ['#d6b35d', '#d9dde1', '#c78b7a', '#1f2328'],
     specs: [
       ['Metal', 'Oro 18K'],
@@ -116,6 +118,8 @@ const products = [
     gem: '#7c3aed',
     reference: '/reference-images/astra-cuff-bracelet.png',
     modelHint: 'astra-cuff-bracelet.glb',
+    modelUrl: '/3dmodels/gold bracelet 3d model.glb',
+    modelFileName: 'gold bracelet 3d model.glb',
     colors: ['#d6b35d', '#d9dde1', '#c78b7a', '#13151a'],
     specs: [
       ['Diametro', '58 mm'],
@@ -139,6 +143,8 @@ const state = {
   spinning: true,
   productGroup: null,
   customModels: new Map(),
+  loadingModels: new Set(),
+  modelLoadErrors: new Set(),
 };
 
 const iconRegistry = {
@@ -195,10 +201,12 @@ camera.position.set(3.9, 2.25, 5.2);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.62;
+controls.autoRotateSpeed = 0.82;
 controls.enablePan = false;
 controls.minDistance = 3.2;
 controls.maxDistance = 8.5;
+controls.minPolarAngle = Math.PI * 0.28;
+controls.maxPolarAngle = Math.PI * 0.58;
 controls.target.set(0, 0.34, 0);
 
 const hemiLight = new THREE.HemisphereLight('#ffffff', '#b7c7c1', 2.45);
@@ -621,6 +629,9 @@ function createHeroExperience() {
 function setProduct(product) {
   state.product = product;
   state.color = product.colors[0];
+  camera.position.set(3.9, 2.25, 5.2);
+  controls.target.set(0, 0.34, 0);
+  controls.update();
   renderProduct();
   renderUI();
 }
@@ -659,6 +670,10 @@ function renderProduct() {
   }
   state.productGroup.rotation.y = -0.35;
   scene.add(state.productGroup);
+
+  if (state.product.modelUrl && !state.customModels.has(state.product.id)) {
+    loadBuiltInModel(state.product);
+  }
 }
 
 function renderProductList() {
@@ -679,7 +694,7 @@ function renderProductList() {
           <span class="product-copy">
             <strong>${product.name}</strong>
             <span>${product.category}</span>
-            <small>${state.customModels.has(product.id) ? 'Modelo cargado' : 'Referencia lista'}</small>
+            <small>${getProductModelLabel(product)}</small>
           </span>
         </button>
       `,
@@ -784,12 +799,34 @@ function renderFinishOptions() {
   });
 }
 
+function getProductModelLabel(product) {
+  const model = state.customModels.get(product.id);
+  if (model?.source === 'built-in') return 'Vision 360 lista';
+  if (model) return 'Modelo personalizado';
+  if (state.loadingModels.has(product.id)) return 'Cargando 360';
+  if (product.modelUrl) return 'Vision 360 disponible';
+  return 'Referencia lista';
+}
+
 function renderModelStatus() {
   const modelStatus = document.querySelector('#model-status');
   const uploadInput = document.querySelector('#model-upload');
   const model = state.customModels.get(state.product.id);
+  const compactStatus = window.matchMedia('(max-width: 560px)').matches;
   if (modelStatus) {
-    modelStatus.textContent = model ? `Modelo cargado: ${model.fileName}` : `Vista provisional activa: ${state.product.modelHint}`;
+    if (model?.source === 'built-in') {
+      modelStatus.textContent = compactStatus ? 'Vision 360 lista' : `Vision 360 lista: ${model.fileName}`;
+    } else if (model) {
+      modelStatus.textContent = compactStatus ? 'Modelo personalizado' : `Modelo personalizado: ${model.fileName}`;
+    } else if (state.loadingModels.has(state.product.id)) {
+      modelStatus.textContent = 'Cargando vision 360...';
+    } else if (state.modelLoadErrors.has(state.product.id)) {
+      modelStatus.textContent = 'No se pudo cargar el modelo base.';
+    } else if (state.product.modelUrl) {
+      modelStatus.textContent = `Preparando ${state.product.modelFileName}`;
+    } else {
+      modelStatus.textContent = `Demo provisional: ${state.product.modelHint}`;
+    }
   }
   if (uploadInput) {
     uploadInput.value = '';
@@ -841,21 +878,51 @@ function normalizeImportedModel(model) {
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
-  model.position.sub(center);
-  model.scale.setScalar(2.25 / maxDimension);
+  const scale = 2.45 / maxDimension;
+  model.scale.setScalar(scale);
+  model.position.copy(center).multiplyScalar(-scale);
   wrapper.userData.disposeOnRemove = false;
   return wrapper;
 }
 
-function replaceCustomModel(productId, fileName, objectUrl, group) {
+function replaceCustomModel(productId, fileName, objectUrl, group, source = 'upload') {
   const previous = state.customModels.get(productId);
   if (previous) {
     scene.remove(previous.group);
     disposeObject(previous.group);
-    URL.revokeObjectURL(previous.objectUrl);
+    if (previous.objectUrl) URL.revokeObjectURL(previous.objectUrl);
   }
 
-  state.customModels.set(productId, { fileName, objectUrl, group });
+  state.customModels.set(productId, { fileName, objectUrl, group, source });
+}
+
+function loadBuiltInModel(product) {
+  if (!product.modelUrl || state.customModels.has(product.id) || state.loadingModels.has(product.id)) return;
+
+  state.loadingModels.add(product.id);
+  state.modelLoadErrors.delete(product.id);
+  renderModelStatus();
+  renderProductList();
+
+  gltfLoader.load(
+    product.modelUrl,
+    (gltf) => {
+      const group = normalizeImportedModel(gltf.scene);
+      state.loadingModels.delete(product.id);
+      replaceCustomModel(product.id, product.modelFileName, null, group, 'built-in');
+
+      if (state.product.id === product.id) {
+        renderProduct();
+      }
+      renderUI();
+    },
+    undefined,
+    () => {
+      state.loadingModels.delete(product.id);
+      state.modelLoadErrors.add(product.id);
+      renderUI();
+    },
+  );
 }
 
 function loadModelFile(file) {
@@ -875,7 +942,7 @@ function loadModelFile(file) {
     objectUrl,
     (gltf) => {
       const group = normalizeImportedModel(gltf.scene);
-      replaceCustomModel(productId, file.name, objectUrl, group);
+      replaceCustomModel(productId, file.name, objectUrl, group, 'upload');
       renderProduct();
       renderUI();
     },
@@ -887,6 +954,27 @@ function loadModelFile(file) {
       }
     },
   );
+}
+
+function setSpinState(spinning) {
+  state.spinning = spinning;
+  controls.autoRotate = spinning;
+  const button = document.querySelector('#toggle-spin');
+  if (!button) return;
+  button.setAttribute('aria-label', spinning ? 'Pausar rotacion' : 'Activar rotacion');
+  button.innerHTML = `<i data-lucide="${spinning ? 'pause' : 'play'}"></i>`;
+  createIcons({ icons: iconRegistry });
+}
+
+function updateAngleIndicator() {
+  const angleValue = document.querySelector('#angle-value');
+  const badge = document.querySelector('.vision-badge');
+  if (!angleValue || !badge) return;
+
+  const rawDegrees = THREE.MathUtils.radToDeg(controls.getAzimuthalAngle());
+  const degrees = Math.round(((rawDegrees % 360) + 360) % 360);
+  angleValue.textContent = `${String(degrees).padStart(3, '0')} grados`;
+  badge.style.setProperty('--angle-progress', `${(degrees / 360) * 100}%`);
 }
 
 function setupModelLoader() {
@@ -954,9 +1042,11 @@ document.querySelector('#reset-view').addEventListener('click', () => {
 });
 
 document.querySelector('#toggle-spin').addEventListener('click', () => {
-  state.spinning = !state.spinning;
-  controls.autoRotate = state.spinning;
-  renderUI();
+  setSpinState(!state.spinning);
+});
+
+controls.addEventListener('start', () => {
+  if (state.spinning) setSpinState(false);
 });
 
 document.querySelectorAll('[data-finish]').forEach((button) => {
@@ -993,6 +1083,7 @@ function animate() {
     floorRing.rotation.z += 0.003;
   }
   controls.update();
+  updateAngleIndicator();
   renderer.render(scene, camera);
 }
 
