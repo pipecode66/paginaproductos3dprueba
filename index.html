@@ -5,134 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Auria Atelier: joyeria contemporanea en oro, esmeraldas y amatistas con vision 360."
+      content="Querubim Joyeria: piezas en oro, esmeraldas y amatistas con vision 360, envio asegurado y atencion personalizada."
     />
-    <title>Auria Atelier | Joyeria contemporanea</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101412'/%3E%3Cpath d='M32 9 49 26 32 55 15 26 32 9Zm0 8-8 9h16l-8-9Zm-9 16 9 15 9-15H23Z' fill='%23d7b46a'/%3E%3C/svg%3E"
-    />
+    <title>Querubim | Joyeria con alma</title>
+    <link rel="icon" type="image/png" href="/logo/querubim-symbol.png" />
   </head>
   <body>
+    <div class="announcement">
+      <span>Envio nacional asegurado</span>
+      <span>Compra protegida</span>
+      <span>Asesoria por WhatsApp</span>
+    </div>
+
     <header class="site-header">
-      <a class="brand" href="#inicio" aria-label="Auria Atelier, inicio">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 64 64">
-            <path d="M32 7 51 26 32 58 13 26 32 7Z" />
-            <path d="M32 16 24 26h16l-8-10Z" />
-            <path d="M23 33 32 49l9-16H23Z" />
-          </svg>
-        </span>
-        <span>
-          <strong>Auria Atelier</strong>
-          <small>Joyeria contemporanea</small>
-        </span>
-      </a>
+      <div class="header-main">
+        <div class="header-side header-side-left">
+          <button class="menu-button" id="menu-button" type="button" aria-label="Abrir menu">
+            <i data-lucide="menu"></i>
+          </button>
+          <nav class="desktop-nav" aria-label="Navegacion principal">
+            <a href="#coleccion">Joyas</a>
+            <a href="#vision-360">Vision 360</a>
+          </nav>
+        </div>
 
-      <nav class="desktop-nav" aria-label="Navegacion principal">
-        <a href="#coleccion">Coleccion</a>
-        <a href="#vision-360">Vision 360</a>
-        <a href="#atelier">Atelier</a>
-        <a href="#servicio">Servicio</a>
-      </nav>
+        <a class="brand" href="#inicio" aria-label="Querubim, inicio">
+          <img src="/logo/querubim-symbol.png" alt="" />
+          <span>
+            <strong>Querubim</strong>
+            <small>Joyeria</small>
+          </span>
+        </a>
 
-      <div class="header-actions">
-        <button class="icon-button" type="button" aria-label="Buscar">
-          <i data-lucide="search"></i>
-        </button>
-        <button class="cart-button" type="button" aria-label="Abrir bolsa de compra">
-          <i data-lucide="shopping-bag"></i>
-          <span id="cart-count">0</span>
-        </button>
+        <div class="header-side header-actions">
+          <nav class="desktop-nav desktop-nav-right" aria-label="Informacion">
+            <a href="#historia">Nosotros</a>
+            <a href="#servicios">Servicios</a>
+          </nav>
+          <button class="icon-button" id="search-button" type="button" aria-label="Buscar joyas">
+            <i data-lucide="search"></i>
+          </button>
+          <button class="cart-button" id="cart-button" type="button" aria-label="Abrir bolsa de compra">
+            <i data-lucide="shopping-bag"></i>
+            <span id="cart-count">0</span>
+          </button>
+        </div>
       </div>
+
+      <nav class="category-nav" aria-label="Categorias">
+        <a href="#coleccion" data-open-product="solara">Anillos</a>
+        <a href="#coleccion" data-open-product="astra">Brazaletes</a>
+        <a href="#vision-360">Explorar en 360</a>
+        <a href="#servicios">Cuidado de joyas</a>
+      </nav>
     </header>
 
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Menu movil">
+      <button type="button" id="menu-close" aria-label="Cerrar menu">
+        <i data-lucide="x"></i>
+      </button>
+      <img src="/logo/querubim-logo-full.png" alt="Joyeria Querubim" />
+      <a href="#coleccion">Coleccion</a>
+      <a href="#vision-360">Vision 360</a>
+      <a href="#historia">Nuestra historia</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
     <main>
-      <div class="announcement">
-        <span>Envio nacional asegurado</span>
-        <span>Certificado de autenticidad incluido</span>
-        <span>Asesoria personalizada</span>
-      </div>
-
       <section class="hero" id="inicio">
-        <img
-          class="hero-product"
-          src="/product-images/solara-ring.png"
-          alt="Anillo Solara de oro con esmeralda"
-        />
-        <div class="hero-overlay"></div>
-
-        <div class="hero-content">
-          <span class="eyebrow">Coleccion Esencia</span>
-          <h1>Auria Atelier</h1>
+        <div class="hero-copy">
+          <span class="eyebrow">Alta joyeria contemporanea</span>
+          <h1>Querubim</h1>
           <p>
-            Joyas de lineas puras, metales nobles y gemas que conservan su caracter desde cualquier angulo.
+            Piezas que unen fuerza y delicadeza. Oro, plata y gemas elegidas para acompanar historias que
+            merecen permanecer.
           </p>
           <div class="hero-actions">
-            <a class="primary-button" href="#vision-360">
-              Explorar la coleccion
+            <a class="primary-button" href="#coleccion">
+              Ver coleccion
               <i data-lucide="arrow-right"></i>
             </a>
-            <a class="text-link" href="#atelier">Conocer el atelier</a>
+            <a class="secondary-button" href="#vision-360">Explorar en 360</a>
           </div>
         </div>
 
-        <div class="hero-note">
-          <span>Pieza destacada</span>
-          <strong>Solara Esmeralda</strong>
-          <small>Oro amarillo 18K</small>
+        <div class="hero-visual" aria-label="Anillo Serafin Esmeralda">
+          <span class="hero-halo"></span>
+          <img src="/product-images/solara-ring.png" alt="Anillo Serafin de oro con esmeralda" />
+          <div class="hero-product-note">
+            <span>Nueva pieza</span>
+            <strong>Serafin Esmeralda</strong>
+            <small>Oro amarillo 18K</small>
+          </div>
+        </div>
+
+        <div class="hero-scroll">
+          <span>Descubrir</span>
+          <i data-lucide="arrow-down"></i>
         </div>
       </section>
 
-      <section class="signature-rail" aria-label="Atributos de Auria Atelier">
-        <div>
-          <i data-lucide="gem"></i>
-          <span>Gemas seleccionadas</span>
-        </div>
+      <section class="trust-strip" aria-label="Beneficios de compra">
         <div>
           <i data-lucide="shield-check"></i>
-          <span>Compra protegida</span>
+          <span><strong>Compra segura</strong>Pagos y datos protegidos</span>
+        </div>
+        <div>
+          <i data-lucide="badge-check"></i>
+          <span><strong>Autenticidad</strong>Certificado incluido</span>
+        </div>
+        <div>
+          <i data-lucide="truck"></i>
+          <span><strong>Envio asegurado</strong>A todo Colombia</span>
         </div>
         <div>
           <i data-lucide="sparkles"></i>
-          <span>Acabado artesanal</span>
-        </div>
-        <div>
-          <i data-lucide="package-check"></i>
-          <span>Presentacion de lujo</span>
+          <span><strong>Cuidado Querubim</strong>Servicio posventa</span>
         </div>
       </section>
 
       <section class="collection-section" id="coleccion">
-        <div class="section-heading">
-          <span class="eyebrow">Coleccion actual</span>
-          <h2>Dos piezas. Dos formas de llevar la luz.</h2>
-          <p>
-            Una seleccion precisa de joyas concebidas para acompañar momentos cotidianos y celebraciones.
-          </p>
+        <div class="section-heading centered-heading">
+          <span class="eyebrow">Joyas destacadas</span>
+          <h2>Encuentra una pieza que se sienta tuya.</h2>
+          <p>Dos siluetas, una misma intencion: convertir cada gesto en un recuerdo.</p>
         </div>
-
         <div class="collection-grid" id="collection-grid"></div>
+      </section>
+
+      <section class="editorial-banner">
+        <div class="editorial-mark">
+          <img src="/logo/querubim-symbol.png" alt="" />
+        </div>
+        <div>
+          <span class="eyebrow">El sello Querubim</span>
+          <h2>Entre lo eterno y lo inesperado.</h2>
+          <p>Joyas concebidas para marcar presencia sin renunciar a la delicadeza.</p>
+        </div>
+        <a class="text-link light-link" href="#historia">
+          Conocer la marca
+          <i data-lucide="arrow-right"></i>
+        </a>
       </section>
 
       <section class="viewer-section" id="vision-360">
         <div class="viewer-heading">
-          <span class="eyebrow">Vision 360</span>
-          <h2>Observa cada detalle.</h2>
-          <p>Desliza horizontalmente sobre la joya o utiliza el control inferior.</p>
+          <div>
+            <span class="eyebrow">Vision 360</span>
+            <h2>Mira antes de elegir.</h2>
+          </div>
+          <p>Gira cada pieza con el mouse o con tu dedo y observa su forma desde todos los angulos.</p>
         </div>
 
         <div class="commerce-layout">
           <aside class="product-selector" aria-label="Seleccionar joya">
-            <span class="selector-label">Coleccion</span>
+            <span class="selector-label">Selecciona una pieza</span>
             <div id="product-selector-list"></div>
           </aside>
 
           <section class="spin-viewer" aria-label="Vista de producto en 360 grados">
             <div class="viewer-toolbar">
               <span class="viewer-counter">
-                <strong id="angle-value">000°</strong>
-                <small>Vision completa</small>
+                <strong id="angle-value">000&deg;</strong>
+                <small>Angulo actual</small>
               </span>
               <div>
                 <button class="icon-button" type="button" id="reset-view" aria-label="Volver a la vista frontal">
@@ -148,7 +184,7 @@
               <img
                 id="spin-image"
                 src="/360/solara/frame-01.jpg"
-                alt="Vista 360 del anillo Solara Esmeralda"
+                alt="Vista 360 del anillo Serafin Esmeralda"
                 draggable="false"
               />
               <div class="drag-cue" id="drag-cue">
@@ -158,23 +194,15 @@
             </div>
 
             <div class="frame-control">
-              <span>0°</span>
-              <input
-                id="frame-range"
-                type="range"
-                min="0"
-                max="35"
-                value="0"
-                step="1"
-                aria-label="Angulo de la joya"
-              />
-              <span>350°</span>
+              <span>0&deg;</span>
+              <input id="frame-range" type="range" min="0" max="35" value="0" step="1" aria-label="Angulo de la joya" />
+              <span>350&deg;</span>
             </div>
           </section>
 
           <aside class="purchase-panel">
             <span class="product-category" id="active-category">Anillo de autor</span>
-            <h2 id="active-name">Solara Esmeralda</h2>
+            <h2 id="active-name">Serafin Esmeralda</h2>
             <p class="product-description" id="active-description">
               Esmeralda de corte rectangular sostenida por cuatro garras sobre un aro de oro amarillo.
             </p>
@@ -201,94 +229,157 @@
               </button>
             </div>
 
+            <button class="advisor-link" type="button" data-whatsapp>
+              <i data-lucide="message-circle"></i>
+              Consultar con una asesora
+            </button>
+
             <div class="purchase-benefits">
-              <div>
-                <i data-lucide="truck"></i>
-                <span>Entrega asegurada en Colombia</span>
-              </div>
-              <div>
-                <i data-lucide="badge-check"></i>
-                <span>Certificado de materiales y gema</span>
-              </div>
-              <div>
-                <i data-lucide="refresh-cw"></i>
-                <span>Cambios durante 15 dias</span>
-              </div>
+              <div><i data-lucide="lock-keyhole"></i><span>Pago seguro y protegido</span></div>
+              <div><i data-lucide="badge-check"></i><span>Certificado de materiales y gema</span></div>
+              <div><i data-lucide="refresh-cw"></i><span>Cambios durante 15 dias</span></div>
             </div>
           </aside>
         </div>
       </section>
 
-      <section class="atelier-section" id="atelier">
-        <div class="atelier-image">
-          <img src="/product-images/astra-cuff-bracelet.png" alt="Brazalete Astra Amatista" />
+      <section class="story-section" id="historia">
+        <div class="story-visual">
+          <img src="/product-images/astra-cuff-bracelet.png" alt="Brazalete Halo Amatista" />
+          <span class="story-number">02</span>
         </div>
-        <div class="atelier-copy">
-          <span class="eyebrow">El atelier</span>
-          <h2>Diseñadas para permanecer.</h2>
+        <div class="story-copy">
+          <img class="story-logo" src="/logo/querubim-logo-full.png" alt="Joyeria Querubim" />
+          <span class="eyebrow">Nuestra esencia</span>
+          <h2>Joyas con presencia. Historias con alma.</h2>
           <p>
-            En Auria seleccionamos metales nobles y gemas con identidad propia. Cada silueta busca equilibrio,
-            comodidad y una presencia capaz de acompañarte durante años.
+            Querubim nace del encuentro entre dos fuerzas: la calidez del oro y la luz de la plata. Nuestro
+            simbolo alado representa proteccion, libertad y la capacidad de transformar un momento en algo eterno.
           </p>
-          <a class="text-link" href="#servicio">
-            Descubrir nuestros servicios
+          <p>
+            Cada pieza se selecciona para destacar la personalidad de quien la lleva, con materiales nobles,
+            acabados luminosos y una atencion cercana durante toda la experiencia.
+          </p>
+          <a class="text-link" href="#contacto">
+            Hablar con Querubim
             <i data-lucide="arrow-right"></i>
           </a>
         </div>
       </section>
 
-      <section class="service-section" id="servicio">
-        <article>
-          <span>01</span>
-          <i data-lucide="message-circle"></i>
-          <h3>Asesoria privada</h3>
-          <p>Te acompañamos en la seleccion de talla, gema y ocasion.</p>
-        </article>
-        <article>
-          <span>02</span>
-          <i data-lucide="ruler"></i>
-          <h3>Ajuste de talla</h3>
-          <p>Servicio de ajuste disponible para el anillo Solara.</p>
-        </article>
-        <article>
-          <span>03</span>
-          <i data-lucide="sparkles"></i>
-          <h3>Cuidado Auria</h3>
-          <p>Limpieza y revision profesional para conservar el brillo de tu joya.</p>
-        </article>
+      <section class="services-section" id="servicios">
+        <div class="section-heading">
+          <span class="eyebrow">Siempre contigo</span>
+          <h2>Una experiencia cuidada de principio a fin.</h2>
+        </div>
+        <div class="services-grid">
+          <article>
+            <span>01</span>
+            <i data-lucide="ruler"></i>
+            <h3>Guia de tallas</h3>
+            <p>Te ayudamos a elegir la medida correcta antes de confirmar tu compra.</p>
+            <a href="#contacto">Solicitar asesoria</a>
+          </article>
+          <article>
+            <span>02</span>
+            <i data-lucide="gift"></i>
+            <h3>Empaque de regalo</h3>
+            <p>Presentacion elegante y lista para convertir la entrega en una ocasion especial.</p>
+            <a href="#contacto">Conocer opciones</a>
+          </article>
+          <article>
+            <span>03</span>
+            <i data-lucide="sparkles"></i>
+            <h3>Cuidado de joyas</h3>
+            <p>Orientacion para conservar el brillo, los metales y las gemas de cada pieza.</p>
+            <a href="#contacto">Ver recomendaciones</a>
+          </article>
+        </div>
       </section>
 
-      <section class="contact-section">
-        <span class="eyebrow">Atencion personalizada</span>
-        <h2>Encuentra la pieza que habla de ti.</h2>
-        <a class="primary-button is-light" href="mailto:atelier@auria.co">
-          Contactar una asesora
-          <i data-lucide="arrow-right"></i>
-        </a>
+      <section class="newsletter-section" id="contacto">
+        <div>
+          <span class="eyebrow">Circulo Querubim</span>
+          <h2>Recibe lanzamientos y beneficios especiales.</h2>
+        </div>
+        <form id="newsletter-form">
+          <label class="sr-only" for="newsletter-email">Correo electronico</label>
+          <input id="newsletter-email" type="email" placeholder="Tu correo electronico" required />
+          <button type="submit" aria-label="Suscribirse">
+            <i data-lucide="arrow-right"></i>
+          </button>
+          <small id="newsletter-message">Al suscribirte aceptas nuestra politica de privacidad.</small>
+        </form>
       </section>
     </main>
 
     <footer class="site-footer">
-      <a class="brand footer-brand" href="#inicio">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 64 64">
-            <path d="M32 7 51 26 32 58 13 26 32 7Z" />
-            <path d="M32 16 24 26h16l-8-10Z" />
-            <path d="M23 33 32 49l9-16H23Z" />
-          </svg>
-        </span>
-        <span>
-          <strong>Auria Atelier</strong>
-          <small>Joyeria contemporanea</small>
-        </span>
-      </a>
-      <div class="footer-links">
-        <a href="#coleccion">Coleccion</a>
-        <a href="#servicio">Servicios</a>
-        <a href="mailto:atelier@auria.co">Contacto</a>
+      <div class="footer-brand">
+        <img src="/logo/querubim-logo-full.png" alt="Joyeria Querubim" />
+        <p>Joyas que protegen historias y celebran lo que te hace unico.</p>
       </div>
-      <small>© 2026 Auria Atelier. Todos los derechos reservados.</small>
+      <div class="footer-column">
+        <strong>Comprar</strong>
+        <a href="#coleccion">Anillos</a>
+        <a href="#coleccion">Brazaletes</a>
+        <a href="#vision-360">Vision 360</a>
+      </div>
+      <div class="footer-column">
+        <strong>Ayuda</strong>
+        <a href="#servicios">Guia de tallas</a>
+        <a href="#servicios">Envios y cambios</a>
+        <a href="#contacto">Contactanos</a>
+      </div>
+      <div class="footer-column">
+        <strong>Contacto</strong>
+        <a href="mailto:contacto@querubim.co">contacto@querubim.co</a>
+        <button type="button" data-whatsapp>WhatsApp</button>
+        <span>Bogota, Colombia</span>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Querubim. Todos los derechos reservados.</span>
+        <span>Visa &middot; Mastercard &middot; PSE &middot; Nequi</span>
+      </div>
     </footer>
+
+    <button class="whatsapp-button" type="button" data-whatsapp aria-label="Contactar por WhatsApp">
+      <i data-lucide="message-circle"></i>
+    </button>
+
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="cart-drawer" id="cart-drawer" aria-label="Bolsa de compra" aria-hidden="true">
+      <div class="drawer-header">
+        <div>
+          <span class="eyebrow">Tu seleccion</span>
+          <h2>Bolsa de compra</h2>
+        </div>
+        <button type="button" id="cart-close" aria-label="Cerrar bolsa"><i data-lucide="x"></i></button>
+      </div>
+      <div class="cart-items" id="cart-items"></div>
+      <div class="cart-empty" id="cart-empty">
+        <i data-lucide="shopping-bag"></i>
+        <strong>Tu bolsa esta vacia</strong>
+        <p>Explora la coleccion y encuentra tu pieza Querubim.</p>
+      </div>
+      <div class="cart-summary" id="cart-summary">
+        <span>Subtotal <strong id="cart-subtotal">$0 COP</strong></span>
+        <button type="button">Finalizar compra</button>
+        <small>Envio calculado al confirmar tus datos.</small>
+      </div>
+    </aside>
+
+    <section class="search-panel" id="search-panel" aria-label="Buscar joyas" aria-hidden="true">
+      <div class="search-panel-header">
+        <label for="search-input">Que pieza estas buscando?</label>
+        <button type="button" id="search-close" aria-label="Cerrar busqueda"><i data-lucide="x"></i></button>
+      </div>
+      <div class="search-input-wrap">
+        <i data-lucide="search"></i>
+        <input id="search-input" type="search" placeholder="Buscar por nombre o tipo de joya" />
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </section>
 
     <script type="module" src="/src/main.js"></script>
   </body>
