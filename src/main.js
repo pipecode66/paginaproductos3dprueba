@@ -1,521 +1,332 @@
 import './styles.css';
 import {
-  ArrowDown,
   ArrowRight,
-  Award,
-  BadgeCheck,
-  Gift,
+  ChevronUp,
   Gem,
-  Handshake,
-  Heart,
-  LockKeyhole,
+  Mail,
+  MapPin,
   Menu,
-  MessageCircle,
-  MoveHorizontal,
-  Pause,
-  Play,
-  RefreshCw,
-  RotateCcw,
-  Ruler,
+  PenTool,
+  Phone,
   Search,
+  Send,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
-  Trash2,
-  Truck,
   X,
   createIcons,
 } from 'lucide';
 
-const FRAME_COUNT = 36;
-
 const products = [
   {
-    id: 'solara',
-    name: 'Serafin Esmeralda',
-    shortName: 'Serafin',
-    category: 'Anillo de autor',
-    type: 'Anillo',
-    price: 9800000,
-    priceLabel: '$9.800.000 COP',
-    description: 'Esmeralda de corte rectangular sostenida por cuatro garras sobre un aro de oro amarillo.',
-    cover: '/product-images/solara-ring.png',
-    framePath: '/360/solara',
-    optionLabel: 'Talla',
-    options: ['5', '6', '7', '8', '9'],
-    specs: [
-      ['Metal', 'Oro amarillo 18K'],
-      ['Gema', 'Esmeralda'],
-      ['Corte', 'Rectangular'],
-      ['Acabado', 'Alto brillo'],
-    ],
+    id: 'anillo-serafin',
+    name: 'Anillo Serafín',
+    category: 'anillos',
+    material: 'Oro amarillo 18K',
+    price: 'Cotización personalizada',
+    description: 'Silueta clásica para compromisos, aniversarios y celebraciones íntimas.',
   },
   {
-    id: 'astra',
-    name: 'Halo Amatista',
-    shortName: 'Halo',
-    category: 'Brazalete abierto',
-    type: 'Brazalete',
-    price: 7200000,
-    priceLabel: '$7.200.000 COP',
-    description: 'Brazalete rigido de oro amarillo con una secuencia graduada de amatistas sobre el frente.',
-    cover: '/product-images/astra-cuff-bracelet.png',
-    framePath: '/360/astra',
-    optionLabel: 'Medida',
-    options: ['S - 15 cm', 'M - 17 cm', 'L - 19 cm'],
-    specs: [
-      ['Metal', 'Oro amarillo 18K'],
-      ['Gemas', 'Amatistas'],
-      ['Silueta', 'Cuff abierto'],
-      ['Acabado', 'Alto brillo'],
-    ],
+    id: 'cadena-aurora',
+    name: 'Cadena Aurora',
+    category: 'cadenas',
+    material: 'Oro amarillo 18K',
+    price: 'Cotización personalizada',
+    description: 'Cadena luminosa para uso diario, medallas familiares o dijes especiales.',
+  },
+  {
+    id: 'pulsera-halo',
+    name: 'Pulsera Halo',
+    category: 'pulseras',
+    material: 'Oro amarillo 18K',
+    price: 'Cotización personalizada',
+    description: 'Pulsera de presencia delicada, ideal para regalo o pieza de legado.',
+  },
+  {
+    id: 'aretes-celeste',
+    name: 'Aretes Celeste',
+    category: 'aretes',
+    material: 'Oro amarillo 18K',
+    price: 'Cotización personalizada',
+    description: 'Diseño sobrio y elegante para acompañar ocasiones especiales.',
   },
 ];
 
 const icons = {
-  ArrowDown,
   ArrowRight,
-  Award,
-  BadgeCheck,
-  Gift,
+  ChevronUp,
   Gem,
-  Handshake,
-  Heart,
-  LockKeyhole,
+  Mail,
+  MapPin,
   Menu,
-  MessageCircle,
-  MoveHorizontal,
-  Pause,
-  Play,
-  RefreshCw,
-  RotateCcw,
-  Ruler,
+  PenTool,
+  Phone,
   Search,
+  Send,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
-  Trash2,
-  Truck,
   X,
 };
 
 const state = {
-  product: products[0],
-  frame: 0,
-  playing: true,
-  dragging: false,
-  dragStartX: 0,
-  dragStartFrame: 0,
-  cart: [],
-  favorites: new Set(),
-  collectionFilter: 'all',
-  cueDismissed: false,
-  lastAdvance: 0,
+  activeFilter: 'todos',
+  query: '',
+  selectedProducts: [],
+  ticking: false,
 };
 
-const spinImage = document.querySelector('#spin-image');
-const spinStage = document.querySelector('#spin-stage');
-const frameRange = document.querySelector('#frame-range');
-const angleValue = document.querySelector('#angle-value');
-const toggleSpin = document.querySelector('#toggle-spin');
-const dragCue = document.querySelector('#drag-cue');
-const overlay = document.querySelector('#overlay');
-const cartDrawer = document.querySelector('#cart-drawer');
-const searchPanel = document.querySelector('#search-panel');
+const selectors = {
+  pageSections: document.querySelectorAll('[data-page]'),
+  navLinks: document.querySelectorAll('.nav-link'),
+  mobileDrawer: document.querySelector('#mobile-drawer'),
+  overlay: document.querySelector('#overlay'),
+  productGrid: document.querySelector('#product-grid'),
+  searchInput: document.querySelector('#catalog-search'),
+  filterButtons: document.querySelectorAll('[data-filter]'),
+  selectionDrawer: document.querySelector('#selection-drawer'),
+  selectionItems: document.querySelector('#selection-items'),
+  selectionEmpty: document.querySelector('#selection-empty'),
+  cartCount: document.querySelector('#cart-count'),
+  scrollTopButton: document.querySelector('#scroll-top-button'),
+  contactForm: document.querySelector('#contact-form'),
+  formMessage: document.querySelector('#form-message'),
+};
 
-function formatCOP(value) {
-  return `$${new Intl.NumberFormat('es-CO').format(value)} COP`;
-}
-
-function frameUrl(product, frame) {
-  return `${product.framePath}/frame-${String(frame + 1).padStart(2, '0')}.jpg`;
-}
-
-function preloadFrames(product) {
-  for (let index = 0; index < FRAME_COUNT; index += 1) {
-    const image = new Image();
-    image.src = frameUrl(product, index);
-  }
-}
-
-function renderCollection() {
-  const grid = document.querySelector('#collection-grid');
-  const visibleProducts =
-    state.collectionFilter === 'all'
-      ? products
-      : products.filter((product) => product.type === state.collectionFilter);
-
-  grid.innerHTML = visibleProducts
-    .map(
-      (product, index) => `
-        <article class="collection-card">
-          <button type="button" data-open-product="${product.id}" aria-label="Ver ${product.name} en 360">
-            <span class="collection-index">0${index + 1}</span>
-            <img src="${product.cover}" alt="${product.name}" />
-            <span class="view-chip"><i data-lucide="move-horizontal"></i> Ver en 360</span>
-          </button>
-          <div class="collection-card-copy">
-            <div>
-              <span>${product.category}</span>
-              <h3>${product.name}</h3>
-            </div>
-            <strong>${product.priceLabel}</strong>
-          </div>
-        </article>
-      `,
-    )
-    .join('');
-  createIcons({ icons });
-}
-
-function renderCollectionFilters() {
-  document.querySelectorAll('[data-filter]').forEach((button) => {
-    const active = button.dataset.filter === state.collectionFilter;
-    button.classList.toggle('active', active);
-    button.setAttribute('aria-pressed', String(active));
+function refreshIcons() {
+  createIcons({
+    icons,
+    attrs: {
+      'aria-hidden': 'true',
+      'stroke-width': '1.5',
+    },
   });
 }
 
-function renderProductSelector() {
-  const selector = document.querySelector('#product-selector-list');
-  selector.innerHTML = products
+function normalizeText(value) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getVisibleProducts() {
+  const query = normalizeText(state.query.trim());
+
+  return products.filter((product) => {
+    const matchesFilter = state.activeFilter === 'todos' || product.category === state.activeFilter;
+    const searchableText = normalizeText(`${product.name} ${product.category} ${product.material} ${product.description}`);
+    return matchesFilter && (!query || searchableText.includes(query));
+  });
+}
+
+function renderProducts() {
+  const visibleProducts = getVisibleProducts();
+
+  selectors.productGrid.innerHTML = visibleProducts.length
+    ? visibleProducts
+        .map(
+          (product) => `
+            <article class="product-card">
+              <div class="product-placeholder" role="img" aria-label="Imagen de producto pendiente para ${product.name}">
+                <i data-lucide="gem"></i>
+                <span>Imagen de producto</span>
+              </div>
+              <div class="product-copy">
+                <span>${product.category}</span>
+                <h3>${product.name}</h3>
+                <p>${product.description}</p>
+                <dl>
+                  <div><dt>Material</dt><dd>${product.material}</dd></div>
+                  <div><dt>Valor</dt><dd>${product.price}</dd></div>
+                </dl>
+                <button class="text-action" type="button" data-select-product="${product.id}">
+                  Guardar para asesoría
+                  <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </article>
+          `,
+        )
+        .join('')
+    : '<p class="empty-results">No encontramos joyas con ese criterio. Escríbenos y te asesoramos.</p>';
+
+  refreshIcons();
+}
+
+function renderFilters() {
+  selectors.filterButtons.forEach((button) => {
+    const isActive = button.dataset.filter === state.activeFilter;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+}
+
+function renderSelection() {
+  selectors.cartCount.textContent = String(state.selectedProducts.length);
+  selectors.selectionEmpty.hidden = state.selectedProducts.length > 0;
+  selectors.selectionItems.innerHTML = state.selectedProducts
     .map(
       (product) => `
-        <button
-          type="button"
-          class="${product.id === state.product.id ? 'active' : ''}"
-          data-product="${product.id}"
-          aria-pressed="${product.id === state.product.id}"
-        >
-          <img src="${product.cover}" alt="" />
-          <span><strong>${product.shortName}</strong><small>${product.category}</small></span>
-          <i data-lucide="arrow-right"></i>
-        </button>
-      `,
-    )
-    .join('');
-}
-
-function renderSpecs() {
-  document.querySelector('#product-specs').innerHTML = state.product.specs
-    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
-    .join('');
-}
-
-function renderOptions() {
-  document.querySelector('#option-label').textContent = state.product.optionLabel;
-  document.querySelector('#product-option').innerHTML = state.product.options
-    .map((option) => `<option value="${option}">${option}</option>`)
-    .join('');
-}
-
-function renderFrame() {
-  spinImage.src = frameUrl(state.product, state.frame);
-  spinImage.alt = `Vista ${state.frame * 10} grados de ${state.product.name}`;
-  frameRange.value = String(state.frame);
-  angleValue.textContent = `${String(state.frame * 10).padStart(3, '0')}\u00b0`;
-}
-
-function renderProduct() {
-  document.querySelector('#active-category').textContent = state.product.category;
-  document.querySelector('#active-name').textContent = state.product.name;
-  document.querySelector('#active-description').textContent = state.product.description;
-  document.querySelector('#active-price').textContent = state.product.priceLabel;
-  renderProductSelector();
-  renderSpecs();
-  renderOptions();
-  renderFrame();
-  renderFavorite();
-  createIcons({ icons });
-}
-
-function renderFavorite() {
-  const button = document.querySelector('#favorite-button');
-  const active = state.favorites.has(state.product.id);
-  button.classList.toggle('active', active);
-  button.setAttribute('aria-label', active ? 'Quitar de favoritos' : 'Agregar a favoritos');
-}
-
-function setProduct(productId, scrollToViewer = false) {
-  const product = products.find((item) => item.id === productId);
-  if (!product) return;
-  state.product = product;
-  state.frame = 0;
-  state.playing = true;
-  state.lastAdvance = performance.now();
-  updatePlaybackButton();
-  renderProduct();
-  closePanels();
-
-  if (scrollToViewer) {
-    document.querySelector('#vision-360').scrollIntoView({ behavior: 'smooth' });
-  }
-}
-
-function setFrame(frame) {
-  state.frame = (frame + FRAME_COUNT) % FRAME_COUNT;
-  renderFrame();
-}
-
-function setPlaying(playing) {
-  state.playing = playing;
-  state.lastAdvance = performance.now();
-  updatePlaybackButton();
-}
-
-function updatePlaybackButton() {
-  toggleSpin.innerHTML = `<i data-lucide="${state.playing ? 'pause' : 'play'}"></i>`;
-  toggleSpin.setAttribute('aria-label', state.playing ? 'Pausar rotacion' : 'Reproducir rotacion');
-  createIcons({ icons });
-}
-
-function dismissCue() {
-  if (state.cueDismissed) return;
-  state.cueDismissed = true;
-  dragCue.classList.add('hidden');
-}
-
-function startDrag(clientX) {
-  state.dragging = true;
-  state.dragStartX = clientX;
-  state.dragStartFrame = state.frame;
-  spinStage.classList.add('dragging');
-  setPlaying(false);
-  dismissCue();
-}
-
-function moveDrag(clientX) {
-  if (!state.dragging) return;
-  const distance = clientX - state.dragStartX;
-  setFrame(state.dragStartFrame - Math.round(distance / 12));
-}
-
-function stopDrag() {
-  state.dragging = false;
-  spinStage.classList.remove('dragging');
-}
-
-function renderCart() {
-  const count = state.cart.reduce((total, item) => total + item.quantity, 0);
-  document.querySelector('#cart-count').textContent = String(count);
-  document.querySelector('#cart-empty').hidden = state.cart.length > 0;
-  document.querySelector('#cart-summary').hidden = state.cart.length === 0;
-
-  document.querySelector('#cart-items').innerHTML = state.cart
-    .map(
-      (item, index) => `
-        <article class="cart-item">
-          <img src="${item.product.cover}" alt="${item.product.name}" />
+        <article class="selection-item">
+          <div class="mini-placeholder"><i data-lucide="gem"></i></div>
           <div>
-            <span>${item.product.category}</span>
-            <strong>${item.product.name}</strong>
-            <small>${item.product.optionLabel}: ${item.option}</small>
-            <b>${item.product.priceLabel}</b>
+            <strong>${product.name}</strong>
+            <span>${product.material}</span>
           </div>
-          <button type="button" data-remove-cart="${index}" aria-label="Eliminar ${item.product.name}">
-            <i data-lucide="trash-2"></i>
+          <button class="icon-button" type="button" data-remove-product="${product.id}" aria-label="Quitar ${product.name}">
+            <i data-lucide="x"></i>
           </button>
         </article>
       `,
     )
     .join('');
-
-  const subtotal = state.cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
-  document.querySelector('#cart-subtotal').textContent = formatCOP(subtotal);
-  createIcons({ icons });
+  refreshIcons();
 }
 
-function renderSearch(query = '') {
-  const normalized = query.trim().toLowerCase();
-  const matches = products.filter((product) =>
-    `${product.name} ${product.category} ${product.description}`.toLowerCase().includes(normalized),
-  );
+function selectProduct(productId) {
+  const product = products.find((item) => item.id === productId);
+  if (!product || state.selectedProducts.some((item) => item.id === productId)) return;
+  state.selectedProducts.push(product);
+  renderSelection();
+}
 
-  document.querySelector('#search-results').innerHTML = matches.length
-    ? matches
-        .map(
-          (product) => `
-            <button type="button" data-open-product="${product.id}">
-              <img src="${product.cover}" alt="" />
-              <span><strong>${product.name}</strong><small>${product.category}</small></span>
-              <b>${product.priceLabel}</b>
-            </button>
-          `,
-        )
-        .join('')
-    : '<p>No encontramos piezas con esa busqueda.</p>';
+function removeSelectedProduct(productId) {
+  state.selectedProducts = state.selectedProducts.filter((item) => item.id !== productId);
+  renderSelection();
 }
 
 function openPanel(panel) {
-  closePanels();
-  overlay.classList.add('visible');
   panel.classList.add('open');
   panel.setAttribute('aria-hidden', 'false');
+  selectors.overlay.classList.add('visible');
   document.body.classList.add('panel-open');
 }
 
 function closePanels() {
-  overlay.classList.remove('visible');
-  cartDrawer.classList.remove('open');
-  searchPanel.classList.remove('open');
-  cartDrawer.setAttribute('aria-hidden', 'true');
-  searchPanel.setAttribute('aria-hidden', 'true');
+  selectors.mobileDrawer.classList.remove('open');
+  selectors.selectionDrawer.classList.remove('open');
+  selectors.mobileDrawer.setAttribute('aria-hidden', 'true');
+  selectors.selectionDrawer.setAttribute('aria-hidden', 'true');
+  selectors.overlay.classList.remove('visible');
   document.body.classList.remove('panel-open');
 }
 
-function toggleMobileMenu(open) {
-  const nav = document.querySelector('#mobile-nav');
-  nav.classList.toggle('open', open);
-  document.body.classList.toggle('panel-open', open);
-}
-
-function setupInteractions() {
-  document.addEventListener('click', (event) => {
-    const filterButton = event.target.closest('[data-filter]');
-    if (filterButton) {
-      state.collectionFilter = filterButton.dataset.filter;
-      renderCollectionFilters();
-      renderCollection();
-    }
-
-    const productButton = event.target.closest('[data-product], [data-open-product]');
-    if (productButton) {
-      event.preventDefault();
-      const id = productButton.dataset.product ?? productButton.dataset.openProduct;
-      setProduct(id, Boolean(productButton.dataset.openProduct));
-    }
-
-    const removeButton = event.target.closest('[data-remove-cart]');
-    if (removeButton) {
-      state.cart.splice(Number(removeButton.dataset.removeCart), 1);
-      renderCart();
-    }
-
-    if (event.target.closest('[data-whatsapp]')) {
-      window.open('https://wa.me/573000000000?text=Hola%20Querubim,%20quiero%20recibir%20asesoria.', '_blank', 'noopener');
-    }
-  });
-
-  spinStage.addEventListener('pointerdown', (event) => {
-    spinStage.setPointerCapture(event.pointerId);
-    startDrag(event.clientX);
-  });
-  spinStage.addEventListener('pointermove', (event) => moveDrag(event.clientX));
-  spinStage.addEventListener('pointerup', stopDrag);
-  spinStage.addEventListener('pointercancel', stopDrag);
-  spinStage.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-      event.preventDefault();
-      setPlaying(false);
-      setFrame(state.frame + (event.key === 'ArrowRight' ? 1 : -1));
-    }
-  });
-
-  frameRange.addEventListener('input', (event) => {
-    setPlaying(false);
-    dismissCue();
-    setFrame(Number(event.target.value));
-  });
-
-  document.querySelector('#reset-view').addEventListener('click', () => {
-    setPlaying(false);
-    setFrame(0);
-  });
-  toggleSpin.addEventListener('click', () => setPlaying(!state.playing));
-
-  document.querySelector('#favorite-button').addEventListener('click', () => {
-    if (state.favorites.has(state.product.id)) state.favorites.delete(state.product.id);
-    else state.favorites.add(state.product.id);
-    renderFavorite();
-  });
-
-  document.querySelector('#add-to-cart').addEventListener('click', (event) => {
-    const option = document.querySelector('#product-option').value;
-    state.cart.push({ product: state.product, option, quantity: 1 });
-    renderCart();
-
-    const button = event.currentTarget;
-    button.classList.add('confirmed');
-    button.innerHTML = '<i data-lucide="badge-check"></i> Agregada a la bolsa';
-    createIcons({ icons });
-    window.setTimeout(() => {
-      button.classList.remove('confirmed');
-      button.innerHTML = '<i data-lucide="shopping-bag"></i> Agregar a la bolsa';
-      createIcons({ icons });
-    }, 1500);
-  });
-
-  document.querySelector('#cart-button').addEventListener('click', () => openPanel(cartDrawer));
-  document.querySelector('#cart-close').addEventListener('click', closePanels);
-  document.querySelector('#search-button').addEventListener('click', () => {
-    renderSearch();
-    openPanel(searchPanel);
-    window.setTimeout(() => document.querySelector('#search-input').focus(), 100);
-  });
-  document.querySelector('#search-close').addEventListener('click', closePanels);
-  document.querySelector('#search-input').addEventListener('input', (event) => renderSearch(event.target.value));
-  overlay.addEventListener('click', closePanels);
-
-  document.querySelector('#menu-button').addEventListener('click', () => toggleMobileMenu(true));
-  document.querySelector('#menu-close').addEventListener('click', () => toggleMobileMenu(false));
-  document.querySelectorAll('#mobile-nav a').forEach((link) => {
-    link.addEventListener('click', () => toggleMobileMenu(false));
-  });
-
-  document.querySelector('#newsletter-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const message = document.querySelector('#newsletter-message');
-    message.textContent = 'Bienvenido al Circulo Querubim.';
-    message.classList.add('success');
-    event.currentTarget.reset();
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      closePanels();
-      toggleMobileMenu(false);
-    }
+function updateActiveNavigation(sectionId) {
+  selectors.navLinks.forEach((link) => {
+    const isActive = link.getAttribute('href') === `#${sectionId}`;
+    link.classList.toggle('active', isActive);
+    if (isActive) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
   });
 }
 
-function setupRevealMotion() {
-  const revealElements = document.querySelectorAll('[data-reveal]');
-  document.body.classList.add('reveal-ready');
+function updateActiveNavigationFromScroll() {
+  const headerOffset = document.querySelector('#site-header').offsetHeight;
+  const targetLine = window.scrollY + headerOffset + window.innerHeight * 0.38;
+  let activeSection = selectors.pageSections[0]?.id;
 
-  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    revealElements.forEach((element) => element.classList.add('is-visible'));
-    return;
-  }
+  selectors.pageSections.forEach((section) => {
+    if (section.offsetTop <= targetLine) activeSection = section.id;
+  });
 
+  if (activeSection) updateActiveNavigation(activeSection);
+}
+
+function setupSectionObservers() {
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
+        entry.target.classList.add('visible');
+        updateActiveNavigation(entry.target.id);
       });
     },
-    { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+    { rootMargin: '-35% 0px -45% 0px', threshold: 0.05 },
   );
 
-  revealElements.forEach((element) => observer.observe(element));
+  selectors.pageSections.forEach((section) => observer.observe(section));
 }
 
-function animate(timestamp) {
-  if (state.playing && timestamp - state.lastAdvance > 120) {
-    setFrame(state.frame + 1);
-    state.lastAdvance = timestamp;
-  }
-  requestAnimationFrame(animate);
+function updateScrollTopButton() {
+  state.ticking = false;
+  const heroHeight = document.querySelector('#home').offsetHeight;
+  selectors.scrollTopButton.classList.toggle('visible', window.scrollY > heroHeight * 0.55);
+  updateActiveNavigationFromScroll();
 }
 
-renderCollection();
-renderCollectionFilters();
-products.forEach(preloadFrames);
-renderProduct();
-renderCart();
-renderSearch();
-setupInteractions();
-setupRevealMotion();
-createIcons({ icons });
-requestAnimationFrame(animate);
+function requestScrollUpdate() {
+  if (state.ticking) return;
+  state.ticking = true;
+  requestAnimationFrame(updateScrollTopButton);
+}
+
+function setupEvents() {
+  document.querySelector('#menu-button').addEventListener('click', () => openPanel(selectors.mobileDrawer));
+  document.querySelector('#menu-close').addEventListener('click', closePanels);
+  document.querySelector('#cart-button').addEventListener('click', () => openPanel(selectors.selectionDrawer));
+  document.querySelector('#cart-close').addEventListener('click', closePanels);
+  selectors.overlay.addEventListener('click', closePanels);
+
+  selectors.navLinks.forEach((link) => {
+    link.addEventListener('click', () => closePanels());
+  });
+
+  selectors.filterButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      state.activeFilter = button.dataset.filter;
+      renderFilters();
+      renderProducts();
+    });
+  });
+
+  selectors.searchInput.addEventListener('input', (event) => {
+    state.query = event.target.value;
+    renderProducts();
+  });
+
+  document.querySelector('#catalog-search-button').addEventListener('click', () => {
+    document.querySelector('#coleccion').scrollIntoView({ behavior: 'smooth' });
+    window.requestAnimationFrame(() => selectors.searchInput.focus());
+  });
+
+  document.addEventListener('click', (event) => {
+    const selectButton = event.target.closest('[data-select-product]');
+    const removeButton = event.target.closest('[data-remove-product]');
+
+    if (selectButton) selectProduct(selectButton.dataset.selectProduct);
+    if (removeButton) removeSelectedProduct(removeButton.dataset.removeProduct);
+  });
+
+  selectors.scrollTopButton.addEventListener('click', () => {
+    document.querySelector('#home').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  selectors.contactForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    if (!selectors.contactForm.checkValidity()) {
+      selectors.formMessage.textContent = 'Revisa los campos marcados con asterisco para poder enviarlo.';
+      selectors.formMessage.classList.add('error');
+      selectors.contactForm.reportValidity();
+      return;
+    }
+
+    selectors.formMessage.textContent = 'Gracias. El equipo de Querubim revisará tu solicitud y te contactará pronto.';
+    selectors.formMessage.classList.remove('error');
+    selectors.formMessage.classList.add('success');
+    selectors.contactForm.reset();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closePanels();
+  });
+
+  window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+}
+
+renderProducts();
+renderFilters();
+renderSelection();
+setupEvents();
+setupSectionObservers();
+refreshIcons();
+requestScrollUpdate();
