@@ -2,8 +2,11 @@ import './styles.css';
 import {
   ArrowDown,
   ArrowRight,
+  Award,
   BadgeCheck,
   Gift,
+  Gem,
+  Handshake,
   Heart,
   LockKeyhole,
   Menu,
@@ -32,6 +35,7 @@ const products = [
     name: 'Serafin Esmeralda',
     shortName: 'Serafin',
     category: 'Anillo de autor',
+    type: 'Anillo',
     price: 9800000,
     priceLabel: '$9.800.000 COP',
     description: 'Esmeralda de corte rectangular sostenida por cuatro garras sobre un aro de oro amarillo.',
@@ -51,6 +55,7 @@ const products = [
     name: 'Halo Amatista',
     shortName: 'Halo',
     category: 'Brazalete abierto',
+    type: 'Brazalete',
     price: 7200000,
     priceLabel: '$7.200.000 COP',
     description: 'Brazalete rigido de oro amarillo con una secuencia graduada de amatistas sobre el frente.',
@@ -70,8 +75,11 @@ const products = [
 const icons = {
   ArrowDown,
   ArrowRight,
+  Award,
   BadgeCheck,
   Gift,
+  Gem,
+  Handshake,
   Heart,
   LockKeyhole,
   Menu,
@@ -100,6 +108,7 @@ const state = {
   dragStartFrame: 0,
   cart: [],
   favorites: new Set(),
+  collectionFilter: 'all',
   cueDismissed: false,
   lastAdvance: 0,
 };
@@ -131,7 +140,12 @@ function preloadFrames(product) {
 
 function renderCollection() {
   const grid = document.querySelector('#collection-grid');
-  grid.innerHTML = products
+  const visibleProducts =
+    state.collectionFilter === 'all'
+      ? products
+      : products.filter((product) => product.type === state.collectionFilter);
+
+  grid.innerHTML = visibleProducts
     .map(
       (product, index) => `
         <article class="collection-card">
@@ -151,6 +165,15 @@ function renderCollection() {
       `,
     )
     .join('');
+  createIcons({ icons });
+}
+
+function renderCollectionFilters() {
+  document.querySelectorAll('[data-filter]').forEach((button) => {
+    const active = button.dataset.filter === state.collectionFilter;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
 }
 
 function renderProductSelector() {
@@ -348,6 +371,13 @@ function toggleMobileMenu(open) {
 
 function setupInteractions() {
   document.addEventListener('click', (event) => {
+    const filterButton = event.target.closest('[data-filter]');
+    if (filterButton) {
+      state.collectionFilter = filterButton.dataset.filter;
+      renderCollectionFilters();
+      renderCollection();
+    }
+
     const productButton = event.target.closest('[data-product], [data-open-product]');
     if (productButton) {
       event.preventDefault();
@@ -448,6 +478,29 @@ function setupInteractions() {
   });
 }
 
+function setupRevealMotion() {
+  const revealElements = document.querySelectorAll('[data-reveal]');
+  document.body.classList.add('reveal-ready');
+
+  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    revealElements.forEach((element) => element.classList.add('is-visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    },
+    { rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+  );
+
+  revealElements.forEach((element) => observer.observe(element));
+}
+
 function animate(timestamp) {
   if (state.playing && timestamp - state.lastAdvance > 120) {
     setFrame(state.frame + 1);
@@ -457,10 +510,12 @@ function animate(timestamp) {
 }
 
 renderCollection();
+renderCollectionFilters();
 products.forEach(preloadFrames);
 renderProduct();
 renderCart();
 renderSearch();
 setupInteractions();
+setupRevealMotion();
 createIcons({ icons });
 requestAnimationFrame(animate);
