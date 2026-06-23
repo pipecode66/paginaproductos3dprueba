@@ -975,20 +975,23 @@ p {
 }
 
 .whatsapp-button {
-  min-width: 54px;
-  min-height: 54px;
-  padding: 0 16px;
+  min-width: 224px;
+  min-height: 58px;
+  padding: 0 22px;
   position: fixed;
-  right: 24px;
+  left: 50%;
+  right: auto;
   bottom: 24px;
   z-index: 150;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   color: #f8fff9;
   background: #25d366;
   box-shadow: 0 16px 38px rgba(37, 211, 102, 0.32);
+  transform: translateX(-50%);
   animation: whatsappPulse 2400ms ease-in-out infinite;
 }
 
@@ -999,17 +1002,10 @@ p {
 }
 
 .whatsapp-button span {
-  max-width: 0;
-  overflow: hidden;
+  max-width: 240px;
   white-space: nowrap;
   font-size: var(--text-sm);
   font-weight: 900;
-  transition: max-width 220ms ease;
-}
-
-.whatsapp-button:hover span,
-.whatsapp-button:focus-visible span {
-  max-width: 220px;
 }
 
 @keyframes whatsappPulse {
@@ -1126,13 +1122,14 @@ p {
   }
 
   .filter-group {
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: visible;
   }
 
   .filter-group button {
     width: auto;
     min-width: 104px;
-    flex: 0 0 auto;
+    flex: 1 1 calc(50% - 4px);
   }
 
   .product-grid {
@@ -1148,13 +1145,11 @@ p {
   }
 
   .whatsapp-button {
-    right: 14px;
-    bottom: 14px;
-    padding-inline: 14px;
-  }
-
-  .whatsapp-button span {
-    display: none;
+    width: min(280px, calc(100vw - 32px));
+    min-width: 0;
+    right: auto;
+    bottom: 16px;
+    padding-inline: 18px;
   }
 
   .scroll-top-button {
