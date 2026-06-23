@@ -6,6 +6,7 @@ import {
   Mail,
   MapPin,
   Menu,
+  MessageCircle,
   PenTool,
   Phone,
   Search,
@@ -16,38 +17,65 @@ import {
   createIcons,
 } from 'lucide';
 
+const WHATSAPP_NUMBER = '570000000000';
+
+const categories = [
+  { slug: 'todos', label: 'Todas' },
+  { slug: 'cadenas', label: 'Cadenas' },
+  { slug: 'dijes', label: 'Dijes' },
+  { slug: 'herrajes', label: 'Herrajes' },
+  { slug: 'candongas', label: 'Candongas' },
+  { slug: 'topos', label: 'Topos' },
+  { slug: 'pulsos', label: 'Pulsos' },
+  { slug: 'tobilleras', label: 'Tobilleras' },
+  { slug: 'anillos', label: 'Anillos' },
+  { slug: 'aros', label: 'Aros' },
+  { slug: 'rosarios', label: 'Rosarios' },
+  { slug: 'tejidos-especiales', label: 'Tejidos Especiales' },
+  { slug: 'balines', label: 'Balines' },
+  { slug: 'argollas-matrimonio', label: 'Argollas Matrimonio' },
+  { slug: 'fabricaciones', label: 'Fabricaciones' },
+];
+
 const products = [
   {
-    id: 'anillo-serafin',
-    name: 'Anillo Serafín',
-    category: 'anillos',
+    id: 'topos-estrellas-ascendentes',
+    name: 'Topos Estrellas Ascendentes',
+    category: 'topos',
     material: 'Oro amarillo 18K',
-    price: 'Cotización personalizada',
-    description: 'Silueta clásica para compromisos, aniversarios y celebraciones íntimas.',
+    value: 'Cotización personalizada',
+    description:
+      'Topos en oro de 18 quilates con silueta de estrellas ascendentes. Una pieza delicada, luminosa y fácil de combinar.',
+    measurements: ['Par estándar', 'Unidad izquierda', 'Unidad derecha', 'Ajuste especial'],
+    details: [
+      ['Categoría', 'Topos'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Acabado', 'Alto brillo'],
+      ['Uso sugerido', 'Diario y regalo'],
+    ],
+    images: [
+      '/products/topos-estrellas-1.jpeg',
+      '/products/topos-estrellas-2.jpeg',
+      '/products/topos-estrellas-3.jpeg',
+      '/products/topos-estrellas-4.jpeg',
+    ],
   },
   {
-    id: 'cadena-aurora',
-    name: 'Cadena Aurora',
-    category: 'cadenas',
+    id: 'pulso-mariposa-filigrana',
+    name: 'Pulso Mariposa Filigrana',
+    category: 'pulsos',
     material: 'Oro amarillo 18K',
-    price: 'Cotización personalizada',
-    description: 'Cadena luminosa para uso diario, medallas familiares o dijes especiales.',
-  },
-  {
-    id: 'pulsera-halo',
-    name: 'Pulsera Halo',
-    category: 'pulseras',
-    material: 'Oro amarillo 18K',
-    price: 'Cotización personalizada',
-    description: 'Pulsera de presencia delicada, ideal para regalo o pieza de legado.',
-  },
-  {
-    id: 'aretes-celeste',
-    name: 'Aretes Celeste',
-    category: 'aretes',
-    material: 'Oro amarillo 18K',
-    price: 'Cotización personalizada',
-    description: 'Diseño sobrio y elegante para acompañar ocasiones especiales.',
+    value: 'Cotización personalizada',
+    description:
+      'Pulso rígido en oro de 18 quilates con terminales ornamentales tipo mariposa. Un diseño elegante con presencia sutil.',
+    measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
+    details: [
+      ['Categoría', 'Pulsos'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Tipo', 'Pulso rígido abierto'],
+      ['Ajuste', 'Según medida de muñeca'],
+    ],
+    images: ['/products/pulso-mariposa-1.jpeg', '/products/pulso-mariposa-2.jpeg', '/products/pulso-mariposa-3.jpeg'],
   },
 ];
 
@@ -58,6 +86,7 @@ const icons = {
   Mail,
   MapPin,
   Menu,
+  MessageCircle,
   PenTool,
   Phone,
   Search,
@@ -69,8 +98,10 @@ const icons = {
 
 const state = {
   activeFilter: 'todos',
+  activeProduct: products[0],
+  activeImageIndex: 0,
   query: '',
-  selectedProducts: [],
+  cartItems: [],
   ticking: false,
 };
 
@@ -79,9 +110,20 @@ const selectors = {
   navLinks: document.querySelectorAll('.nav-link'),
   mobileDrawer: document.querySelector('#mobile-drawer'),
   overlay: document.querySelector('#overlay'),
+  categoryFilters: document.querySelector('#category-filters'),
   productGrid: document.querySelector('#product-grid'),
   searchInput: document.querySelector('#catalog-search'),
-  filterButtons: document.querySelectorAll('[data-filter]'),
+  detailPanel: document.querySelector('#product-detail-panel'),
+  detailCategory: document.querySelector('#detail-category'),
+  detailName: document.querySelector('#detail-name'),
+  detailMainImage: document.querySelector('#detail-main-image'),
+  detailThumbs: document.querySelector('#detail-thumbs'),
+  detailDescription: document.querySelector('#detail-description'),
+  detailSpecs: document.querySelector('#detail-specs'),
+  detailMeasure: document.querySelector('#detail-measure'),
+  detailMessage: document.querySelector('#detail-message'),
+  detailWhatsapp: document.querySelector('#detail-whatsapp'),
+  detailAddCart: document.querySelector('#detail-add-cart'),
   selectionDrawer: document.querySelector('#selection-drawer'),
   selectionItems: document.querySelector('#selection-items'),
   selectionEmpty: document.querySelector('#selection-empty'),
@@ -108,14 +150,43 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function getCategoryLabel(slug) {
+  return categories.find((category) => category.slug === slug)?.label ?? slug;
+}
+
+function buildWhatsAppLink(product, measure = '') {
+  const measureText = measure ? ` Medida seleccionada: ${measure}.` : '';
+  const message = `Hola Querubim, quiero cotizar la joya ${product.name}.${measureText}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 function getVisibleProducts() {
   const query = normalizeText(state.query.trim());
 
   return products.filter((product) => {
     const matchesFilter = state.activeFilter === 'todos' || product.category === state.activeFilter;
-    const searchableText = normalizeText(`${product.name} ${product.category} ${product.material} ${product.description}`);
+    const searchableText = normalizeText(
+      `${product.name} ${getCategoryLabel(product.category)} ${product.material} ${product.description}`,
+    );
     return matchesFilter && (!query || searchableText.includes(query));
   });
+}
+
+function renderCategories() {
+  selectors.categoryFilters.innerHTML = categories
+    .map(
+      (category) => `
+        <button
+          class="${category.slug === state.activeFilter ? 'active' : ''}"
+          type="button"
+          data-filter="${category.slug}"
+          aria-pressed="${category.slug === state.activeFilter}"
+        >
+          ${category.label}
+        </button>
+      `,
+    )
+    .join('');
 }
 
 function renderProducts() {
@@ -126,53 +197,108 @@ function renderProducts() {
         .map(
           (product) => `
             <article class="product-card">
-              <div class="product-placeholder" role="img" aria-label="Imagen de producto pendiente para ${product.name}">
-                <i data-lucide="gem"></i>
-                <span>Imagen de producto</span>
-              </div>
-              <div class="product-copy">
-                <span>${product.category}</span>
-                <h3>${product.name}</h3>
-                <p>${product.description}</p>
-                <dl>
-                  <div><dt>Material</dt><dd>${product.material}</dd></div>
-                  <div><dt>Valor</dt><dd>${product.price}</dd></div>
-                </dl>
-                <button class="text-action" type="button" data-select-product="${product.id}">
-                  Guardar para asesoría
-                  <i data-lucide="arrow-right"></i>
-                </button>
-              </div>
+              <button class="product-card-view" type="button" data-open-product="${product.id}" aria-label="Ver detalle de ${product.name}">
+                <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
+                <span class="product-card-category">${getCategoryLabel(product.category)}</span>
+                <span class="product-card-name">${product.name}</span>
+                <span class="product-card-material">${product.material}</span>
+                <span class="product-card-value">${product.value}</span>
+              </button>
             </article>
           `,
         )
         .join('')
-    : '<p class="empty-results">No encontramos joyas con ese criterio. Escríbenos y te asesoramos.</p>';
+    : '<p class="empty-results">No encontramos joyas en esta categoría todavía. Escríbenos y te asesoramos.</p>';
 
   refreshIcons();
 }
 
-function renderFilters() {
-  selectors.filterButtons.forEach((button) => {
-    const isActive = button.dataset.filter === state.activeFilter;
-    button.classList.toggle('active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
-  });
+function renderDetail() {
+  const product = state.activeProduct;
+  const selectedMeasure = selectors.detailMeasure.value;
+  const image = product.images[state.activeImageIndex] ?? product.images[0];
+
+  selectors.detailCategory.textContent = getCategoryLabel(product.category);
+  selectors.detailName.textContent = product.name;
+  selectors.detailMainImage.src = image;
+  selectors.detailMainImage.alt = product.name;
+  selectors.detailDescription.textContent = product.description;
+  selectors.detailSpecs.innerHTML = product.details
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join('');
+  selectors.detailMeasure.innerHTML = [
+    '<option value="">Selecciona una medida</option>',
+    ...product.measurements.map((measure) => `<option value="${measure}">${measure}</option>`),
+  ].join('');
+  selectors.detailMeasure.value = selectedMeasure && product.measurements.includes(selectedMeasure) ? selectedMeasure : '';
+  selectors.detailThumbs.innerHTML = product.images
+    .map(
+      (src, index) => `
+        <button class="${index === state.activeImageIndex ? 'active' : ''}" type="button" data-image-index="${index}" aria-label="Ver imagen ${index + 1} de ${product.name}">
+          <img src="${src}" alt="" loading="lazy" />
+        </button>
+      `,
+    )
+    .join('');
+  selectors.detailWhatsapp.href = buildWhatsAppLink(product, selectors.detailMeasure.value);
+  selectors.detailMessage.textContent = '';
+  selectors.detailMessage.classList.remove('error', 'success');
+  refreshIcons();
 }
 
-function renderSelection() {
-  selectors.cartCount.textContent = String(state.selectedProducts.length);
-  selectors.selectionEmpty.hidden = state.selectedProducts.length > 0;
-  selectors.selectionItems.innerHTML = state.selectedProducts
+function openProductDetail(productId) {
+  const product = products.find((item) => item.id === productId);
+  if (!product) return;
+  state.activeProduct = product;
+  state.activeImageIndex = 0;
+  renderDetail();
+  openPanel(selectors.detailPanel);
+}
+
+function addActiveProductToCart() {
+  const measure = selectors.detailMeasure.value;
+  const product = state.activeProduct;
+
+  if (!measure) {
+    selectors.detailMessage.textContent = 'Selecciona una medida antes de añadir la joya a la canasta.';
+    selectors.detailMessage.classList.add('error');
+    selectors.detailMeasure.focus();
+    return;
+  }
+
+  const key = `${product.id}-${measure}`;
+  if (state.cartItems.some((item) => item.key === key)) {
+    selectors.detailMessage.textContent = 'Esta joya con esa medida ya está en la canasta.';
+    selectors.detailMessage.classList.add('error');
+    return;
+  }
+
+  state.cartItems.push({ key, product, measure });
+  renderCart();
+  selectors.detailMessage.textContent = 'Joya añadida a la canasta con la medida seleccionada.';
+  selectors.detailMessage.classList.remove('error');
+  selectors.detailMessage.classList.add('success');
+}
+
+function removeCartItem(key) {
+  state.cartItems = state.cartItems.filter((item) => item.key !== key);
+  renderCart();
+}
+
+function renderCart() {
+  selectors.cartCount.textContent = String(state.cartItems.length);
+  selectors.selectionEmpty.hidden = state.cartItems.length > 0;
+  selectors.selectionItems.innerHTML = state.cartItems
     .map(
-      (product) => `
+      ({ key, product, measure }) => `
         <article class="selection-item">
-          <div class="mini-placeholder"><i data-lucide="gem"></i></div>
+          <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
           <div>
             <strong>${product.name}</strong>
-            <span>${product.material}</span>
+            <span>${getCategoryLabel(product.category)} · ${product.material}</span>
+            <small>Medida: ${measure}</small>
           </div>
-          <button class="icon-button" type="button" data-remove-product="${product.id}" aria-label="Quitar ${product.name}">
+          <button class="icon-button" type="button" data-remove-cart="${key}" aria-label="Quitar ${product.name}">
             <i data-lucide="x"></i>
           </button>
         </article>
@@ -182,32 +308,25 @@ function renderSelection() {
   refreshIcons();
 }
 
-function selectProduct(productId) {
-  const product = products.find((item) => item.id === productId);
-  if (!product || state.selectedProducts.some((item) => item.id === productId)) return;
-  state.selectedProducts.push(product);
-  renderSelection();
-}
-
-function removeSelectedProduct(productId) {
-  state.selectedProducts = state.selectedProducts.filter((item) => item.id !== productId);
-  renderSelection();
-}
-
 function openPanel(panel) {
+  closePanels(false);
   panel.classList.add('open');
   panel.setAttribute('aria-hidden', 'false');
   selectors.overlay.classList.add('visible');
   document.body.classList.add('panel-open');
 }
 
-function closePanels() {
+function closePanels(removeOverlay = true) {
   selectors.mobileDrawer.classList.remove('open');
+  selectors.detailPanel.classList.remove('open');
   selectors.selectionDrawer.classList.remove('open');
   selectors.mobileDrawer.setAttribute('aria-hidden', 'true');
+  selectors.detailPanel.setAttribute('aria-hidden', 'true');
   selectors.selectionDrawer.setAttribute('aria-hidden', 'true');
-  selectors.overlay.classList.remove('visible');
-  document.body.classList.remove('panel-open');
+  if (removeOverlay) {
+    selectors.overlay.classList.remove('visible');
+    document.body.classList.remove('panel-open');
+  }
 }
 
 function updateActiveNavigation(sectionId) {
@@ -261,21 +380,22 @@ function requestScrollUpdate() {
 
 function setupEvents() {
   document.querySelector('#menu-button').addEventListener('click', () => openPanel(selectors.mobileDrawer));
-  document.querySelector('#menu-close').addEventListener('click', closePanels);
+  document.querySelector('#menu-close').addEventListener('click', () => closePanels());
   document.querySelector('#cart-button').addEventListener('click', () => openPanel(selectors.selectionDrawer));
-  document.querySelector('#cart-close').addEventListener('click', closePanels);
-  selectors.overlay.addEventListener('click', closePanels);
+  document.querySelector('#cart-close').addEventListener('click', () => closePanels());
+  document.querySelector('#detail-close').addEventListener('click', () => closePanels());
+  selectors.overlay.addEventListener('click', () => closePanels());
 
   selectors.navLinks.forEach((link) => {
     link.addEventListener('click', () => closePanels());
   });
 
-  selectors.filterButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      state.activeFilter = button.dataset.filter;
-      renderFilters();
-      renderProducts();
-    });
+  selectors.categoryFilters.addEventListener('click', (event) => {
+    const filterButton = event.target.closest('[data-filter]');
+    if (!filterButton) return;
+    state.activeFilter = filterButton.dataset.filter;
+    renderCategories();
+    renderProducts();
   });
 
   selectors.searchInput.addEventListener('input', (event) => {
@@ -289,12 +409,25 @@ function setupEvents() {
   });
 
   document.addEventListener('click', (event) => {
-    const selectButton = event.target.closest('[data-select-product]');
-    const removeButton = event.target.closest('[data-remove-product]');
+    const productButton = event.target.closest('[data-open-product]');
+    const imageButton = event.target.closest('[data-image-index]');
+    const removeButton = event.target.closest('[data-remove-cart]');
 
-    if (selectButton) selectProduct(selectButton.dataset.selectProduct);
-    if (removeButton) removeSelectedProduct(removeButton.dataset.removeProduct);
+    if (productButton) openProductDetail(productButton.dataset.openProduct);
+    if (imageButton) {
+      state.activeImageIndex = Number(imageButton.dataset.imageIndex);
+      renderDetail();
+    }
+    if (removeButton) removeCartItem(removeButton.dataset.removeCart);
   });
+
+  selectors.detailMeasure.addEventListener('change', () => {
+    selectors.detailWhatsapp.href = buildWhatsAppLink(state.activeProduct, selectors.detailMeasure.value);
+    selectors.detailMessage.textContent = '';
+    selectors.detailMessage.classList.remove('error', 'success');
+  });
+
+  selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
 
   selectors.scrollTopButton.addEventListener('click', () => {
     document.querySelector('#home').scrollIntoView({ behavior: 'smooth' });
@@ -323,9 +456,9 @@ function setupEvents() {
   window.addEventListener('scroll', requestScrollUpdate, { passive: true });
 }
 
+renderCategories();
 renderProducts();
-renderFilters();
-renderSelection();
+renderCart();
 setupEvents();
 setupSectionObservers();
 refreshIcons();

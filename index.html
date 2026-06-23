@@ -134,11 +134,11 @@
         <div class="collection-intro">
           <div>
             <span class="eyebrow">Colección</span>
-            <h2>Joyas listas para recibir fotografía real de producto.</h2>
+            <h2>Joyas seleccionadas para brillar desde cada detalle.</h2>
           </div>
           <p>
-            Los productos se presentan con espacios reservados elegantes mientras el cliente carga las fotografías
-            definitivas del catálogo.
+            Explora piezas en oro 18K con galería detallada, medidas seleccionables y asesoría directa para cotizar
+            cada joya con tranquilidad.
           </p>
         </div>
 
@@ -147,13 +147,7 @@
             <span>Buscar</span>
             <input id="catalog-search" type="search" placeholder="Anillo, cadena, brazalete..." />
           </label>
-          <div class="filter-group" aria-label="Filtrar joyas">
-            <button class="active" type="button" data-filter="todos">Todas</button>
-            <button type="button" data-filter="anillos">Anillos</button>
-            <button type="button" data-filter="cadenas">Cadenas</button>
-            <button type="button" data-filter="pulseras">Pulseras</button>
-            <button type="button" data-filter="aretes">Aretes</button>
-          </div>
+          <div class="filter-group" id="category-filters" aria-label="Filtrar joyas"></div>
         </div>
 
         <div class="collection-layout">
@@ -273,18 +267,56 @@
       <span>Escríbenos por WhatsApp</span>
     </a>
 
-    <aside class="selection-drawer" id="selection-drawer" aria-label="Selección de joyas" aria-hidden="true">
+    <aside class="product-detail-panel" id="product-detail-panel" aria-label="Detalle de producto" aria-hidden="true">
       <div class="drawer-header">
         <div>
-          <span class="eyebrow">Tu selección</span>
-          <h2>Joyas guardadas</h2>
+          <span class="eyebrow" id="detail-category">Producto</span>
+          <h2 id="detail-name">Detalle de joya</h2>
         </div>
-        <button class="icon-button" id="cart-close" type="button" aria-label="Cerrar selección">
+        <button class="icon-button" id="detail-close" type="button" aria-label="Cerrar detalle">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="detail-layout">
+        <div class="detail-gallery">
+          <img id="detail-main-image" src="/products/topos-estrellas-1.jpeg" alt="" />
+          <div class="detail-thumbs" id="detail-thumbs"></div>
+        </div>
+        <div class="detail-info">
+          <p id="detail-description"></p>
+          <dl class="detail-specs" id="detail-specs"></dl>
+          <label class="measure-field" for="detail-measure">
+            <span>Medida para la joya <b>*</b></span>
+            <select id="detail-measure" required></select>
+          </label>
+          <p class="detail-message" id="detail-message" role="status" aria-live="polite"></p>
+          <div class="detail-actions">
+            <a class="button button-primary" id="detail-whatsapp" href="#" target="_blank" rel="noopener">
+              Cotizar en WhatsApp
+              <i data-lucide="message-circle"></i>
+            </a>
+            <button class="button button-secondary-dark" id="detail-add-cart" type="button">
+              Añadir a la canasta
+              <i data-lucide="shopping-bag"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <aside class="selection-drawer" id="selection-drawer" aria-label="Canasta de joyas" aria-hidden="true">
+      <div class="drawer-header">
+        <div>
+          <span class="eyebrow">Tu canasta</span>
+          <h2>Joyas para cotizar</h2>
+        </div>
+        <button class="icon-button" id="cart-close" type="button" aria-label="Cerrar canasta">
           <i data-lucide="x"></i>
         </button>
       </div>
       <div class="selection-items" id="selection-items"></div>
-      <p class="selection-empty" id="selection-empty">Aún no has guardado joyas para asesoría.</p>
+      <p class="selection-empty" id="selection-empty">Aún no has añadido joyas a la canasta.</p>
     </aside>
 
     <div class="overlay" id="overlay"></div>
