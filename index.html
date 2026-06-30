@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
     <title>Joyería Querubim | Elegancia que trasciende generaciones</title>
@@ -74,6 +74,11 @@
     <main>
       <section class="page-section hero-section" id="home" data-page>
         <div class="hero-bg" aria-hidden="true"></div>
+        <div class="hero-collage" aria-hidden="true">
+          <img class="collage-piece collage-piece-one" src="/products/topos-estrellas-1.jpeg" alt="" />
+          <img class="collage-piece collage-piece-two" src="/products/pulso-mariposa-2.jpeg" alt="" />
+          <img class="collage-piece collage-piece-three" src="/images/rings-celebration.jpg" alt="" />
+        </div>
         <div class="hero-content">
           <span class="eyebrow">Oro 18 quilates · Colombia</span>
           <h1>Elegancia que trasciende generaciones.</h1>
@@ -143,12 +148,37 @@
         </div>
 
         <div class="catalog-toolbar" aria-label="Herramientas de catálogo">
+          <div class="catalog-sidebar-copy">
+            <span class="eyebrow">Catálogo</span>
+            <h3>Selecciona una pieza</h3>
+            <p>Filtra la colección por categoría y encuentra la joya que quieres cotizar.</p>
+          </div>
           <label class="search-field" for="catalog-search">
             <span>Buscar</span>
-            <input id="catalog-search" type="search" placeholder="Anillo, cadena, brazalete..." />
+            <input id="catalog-search" type="search" placeholder="Anillo, cadena, pulso..." />
           </label>
           <div class="filter-group" id="category-filters" aria-label="Filtrar joyas"></div>
         </div>
+
+        <section class="premium-showcase" aria-label="Línea premium Querubim">
+          <div class="premium-copy">
+            <span class="eyebrow">Querubim Premium</span>
+            <h3>Piezas con presencia, acabado superior y asesoría prioritaria.</h3>
+            <p>
+              La selección premium reúne joyas de mayor protagonismo visual, atención personalizada y detalles pensados
+              para celebraciones especiales.
+            </p>
+            <a class="button button-primary" href="#contacto">
+              Solicitar asesoría premium
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+          <div class="premium-collage" aria-hidden="true">
+            <img class="premium-main" src="/products/pulso-mariposa-1.jpeg" alt="" loading="lazy" />
+            <img class="premium-float premium-float-top" src="/products/pulso-mariposa-3.jpeg" alt="" loading="lazy" />
+            <img class="premium-float premium-float-bottom" src="/images/collection-flatlay.jpg" alt="" loading="lazy" />
+          </div>
+        </section>
 
         <div class="collection-layout">
           <figure class="collection-media">

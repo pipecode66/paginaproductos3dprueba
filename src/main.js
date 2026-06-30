@@ -44,6 +44,7 @@ const products = [
     category: 'topos',
     material: 'Oro amarillo 18K',
     value: 'Cotización personalizada',
+    premium: false,
     description:
       'Topos en oro de 18 quilates con silueta de estrellas ascendentes. Una pieza delicada, luminosa y fácil de combinar.',
     measurements: ['Par estándar', 'Unidad izquierda', 'Unidad derecha', 'Ajuste especial'],
@@ -66,6 +67,7 @@ const products = [
     category: 'pulsos',
     material: 'Oro amarillo 18K',
     value: 'Cotización personalizada',
+    premium: true,
     description:
       'Pulso rígido en oro de 18 quilates con terminales ornamentales tipo mariposa. Un diseño elegante con presencia sutil.',
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
@@ -196,9 +198,10 @@ function renderProducts() {
     ? visibleProducts
         .map(
           (product) => `
-            <article class="product-card">
+            <article class="product-card${product.premium ? ' premium-product' : ''}">
               <button class="product-card-view" type="button" data-open-product="${product.id}" aria-label="Ver detalle de ${product.name}">
                 <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
+                ${product.premium ? '<span class="premium-badge">Premium</span>' : ''}
                 <span class="product-card-category">${getCategoryLabel(product.category)}</span>
                 <span class="product-card-name">${product.name}</span>
                 <span class="product-card-material">${product.material}</span>
