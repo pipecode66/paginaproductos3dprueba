@@ -312,9 +312,9 @@ function renderCategories({ premium = false } = {}) {
     .join('');
 }
 
-function getProductCardMarkup(product, { premiumCatalog = false } = {}) {
+function getProductCardMarkup(product, { premiumCatalog = false, index = 0 } = {}) {
   return `
-    <article class="product-card${product.premium ? ' premium-product' : ''}${premiumCatalog ? ' premium-catalog-card' : ''}">
+    <article class="product-card${product.premium ? ' premium-product' : ''}${premiumCatalog ? ' premium-catalog-card' : ''}" style="--card-index: ${index}">
       <button class="product-card-view" type="button" data-open-product="${product.id}" aria-label="Ver detalle de ${product.name}">
         <span class="product-image-wrap">
           <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
@@ -338,7 +338,7 @@ function renderProducts({ premium = false } = {}) {
   if (!target) return;
 
   target.innerHTML = visibleProducts.length
-    ? visibleProducts.map((product) => getProductCardMarkup(product, { premiumCatalog: premium })).join('')
+    ? visibleProducts.map((product, index) => getProductCardMarkup(product, { premiumCatalog: premium, index })).join('')
     : '<p class="empty-results">No encontramos joyas en esta categoría todavía. Escríbenos y te asesoramos.</p>';
 
   refreshIcons();
