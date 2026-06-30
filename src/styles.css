@@ -1741,6 +1741,7 @@ body.premium-route .whatsapp-button {
 
 body.premium-route .premium-catalog-section {
   padding-top: clamp(26px, 3vw, 42px);
+  transform: none;
 }
 
 body.premium-route .premium-back-link svg {
