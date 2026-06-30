@@ -39,6 +39,7 @@
         <a class="nav-link active" href="#home">Home</a>
         <a class="nav-link" href="#nosotros">Nosotros</a>
         <a class="nav-link" href="#coleccion">Colección</a>
+        <a class="nav-link nav-link-premium" href="/premium" data-route-link="premium">Premium</a>
         <a class="nav-link" href="#servicios">Servicios</a>
         <a class="nav-link" href="#contacto">Contacto</a>
       </nav>
@@ -67,6 +68,7 @@
       <a class="nav-link active" href="#home">Home</a>
       <a class="nav-link" href="#nosotros">Nosotros</a>
       <a class="nav-link" href="#coleccion">Colección</a>
+      <a class="nav-link nav-link-premium" href="/premium" data-route-link="premium">Premium</a>
       <a class="nav-link" href="#servicios">Servicios</a>
       <a class="nav-link" href="#contacto">Contacto</a>
     </aside>
@@ -160,34 +162,32 @@
           <div class="filter-group" id="category-filters" aria-label="Filtrar joyas"></div>
         </div>
 
-        <section class="premium-showcase" aria-label="Línea premium Querubim">
+        <a
+          class="premium-showcase"
+          href="/premium"
+          data-route-link="premium"
+          aria-label="Ir al catálogo premium Querubim"
+        >
           <div class="premium-copy">
             <span class="eyebrow">Querubim Premium</span>
-            <h3>Piezas con presencia, acabado superior y asesoría prioritaria.</h3>
+            <h3>Catálogo reservado para piezas de mayor presencia.</h3>
             <p>
-              La selección premium reúne joyas de mayor protagonismo visual, atención personalizada y detalles pensados
-              para celebraciones especiales.
+              Ingresa a una selección independiente con joyas de acabado superior, brillo dorado y una experiencia de
+              compra más refinada.
             </p>
-            <a class="button button-primary" href="#contacto">
-              Solicitar asesoría premium
+            <span class="button button-primary">
+              Explorar catálogo premium
               <i data-lucide="arrow-right"></i>
-            </a>
+            </span>
           </div>
           <div class="premium-collage" aria-hidden="true">
             <img class="premium-main" src="/products/pulso-mariposa-1.jpeg" alt="" loading="lazy" />
             <img class="premium-float premium-float-top" src="/products/pulso-mariposa-3.jpeg" alt="" loading="lazy" />
             <img class="premium-float premium-float-bottom" src="/images/collection-flatlay.jpg" alt="" loading="lazy" />
           </div>
-        </section>
+        </a>
 
         <div class="collection-layout">
-          <figure class="collection-media">
-            <img
-              src="/images/collection-flatlay.jpg"
-              alt="Composición superior de joyas de oro sobre mármol cálido"
-              loading="lazy"
-            />
-          </figure>
           <div class="product-grid" id="product-grid" aria-live="polite"></div>
         </div>
       </section>
@@ -274,6 +274,36 @@
             </button>
             <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
           </form>
+        </div>
+      </section>
+
+      <section class="page-section premium-catalog-section" id="premium-catalog" aria-label="Catálogo premium Querubim">
+        <div class="premium-page-hero">
+          <div>
+            <span class="eyebrow">Querubim Premium</span>
+            <h1>Joyas con brillo reservado y presencia superior.</h1>
+            <p>
+              Una selección independiente para piezas con acabados especiales, materiales destacados y asesoría
+              prioritaria.
+            </p>
+          </div>
+          <a class="button button-secondary premium-back-link" href="/" data-route-link="home" data-target-section="coleccion">
+            Volver al catálogo
+            <i data-lucide="arrow-right"></i>
+          </a>
+        </div>
+
+        <div class="premium-catalog-shell">
+          <aside class="premium-catalog-toolbar" aria-label="Herramientas de catálogo premium">
+            <span class="eyebrow">Selección premium</span>
+            <h2>Filtra la colección</h2>
+            <label class="search-field" for="premium-catalog-search">
+              <span>Buscar</span>
+              <input id="premium-catalog-search" type="search" placeholder="Argollas, rosario, pulso..." />
+            </label>
+            <div class="filter-group premium-filter-group" id="premium-category-filters" aria-label="Filtrar joyas premium"></div>
+          </aside>
+          <div class="premium-product-grid" id="premium-product-grid" aria-live="polite"></div>
         </div>
       </section>
     </main>

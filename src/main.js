@@ -62,6 +62,60 @@ const products = [
     ],
   },
   {
+    id: 'cadena-eslabon-clasico',
+    name: 'Cadena Eslabón Clásico',
+    category: 'cadenas',
+    material: 'Oro amarillo 18K',
+    value: 'Cotización personalizada',
+    premium: false,
+    description:
+      'Cadena en oro de 18 quilates con eslabón clásico, brillo cálido y presencia versátil para uso diario o regalo.',
+    measurements: ['40 cm', '45 cm', '50 cm', '55 cm', '60 cm', 'Medida personalizada'],
+    details: [
+      ['Categoría', 'Cadenas'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Tipo', 'Eslabón clásico'],
+      ['Uso sugerido', 'Diario y regalo'],
+    ],
+    images: ['/products/cadena-eslabon-clasico-ai.png'],
+  },
+  {
+    id: 'candongas-luna-brillante',
+    name: 'Candongas Luna Brillante',
+    category: 'candongas',
+    material: 'Oro amarillo 18K',
+    value: 'Cotización personalizada',
+    premium: false,
+    description:
+      'Candongas pulidas en oro de 18 quilates con silueta limpia y acabado brillante para combinar con cualquier ocasión.',
+    measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
+    details: [
+      ['Categoría', 'Candongas'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Acabado', 'Alto brillo'],
+      ['Uso sugerido', 'Diario'],
+    ],
+    images: ['/products/candongas-luna-brillante-ai.png'],
+  },
+  {
+    id: 'dije-solar-delicado',
+    name: 'Dije Solar Delicado',
+    category: 'dijes',
+    material: 'Oro amarillo 18K',
+    value: 'Cotización personalizada',
+    premium: false,
+    description:
+      'Dije en oro de 18 quilates con motivo solar, diseñado para aportar un detalle luminoso y sutil a cadenas finas.',
+    measurements: ['Pequeño', 'Mediano', 'Con argolla estándar', 'Argolla reforzada'],
+    details: [
+      ['Categoría', 'Dijes'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Motivo', 'Solar'],
+      ['Uso sugerido', 'Cadena fina'],
+    ],
+    images: ['/products/dije-solar-delicado-ai.png'],
+  },
+  {
     id: 'pulso-mariposa-filigrana',
     name: 'Pulso Mariposa Filigrana',
     category: 'pulsos',
@@ -78,6 +132,60 @@ const products = [
       ['Ajuste', 'Según medida de muñeca'],
     ],
     images: ['/products/pulso-mariposa-1.jpeg', '/products/pulso-mariposa-2.jpeg', '/products/pulso-mariposa-3.jpeg'],
+  },
+  {
+    id: 'premium-argollas-diamante',
+    name: 'Argollas Destello Nupcial',
+    category: 'argollas-matrimonio',
+    material: 'Oro amarillo 18K',
+    value: 'Cotización premium',
+    premium: true,
+    description:
+      'Argollas premium en oro de 18 quilates con detalles luminosos, pensadas para ceremonias y aniversarios memorables.',
+    measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
+    details: [
+      ['Categoría', 'Argollas Matrimonio'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Línea', 'Premium'],
+      ['Uso sugerido', 'Matrimonio'],
+    ],
+    images: ['/products/premium-argollas-diamante-ai.png'],
+  },
+  {
+    id: 'premium-rosario-cruz',
+    name: 'Rosario Cruz Serena',
+    category: 'rosarios',
+    material: 'Oro amarillo 18K',
+    value: 'Cotización premium',
+    premium: true,
+    description:
+      'Rosario premium en oro de 18 quilates con cruz delicada, acabado elegante y presencia ceremonial refinada.',
+    measurements: ['45 cm', '50 cm', '55 cm', '60 cm', 'Medida personalizada'],
+    details: [
+      ['Categoría', 'Rosarios'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Línea', 'Premium'],
+      ['Acabado', 'Brillo suave'],
+    ],
+    images: ['/products/premium-rosario-cruz-ai.png'],
+  },
+  {
+    id: 'premium-pulso-filigrana',
+    name: 'Pulso Filigrana Imperial',
+    category: 'pulsos',
+    material: 'Oro amarillo 18K',
+    value: 'Cotización premium',
+    premium: true,
+    description:
+      'Pulso premium en oro de 18 quilates con detalles de filigrana y brillo controlado para una presencia más sofisticada.',
+    measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
+    details: [
+      ['Categoría', 'Pulsos'],
+      ['Material', 'Oro amarillo 18K'],
+      ['Línea', 'Premium'],
+      ['Acabado', 'Filigrana'],
+    ],
+    images: ['/products/premium-pulso-filigrana-ai.png'],
   },
 ];
 
@@ -100,10 +208,13 @@ const icons = {
 
 const state = {
   activeFilter: 'todos',
+  activePremiumFilter: 'todos',
   activeProduct: products[0],
   activeImageIndex: 0,
   query: '',
+  premiumQuery: '',
   cartItems: [],
+  currentRoute: 'home',
   ticking: false,
 };
 
@@ -115,6 +226,9 @@ const selectors = {
   categoryFilters: document.querySelector('#category-filters'),
   productGrid: document.querySelector('#product-grid'),
   searchInput: document.querySelector('#catalog-search'),
+  premiumCategoryFilters: document.querySelector('#premium-category-filters'),
+  premiumProductGrid: document.querySelector('#premium-product-grid'),
+  premiumSearchInput: document.querySelector('#premium-catalog-search'),
   detailPanel: document.querySelector('#product-detail-panel'),
   detailCategory: document.querySelector('#detail-category'),
   detailName: document.querySelector('#detail-name'),
@@ -162,27 +276,34 @@ function buildWhatsAppLink(product, measure = '') {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-function getVisibleProducts() {
-  const query = normalizeText(state.query.trim());
+function getVisibleProducts({ premium = false } = {}) {
+  const query = normalizeText((premium ? state.premiumQuery : state.query).trim());
+  const activeFilter = premium ? state.activePremiumFilter : state.activeFilter;
 
   return products.filter((product) => {
-    const matchesFilter = state.activeFilter === 'todos' || product.category === state.activeFilter;
+    const matchesCatalog = Boolean(product.premium) === premium;
+    const matchesFilter = activeFilter === 'todos' || product.category === activeFilter;
     const searchableText = normalizeText(
       `${product.name} ${getCategoryLabel(product.category)} ${product.material} ${product.description}`,
     );
-    return matchesFilter && (!query || searchableText.includes(query));
+    return matchesCatalog && matchesFilter && (!query || searchableText.includes(query));
   });
 }
 
-function renderCategories() {
-  selectors.categoryFilters.innerHTML = categories
+function renderCategories({ premium = false } = {}) {
+  const activeFilter = premium ? state.activePremiumFilter : state.activeFilter;
+  const target = premium ? selectors.premiumCategoryFilters : selectors.categoryFilters;
+  if (!target) return;
+
+  target.innerHTML = categories
     .map(
       (category) => `
         <button
-          class="${category.slug === state.activeFilter ? 'active' : ''}"
+          class="${category.slug === activeFilter ? 'active' : ''}"
           type="button"
           data-filter="${category.slug}"
-          aria-pressed="${category.slug === state.activeFilter}"
+          data-premium-filter="${premium}"
+          aria-pressed="${category.slug === activeFilter}"
         >
           ${category.label}
         </button>
@@ -191,26 +312,33 @@ function renderCategories() {
     .join('');
 }
 
-function renderProducts() {
-  const visibleProducts = getVisibleProducts();
+function getProductCardMarkup(product, { premiumCatalog = false } = {}) {
+  return `
+    <article class="product-card${product.premium ? ' premium-product' : ''}${premiumCatalog ? ' premium-catalog-card' : ''}">
+      <button class="product-card-view" type="button" data-open-product="${product.id}" aria-label="Ver detalle de ${product.name}">
+        <span class="product-image-wrap">
+          <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
+        </span>
+        <span class="product-card-content">
+          ${product.premium ? '<span class="premium-badge">Premium</span>' : ''}
+          <span class="product-card-category">${getCategoryLabel(product.category)}</span>
+          <span class="product-card-name">${product.name}</span>
+          <span class="product-card-material">${product.material}</span>
+          <span class="product-card-value">${product.value}</span>
+          <span class="product-card-cta">Ver detalle</span>
+        </span>
+      </button>
+    </article>
+  `;
+}
 
-  selectors.productGrid.innerHTML = visibleProducts.length
-    ? visibleProducts
-        .map(
-          (product) => `
-            <article class="product-card${product.premium ? ' premium-product' : ''}">
-              <button class="product-card-view" type="button" data-open-product="${product.id}" aria-label="Ver detalle de ${product.name}">
-                <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
-                ${product.premium ? '<span class="premium-badge">Premium</span>' : ''}
-                <span class="product-card-category">${getCategoryLabel(product.category)}</span>
-                <span class="product-card-name">${product.name}</span>
-                <span class="product-card-material">${product.material}</span>
-                <span class="product-card-value">${product.value}</span>
-              </button>
-            </article>
-          `,
-        )
-        .join('')
+function renderProducts({ premium = false } = {}) {
+  const visibleProducts = getVisibleProducts({ premium });
+  const target = premium ? selectors.premiumProductGrid : selectors.productGrid;
+  if (!target) return;
+
+  target.innerHTML = visibleProducts.length
+    ? visibleProducts.map((product) => getProductCardMarkup(product, { premiumCatalog: premium })).join('')
     : '<p class="empty-results">No encontramos joyas en esta categoría todavía. Escríbenos y te asesoramos.</p>';
 
   refreshIcons();
@@ -334,7 +462,10 @@ function closePanels(removeOverlay = true) {
 
 function updateActiveNavigation(sectionId) {
   selectors.navLinks.forEach((link) => {
-    const isActive = link.getAttribute('href') === `#${sectionId}`;
+    const isActive =
+      sectionId === 'premium'
+        ? link.dataset.routeLink === 'premium'
+        : link.getAttribute('href') === `#${sectionId}`;
     link.classList.toggle('active', isActive);
     if (isActive) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -342,6 +473,11 @@ function updateActiveNavigation(sectionId) {
 }
 
 function updateActiveNavigationFromScroll() {
+  if (state.currentRoute === 'premium') {
+    updateActiveNavigation('premium');
+    return;
+  }
+
   const headerOffset = document.querySelector('#site-header').offsetHeight;
   const targetLine = window.scrollY + headerOffset + window.innerHeight * 0.38;
   let activeSection = selectors.pageSections[0]?.id;
@@ -359,6 +495,7 @@ function setupSectionObservers() {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
         entry.target.classList.add('visible');
+        if (state.currentRoute === 'premium') return;
         updateActiveNavigation(entry.target.id);
       });
     },
@@ -370,6 +507,12 @@ function setupSectionObservers() {
 
 function updateScrollTopButton() {
   state.ticking = false;
+  if (state.currentRoute === 'premium') {
+    selectors.scrollTopButton.classList.toggle('visible', window.scrollY > 320);
+    updateActiveNavigation('premium');
+    return;
+  }
+
   const heroHeight = document.querySelector('#home').offsetHeight;
   selectors.scrollTopButton.classList.toggle('visible', window.scrollY > heroHeight * 0.55);
   updateActiveNavigationFromScroll();
@@ -381,6 +524,37 @@ function requestScrollUpdate() {
   requestAnimationFrame(updateScrollTopButton);
 }
 
+function getInitialRoute() {
+  return window.location.pathname.replace(/\/$/, '') === '/premium' ? 'premium' : 'home';
+}
+
+function setRoute(route, { push = true, targetSection = null } = {}) {
+  state.currentRoute = route;
+  document.body.classList.toggle('premium-route', route === 'premium');
+  closePanels();
+
+  if (route === 'premium') {
+    document.title = 'Catálogo Premium Querubim | Joyas en oro 18K';
+    updateActiveNavigation('premium');
+    renderCategories({ premium: true });
+    renderProducts({ premium: true });
+    if (push) window.history.pushState({ route: 'premium' }, '', '/premium');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestScrollUpdate();
+    return;
+  }
+
+  document.title = 'Joyería Querubim | Elegancia que trasciende generaciones';
+  if (push) window.history.pushState({ route: 'home' }, '', targetSection ? `/#${targetSection}` : '/');
+
+  window.requestAnimationFrame(() => {
+    const target = document.querySelector(`#${targetSection || 'home'}`);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+    updateActiveNavigationFromScroll();
+    requestScrollUpdate();
+  });
+}
+
 function setupEvents() {
   document.querySelector('#menu-button').addEventListener('click', () => openPanel(selectors.mobileDrawer));
   document.querySelector('#menu-close').addEventListener('click', () => closePanels());
@@ -390,7 +564,21 @@ function setupEvents() {
   selectors.overlay.addEventListener('click', () => closePanels());
 
   selectors.navLinks.forEach((link) => {
-    link.addEventListener('click', () => closePanels());
+    link.addEventListener('click', (event) => {
+      const href = link.getAttribute('href');
+      if (link.dataset.routeLink === 'premium') {
+        event.preventDefault();
+        event.stopPropagation();
+        setRoute('premium');
+        return;
+      }
+
+      if (href?.startsWith('#')) {
+        event.preventDefault();
+        event.stopPropagation();
+        setRoute('home', { targetSection: href.slice(1) });
+      }
+    });
   });
 
   selectors.categoryFilters.addEventListener('click', (event) => {
@@ -401,13 +589,26 @@ function setupEvents() {
     renderProducts();
   });
 
+  selectors.premiumCategoryFilters?.addEventListener('click', (event) => {
+    const filterButton = event.target.closest('[data-filter]');
+    if (!filterButton) return;
+    state.activePremiumFilter = filterButton.dataset.filter;
+    renderCategories({ premium: true });
+    renderProducts({ premium: true });
+  });
+
   selectors.searchInput.addEventListener('input', (event) => {
     state.query = event.target.value;
     renderProducts();
   });
 
+  selectors.premiumSearchInput?.addEventListener('input', (event) => {
+    state.premiumQuery = event.target.value;
+    renderProducts({ premium: true });
+  });
+
   document.querySelector('#catalog-search-button').addEventListener('click', () => {
-    document.querySelector('#coleccion').scrollIntoView({ behavior: 'smooth' });
+    setRoute('home', { targetSection: 'coleccion' });
     window.requestAnimationFrame(() => selectors.searchInput.focus());
   });
 
@@ -415,6 +616,21 @@ function setupEvents() {
     const productButton = event.target.closest('[data-open-product]');
     const imageButton = event.target.closest('[data-image-index]');
     const removeButton = event.target.closest('[data-remove-cart]');
+    const routeLink = event.target.closest('[data-route-link]');
+
+    if (routeLink) {
+      event.preventDefault();
+      if (routeLink.dataset.routeLink === 'premium') setRoute('premium');
+      else setRoute('home', { targetSection: routeLink.dataset.targetSection || 'home' });
+      return;
+    }
+
+    const hashLink = event.target.closest('a[href^="#"]');
+    if (hashLink) {
+      event.preventDefault();
+      setRoute('home', { targetSection: hashLink.getAttribute('href').slice(1) });
+      return;
+    }
 
     if (productButton) openProductDetail(productButton.dataset.openProduct);
     if (imageButton) {
@@ -433,6 +649,10 @@ function setupEvents() {
   selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
 
   selectors.scrollTopButton.addEventListener('click', () => {
+    if (state.currentRoute === 'premium') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     document.querySelector('#home').scrollIntoView({ behavior: 'smooth' });
   });
 
@@ -457,12 +677,22 @@ function setupEvents() {
   });
 
   window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+  window.addEventListener('popstate', () => {
+    const route = getInitialRoute();
+    setRoute(route, { push: false, targetSection: route === 'home' ? window.location.hash.slice(1) || 'home' : null });
+  });
 }
 
 renderCategories();
 renderProducts();
+renderCategories({ premium: true });
+renderProducts({ premium: true });
 renderCart();
 setupEvents();
 setupSectionObservers();
 refreshIcons();
+setRoute(getInitialRoute(), {
+  push: false,
+  targetSection: getInitialRoute() === 'home' ? window.location.hash.slice(1) || 'home' : null,
+});
 requestScrollUpdate();
