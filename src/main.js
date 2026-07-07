@@ -27,7 +27,7 @@ import {
 } from 'lucide';
 
 const WHATSAPP_NUMBER = '570000000000';
-const PRODUCT_STORAGE_KEY = 'querubim-products-v1';
+const PRODUCT_STORAGE_KEY = 'querubim-products-v2';
 const ADMIN_SESSION_KEY = 'querubim-admin-session';
 const ADMIN_CREDENTIALS = {
   email: 'admin@querubim.co',
@@ -63,7 +63,7 @@ const importedCatalogGroups = [
     basePrice: 780000,
     priceStep: 38000,
     measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
-    description: 'Anillo en oro 18K seleccionado para el catalogo Querubim, con fotografia real de referencia y precio provisional.',
+    description: 'Anillo en oro 18K seleccionado para el catálogo Querubim, con fotografía real de referencia y precio provisional.',
   },
   {
     category: 'brazaletes',
@@ -72,7 +72,7 @@ const importedCatalogGroups = [
     basePrice: 1250000,
     priceStep: 42000,
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
-    description: 'Brazalete en oro 18K con acabado elegante, ideal para uso diario, regalo o combinacion con otras piezas.',
+    description: 'Brazalete en oro 18K con acabado elegante, ideal para uso diario, regalo o combinación con otras piezas.',
   },
   {
     category: 'candongas',
@@ -80,8 +80,8 @@ const importedCatalogGroups = [
     count: 30,
     basePrice: 620000,
     priceStep: 26000,
-    measurements: ['Pequenas', 'Medianas', 'Grandes', 'Ajuste especial'],
-    description: 'Candongas en oro 18K con presencia luminosa y estilo versatil para ocasiones casuales o formales.',
+    measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
+    description: 'Candongas en oro 18K con presencia luminosa y estilo versátil para ocasiones casuales o formales.',
   },
   {
     category: 'dijes-para-manillas',
@@ -89,7 +89,7 @@ const importedCatalogGroups = [
     count: 28,
     basePrice: 280000,
     priceStep: 18000,
-    measurements: ['Mini', 'Pequeno', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
+    measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
     description: 'Dije para manilla en oro 18K, pensado para personalizar una joya con un detalle delicado y significativo.',
   },
   {
@@ -99,7 +99,7 @@ const importedCatalogGroups = [
     basePrice: 950000,
     priceStep: 36000,
     measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
-    description: 'Manilla en oro 18K con fotografia real de catalogo, precio provisional y medidas ajustables segun solicitud.',
+    description: 'Manilla en oro 18K con fotografía real de catálogo, precio provisional y medidas ajustables según solicitud.',
   },
 ];
 
@@ -399,7 +399,7 @@ function createImportedCatalogProducts() {
         description: group.description,
         measurements: group.measurements,
         details: [
-          ['Categoria', label],
+          ['Categoría', label],
           ['Material', 'Oro amarillo 18K'],
           ['Precio', formatCurrency(price)],
           ['Estado', 'Disponible para cotizar'],
@@ -462,10 +462,10 @@ function refreshCatalogViews() {
 
 function buildProductDetails(product) {
   return [
-    ['Categoria', getCategoryLabel(product.category)],
+    ['Categoría', getCategoryLabel(product.category)],
     ['Material', product.material],
     ['Precio', product.value],
-    ['Linea', product.premium ? 'Premium' : 'Catalogo'],
+    ['Línea', product.premium ? 'Premium' : 'Catálogo'],
   ];
 }
 
@@ -701,9 +701,9 @@ function renderAdminStats() {
 
   const stats = [
     { icon: 'package', label: 'Productos', value: products.length },
-    { icon: 'bar-chart-3', label: 'Catalogo normal', value: normalProducts },
+    { icon: 'bar-chart-3', label: 'Catálogo normal', value: normalProducts },
     { icon: 'gem', label: 'Premium', value: premiumProducts },
-    { icon: 'shield-check', label: 'Categorias activas', value: categoriesUsed },
+    { icon: 'shield-check', label: 'Categorías activas', value: categoriesUsed },
     { icon: 'shopping-bag', label: 'Valor provisional', value: formatCurrency(estimatedValue) },
   ];
 
@@ -748,7 +748,7 @@ function renderAdminProducts() {
           `;
         })
         .join('')
-    : '<p class="empty-results">No hay productos que coincidan con la busqueda.</p>';
+    : '<p class="empty-results">No hay productos que coincidan con la búsqueda.</p>';
 }
 
 function renderAdminPanel() {
@@ -872,7 +872,7 @@ function saveAdminProduct(event) {
 function deleteAdminProduct(productId) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
-  if (!window.confirm(`Eliminar ${product.name} del catalogo?`)) return;
+  if (!window.confirm(`¿Eliminar ${product.name} del catálogo?`)) return;
 
   products = products.filter((item) => item.id !== productId);
   state.cartItems = state.cartItems.filter((item) => item.product.id !== productId);
@@ -886,7 +886,7 @@ function handleAdminLogin(event) {
   event.preventDefault();
 
   if (!selectors.adminLoginForm.checkValidity()) {
-    selectors.adminLoginMessage.textContent = 'Completa el correo y la contrasena.';
+    selectors.adminLoginMessage.textContent = 'Completa el correo y la contraseña.';
     selectors.adminLoginMessage.classList.add('error');
     selectors.adminLoginForm.reportValidity();
     return;
@@ -1115,7 +1115,7 @@ function setupEvents() {
     refreshIcons();
   });
   selectors.adminResetCatalog?.addEventListener('click', () => {
-    if (!window.confirm('Restaurar el catalogo inicial de Querubim?')) return;
+    if (!window.confirm('¿Restaurar el catálogo inicial de Querubim?')) return;
     resetAdminForm();
     resetProductsToDefault();
   });
