@@ -27,7 +27,7 @@ import {
 } from 'lucide';
 
 const WHATSAPP_NUMBER = '570000000000';
-const PRODUCT_STORAGE_KEY = 'querubim-products-v2';
+const PRODUCT_STORAGE_KEY = 'querubim-products-v3';
 const ADMIN_SESSION_KEY = 'querubim-admin-session';
 const ADMIN_CREDENTIALS = {
   email: 'admin@querubim.co',
@@ -57,49 +57,232 @@ const categories = [
 
 const importedCatalogGroups = [
   {
+    id: 'anillo-rubi-aurora',
+    name: 'Anillo Rubí Aurora',
     category: 'anillos',
-    singular: 'Anillo',
-    count: 24,
-    basePrice: 780000,
-    priceStep: 38000,
+    imageStart: 1,
+    imageEnd: 8,
+    price: 1120000,
     measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
-    description: 'Anillo en oro 18K seleccionado para el catálogo Querubim, con fotografía real de referencia y precio provisional.',
+    description:
+      'Anillo en oro 18K con cristales rojos tipo rubí en corte rectangular. Una pieza luminosa, femenina y fácil de combinar.',
+    finish: 'Cristales rojos',
   },
   {
+    id: 'anillo-corona-amatista',
+    name: 'Anillo Corona Amatista',
+    category: 'anillos',
+    imageStart: 9,
+    imageEnd: 16,
+    price: 1480000,
+    measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
+    description:
+      'Anillo en oro 18K con diseño tipo corona, acentos brillantes y piedra central morada para una presencia elegante.',
+    finish: 'Corona con piedra morada',
+  },
+  {
+    id: 'anillo-filigrana-celestial',
+    name: 'Anillo Filigrana Celestial',
+    category: 'anillos',
+    imageStart: 17,
+    imageEnd: 24,
+    price: 1250000,
+    measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
+    description:
+      'Anillo en oro 18K con volumen ornamental y detalles de filigrana, pensado para quienes prefieren una joya con carácter.',
+    finish: 'Filigrana brillante',
+  },
+  {
+    id: 'brazalete-placa-dorada',
+    name: 'Brazalete Placa Dorada',
     category: 'brazaletes',
-    singular: 'Brazalete',
-    count: 32,
-    basePrice: 1250000,
-    priceStep: 42000,
+    imageStart: 1,
+    imageEnd: 8,
+    price: 1320000,
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
-    description: 'Brazalete en oro 18K con acabado elegante, ideal para uso diario, regalo o combinación con otras piezas.',
+    description:
+      'Brazalete rígido en oro 18K con placa decorativa central y silueta limpia para uso diario o regalo especial.',
+    finish: 'Placa decorativa',
   },
   {
+    id: 'brazalete-lazo-diamantado',
+    name: 'Brazalete Lazo Diamantado',
+    category: 'brazaletes',
+    imageStart: 9,
+    imageEnd: 16,
+    price: 1180000,
+    measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
+    description:
+      'Brazalete con terminales tipo lazo y textura diamantada, ideal para una pieza delicada con brillo sutil.',
+    finish: 'Lazo diamantado',
+  },
+  {
+    id: 'brazalete-greca-serena',
+    name: 'Brazalete Greca Serena',
+    category: 'brazaletes',
+    imageStart: 17,
+    imageEnd: 24,
+    price: 1090000,
+    measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
+    description:
+      'Brazalete abierto con motivo geométrico central, acabado sobrio y estructura cómoda para uso frecuente.',
+    finish: 'Greca central',
+  },
+  {
+    id: 'brazalete-amuletos-esmeralda',
+    name: 'Brazalete Amuletos Esmeralda',
+    category: 'brazaletes',
+    imageStart: 25,
+    imageEnd: 32,
+    price: 1580000,
+    measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
+    description:
+      'Brazalete en oro 18K con dijes colgantes y detalles verdes tipo esmeralda para una composición llamativa.',
+    finish: 'Dijes con acentos verdes',
+  },
+  {
+    id: 'candongas-brillo-clasico',
+    name: 'Candongas Brillo Clásico',
     category: 'candongas',
-    singular: 'Candonga',
-    count: 30,
-    basePrice: 620000,
-    priceStep: 26000,
+    imageStart: 1,
+    imageEnd: 8,
+    price: 680000,
     measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
-    description: 'Candongas en oro 18K con presencia luminosa y estilo versátil para ocasiones casuales o formales.',
+    description:
+      'Candongas en oro 18K de acabado pulido, formato clásico y brillo limpio para acompañar cualquier ocasión.',
+    finish: 'Alto brillo',
   },
   {
+    id: 'candongas-trenza-dorada',
+    name: 'Candongas Trenza Dorada',
+    category: 'candongas',
+    imageStart: 9,
+    imageEnd: 16,
+    price: 740000,
+    measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
+    description:
+      'Candongas en oro 18K con volumen trenzado y textura brillante, diseñadas para sumar presencia sin perder delicadeza.',
+    finish: 'Trenzado brillante',
+  },
+  {
+    id: 'candongas-ovalo-diamantado',
+    name: 'Candongas Óvalo Diamantado',
+    category: 'candongas',
+    imageStart: 17,
+    imageEnd: 24,
+    price: 790000,
+    measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
+    description:
+      'Candongas ovaladas en oro 18K con textura diamantada y una silueta alargada que estiliza el rostro.',
+    finish: 'Óvalo diamantado',
+  },
+  {
+    id: 'candongas-onda-organica',
+    name: 'Candongas Onda Orgánica',
+    category: 'candongas',
+    imageStart: 25,
+    imageEnd: 30,
+    price: 860000,
+    measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
+    description:
+      'Candongas en oro 18K con contorno ondulado y acabado orgánico para una pieza más artística y moderna.',
+    finish: 'Textura orgánica',
+  },
+  {
+    id: 'dije-mano-sagrada',
+    name: 'Dije Mano Sagrada',
     category: 'dijes-para-manillas',
-    singular: 'Dije para Manilla',
-    count: 28,
-    basePrice: 280000,
-    priceStep: 18000,
+    imageStart: 1,
+    imageEnd: 8,
+    price: 340000,
     measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
-    description: 'Dije para manilla en oro 18K, pensado para personalizar una joya con un detalle delicado y significativo.',
+    description:
+      'Dije para manilla en oro 18K con símbolo de mano protectora, ideal para personalizar una joya con intención.',
+    finish: 'Símbolo protector',
   },
   {
+    id: 'dije-medallon-corona-real',
+    name: 'Dije Medallón Corona Real',
+    category: 'dijes-para-manillas',
+    imageStart: 9,
+    imageEnd: 16,
+    price: 520000,
+    measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
+    description:
+      'Dije para manilla con medallón circular, corona central y contraste bicolor para una pieza de mayor presencia.',
+    finish: 'Medallón bicolor',
+  },
+  {
+    id: 'dije-moneda-sol-querubim',
+    name: 'Dije Moneda Sol Querubim',
+    category: 'dijes-para-manillas',
+    imageStart: 17,
+    imageEnd: 20,
+    price: 300000,
+    measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
+    description:
+      'Dije redondo en oro 18K con relieve central y borde texturizado, pensado para combinaciones discretas.',
+    finish: 'Relieve circular',
+  },
+  {
+    id: 'dije-medalla-devocion',
+    name: 'Dije Medalla Devoción',
+    category: 'dijes-para-manillas',
+    imageStart: 21,
+    imageEnd: 28,
+    price: 460000,
+    measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
+    description:
+      'Dije tipo medalla en oro 18K con forma alargada y relieve delicado para una manilla personalizada.',
+    finish: 'Medalla alargada',
+  },
+  {
+    id: 'manilla-atenea-cristal',
+    name: 'Manilla Atenea Cristal',
     category: 'manillas',
-    singular: 'Manilla',
-    count: 32,
-    basePrice: 950000,
-    priceStep: 36000,
+    imageStart: 1,
+    imageEnd: 8,
+    price: 1280000,
     measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
-    description: 'Manilla en oro 18K con fotografía real de catálogo, precio provisional y medidas ajustables según solicitud.',
+    description:
+      'Manilla en oro 18K con eslabones rectangulares y detalles brillantes, pensada para una presencia elegante.',
+    finish: 'Eslabones con brillo',
+  },
+  {
+    id: 'manilla-esmeralda-enlace',
+    name: 'Manilla Esmeralda Enlace',
+    category: 'manillas',
+    imageStart: 9,
+    imageEnd: 16,
+    price: 1560000,
+    measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
+    description:
+      'Manilla en oro 18K con eslabones y acentos verdes tipo esmeralda, ideal para una pieza con color protagonista.',
+    finish: 'Acentos verdes',
+  },
+  {
+    id: 'manilla-eslabon-dorado',
+    name: 'Manilla Eslabón Dorado',
+    category: 'manillas',
+    imageStart: 17,
+    imageEnd: 24,
+    price: 1380000,
+    measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
+    description:
+      'Manilla en oro 18K de eslabón ancho con caída flexible, una pieza clásica para uso diario o regalo.',
+    finish: 'Eslabón ancho',
+  },
+  {
+    id: 'manilla-placa-sello-dorado',
+    name: 'Manilla Placa Sello Dorado',
+    category: 'manillas',
+    imageStart: 25,
+    imageEnd: 32,
+    price: 1650000,
+    measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
+    description:
+      'Manilla en oro 18K con eslabón cubano y placa central tipo sello, diseñada para un estilo contundente.',
+    finish: 'Placa central',
   },
 ];
 
@@ -380,34 +563,37 @@ function getProductPrice(product) {
   return Number(numericValue) || 0;
 }
 
-function createImportedCatalogProducts() {
-  return importedCatalogGroups.flatMap((group) =>
-    Array.from({ length: group.count }, (_, index) => {
-      const number = String(index + 1).padStart(2, '0');
-      const price = group.basePrice + index * group.priceStep;
-      const label = getCategoryLabel(group.category);
-      const name = `${group.singular} Querubim ${number}`;
+function buildCatalogImageRange(category, start, end) {
+  return Array.from({ length: end - start + 1 }, (_, index) => {
+    const number = String(start + index).padStart(2, '0');
+    return `/products/catalogo-real/${category}/${category}-${number}.jpg`;
+  });
+}
 
-      return {
-        id: `${group.category}-catalogo-${number}`,
-        name,
-        category: group.category,
-        material: 'Oro amarillo 18K',
-        price,
-        value: formatCurrency(price),
-        premium: false,
-        description: group.description,
-        measurements: group.measurements,
-        details: [
-          ['Categoría', label],
-          ['Material', 'Oro amarillo 18K'],
-          ['Precio', formatCurrency(price)],
-          ['Estado', 'Disponible para cotizar'],
-        ],
-        images: [`/products/catalogo-real/${group.category}/${group.category}-${number}.jpg`],
-      };
-    }),
-  );
+function createImportedCatalogProducts() {
+  return importedCatalogGroups.map((group) => {
+    const label = getCategoryLabel(group.category);
+    const value = formatCurrency(group.price);
+
+    return {
+      id: group.id,
+      name: group.name,
+      category: group.category,
+      material: 'Oro amarillo 18K',
+      price: group.price,
+      value,
+      premium: false,
+      description: group.description,
+      measurements: group.measurements,
+      details: [
+        ['Categoría', label],
+        ['Material', 'Oro amarillo 18K'],
+        ['Precio', value],
+        ['Acabado', group.finish],
+      ],
+      images: buildCatalogImageRange(group.category, group.imageStart, group.imageEnd),
+    };
+  });
 }
 
 function loadStoredProducts() {
