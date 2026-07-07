@@ -1,23 +1,38 @@
 import './styles.css';
 import {
   ArrowRight,
+  BarChart3,
   ChevronUp,
+  Edit3,
   Gem,
+  LockKeyhole,
+  LogOut,
   Mail,
   MapPin,
   Menu,
   MessageCircle,
+  Package,
   PenTool,
   Phone,
+  Plus,
+  RotateCcw,
+  Save,
   Search,
   Send,
   ShieldCheck,
   ShoppingBag,
+  Trash2,
   X,
   createIcons,
 } from 'lucide';
 
 const WHATSAPP_NUMBER = '570000000000';
+const PRODUCT_STORAGE_KEY = 'querubim-products-v1';
+const ADMIN_SESSION_KEY = 'querubim-admin-session';
+const ADMIN_CREDENTIALS = {
+  email: 'admin@querubim.co',
+  password: 'Querubim2026',
+};
 
 const categories = [
   { slug: 'todos', label: 'Todas' },
@@ -25,6 +40,9 @@ const categories = [
   { slug: 'dijes', label: 'Dijes' },
   { slug: 'herrajes', label: 'Herrajes' },
   { slug: 'candongas', label: 'Candongas' },
+  { slug: 'brazaletes', label: 'Brazaletes' },
+  { slug: 'dijes-para-manillas', label: 'Dijes para Manillas' },
+  { slug: 'manillas', label: 'Manillas' },
   { slug: 'topos', label: 'Topos' },
   { slug: 'pulsos', label: 'Pulsos' },
   { slug: 'tobilleras', label: 'Tobilleras' },
@@ -37,7 +55,55 @@ const categories = [
   { slug: 'fabricaciones', label: 'Fabricaciones' },
 ];
 
-const products = [
+const importedCatalogGroups = [
+  {
+    category: 'anillos',
+    singular: 'Anillo',
+    count: 24,
+    basePrice: 780000,
+    priceStep: 38000,
+    measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
+    description: 'Anillo en oro 18K seleccionado para el catalogo Querubim, con fotografia real de referencia y precio provisional.',
+  },
+  {
+    category: 'brazaletes',
+    singular: 'Brazalete',
+    count: 32,
+    basePrice: 1250000,
+    priceStep: 42000,
+    measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
+    description: 'Brazalete en oro 18K con acabado elegante, ideal para uso diario, regalo o combinacion con otras piezas.',
+  },
+  {
+    category: 'candongas',
+    singular: 'Candonga',
+    count: 30,
+    basePrice: 620000,
+    priceStep: 26000,
+    measurements: ['Pequenas', 'Medianas', 'Grandes', 'Ajuste especial'],
+    description: 'Candongas en oro 18K con presencia luminosa y estilo versatil para ocasiones casuales o formales.',
+  },
+  {
+    category: 'dijes-para-manillas',
+    singular: 'Dije para Manilla',
+    count: 28,
+    basePrice: 280000,
+    priceStep: 18000,
+    measurements: ['Mini', 'Pequeno', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
+    description: 'Dije para manilla en oro 18K, pensado para personalizar una joya con un detalle delicado y significativo.',
+  },
+  {
+    category: 'manillas',
+    singular: 'Manilla',
+    count: 32,
+    basePrice: 950000,
+    priceStep: 36000,
+    measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
+    description: 'Manilla en oro 18K con fotografia real de catalogo, precio provisional y medidas ajustables segun solicitud.',
+  },
+];
+
+const defaultProducts = [
   {
     id: 'topos-estrellas-ascendentes',
     name: 'Topos Estrellas Ascendentes',
@@ -189,20 +255,33 @@ const products = [
   },
 ];
 
+defaultProducts.push(...createImportedCatalogProducts());
+
+let products = loadStoredProducts();
+
 const icons = {
   ArrowRight,
+  BarChart3,
   ChevronUp,
+  Edit3,
   Gem,
+  LockKeyhole,
+  LogOut,
   Mail,
   MapPin,
   Menu,
   MessageCircle,
+  Package,
   PenTool,
   Phone,
+  Plus,
+  RotateCcw,
+  Save,
   Search,
   Send,
   ShieldCheck,
   ShoppingBag,
+  Trash2,
   X,
 };
 
@@ -213,6 +292,8 @@ const state = {
   activeImageIndex: 0,
   query: '',
   premiumQuery: '',
+  adminQuery: '',
+  editingProductId: null,
   cartItems: [],
   currentRoute: 'home',
   ticking: false,
@@ -229,6 +310,28 @@ const selectors = {
   premiumCategoryFilters: document.querySelector('#premium-category-filters'),
   premiumProductGrid: document.querySelector('#premium-product-grid'),
   premiumSearchInput: document.querySelector('#premium-catalog-search'),
+  adminLoginView: document.querySelector('#admin-login-view'),
+  adminPanelView: document.querySelector('#admin-panel-view'),
+  adminLoginForm: document.querySelector('#admin-login-form'),
+  adminLoginMessage: document.querySelector('#admin-login-message'),
+  adminLogout: document.querySelector('#admin-logout'),
+  adminStats: document.querySelector('#admin-stats'),
+  adminProductList: document.querySelector('#admin-product-list'),
+  adminSearchInput: document.querySelector('#admin-product-search'),
+  adminProductForm: document.querySelector('#admin-product-form'),
+  adminFormTitle: document.querySelector('#admin-form-title'),
+  adminEditId: document.querySelector('#admin-edit-id'),
+  adminName: document.querySelector('#admin-name'),
+  adminCategory: document.querySelector('#admin-category'),
+  adminPrice: document.querySelector('#admin-price'),
+  adminMaterial: document.querySelector('#admin-material'),
+  adminImage: document.querySelector('#admin-image'),
+  adminMeasurements: document.querySelector('#admin-measurements'),
+  adminDescription: document.querySelector('#admin-description'),
+  adminPremium: document.querySelector('#admin-premium'),
+  adminFormMessage: document.querySelector('#admin-form-message'),
+  adminCancelEdit: document.querySelector('#admin-cancel-edit'),
+  adminResetCatalog: document.querySelector('#admin-reset-catalog'),
   detailPanel: document.querySelector('#product-detail-panel'),
   detailCategory: document.querySelector('#detail-category'),
   detailName: document.querySelector('#detail-name'),
@@ -259,8 +362,122 @@ function refreshIcons() {
   });
 }
 
+function cloneProductList(productList = defaultProducts) {
+  return JSON.parse(JSON.stringify(productList));
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(Number(value) || 0);
+}
+
+function getProductPrice(product) {
+  if (Number.isFinite(Number(product.price))) return Number(product.price);
+  const numericValue = String(product.value ?? '').replace(/[^\d]/g, '');
+  return Number(numericValue) || 0;
+}
+
+function createImportedCatalogProducts() {
+  return importedCatalogGroups.flatMap((group) =>
+    Array.from({ length: group.count }, (_, index) => {
+      const number = String(index + 1).padStart(2, '0');
+      const price = group.basePrice + index * group.priceStep;
+      const label = getCategoryLabel(group.category);
+      const name = `${group.singular} Querubim ${number}`;
+
+      return {
+        id: `${group.category}-catalogo-${number}`,
+        name,
+        category: group.category,
+        material: 'Oro amarillo 18K',
+        price,
+        value: formatCurrency(price),
+        premium: false,
+        description: group.description,
+        measurements: group.measurements,
+        details: [
+          ['Categoria', label],
+          ['Material', 'Oro amarillo 18K'],
+          ['Precio', formatCurrency(price)],
+          ['Estado', 'Disponible para cotizar'],
+        ],
+        images: [`/products/catalogo-real/${group.category}/${group.category}-${number}.jpg`],
+      };
+    }),
+  );
+}
+
+function loadStoredProducts() {
+  try {
+    const storedProducts = localStorage.getItem(PRODUCT_STORAGE_KEY);
+    if (!storedProducts) return cloneProductList();
+
+    const parsedProducts = JSON.parse(storedProducts);
+    if (Array.isArray(parsedProducts)) return parsedProducts;
+  } catch {
+    localStorage.removeItem(PRODUCT_STORAGE_KEY);
+  }
+
+  return cloneProductList();
+}
+
+function saveProducts() {
+  localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(products));
+}
+
+function resetProductsToDefault() {
+  products = cloneProductList();
+  saveProducts();
+  state.activeProduct = products[0];
+  state.editingProductId = null;
+  refreshCatalogViews();
+}
+
+function slugify(value) {
+  return normalizeText(value)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function refreshCatalogViews() {
+  renderCategories();
+  renderProducts();
+  renderCategories({ premium: true });
+  renderProducts({ premium: true });
+  renderCart();
+  renderAdminPanel();
+}
+
+function buildProductDetails(product) {
+  return [
+    ['Categoria', getCategoryLabel(product.category)],
+    ['Material', product.material],
+    ['Precio', product.value],
+    ['Linea', product.premium ? 'Premium' : 'Catalogo'],
+  ];
+}
+
+function normalizeMeasurements(value) {
+  return String(value || '')
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function normalizeText(value) {
-  return value
+  return String(value ?? '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
@@ -313,18 +530,20 @@ function renderCategories({ premium = false } = {}) {
 }
 
 function getProductCardMarkup(product, { premiumCatalog = false, index = 0 } = {}) {
+  const image = product.images[0] || '/logo/querubim-symbol.png';
+
   return `
     <article class="product-card${product.premium ? ' premium-product' : ''}${premiumCatalog ? ' premium-catalog-card' : ''}" style="--card-index: ${index}">
-      <button class="product-card-view" type="button" data-open-product="${product.id}" aria-label="Ver detalle de ${product.name}">
+      <button class="product-card-view" type="button" data-open-product="${escapeHtml(product.id)}" aria-label="Ver detalle de ${escapeHtml(product.name)}">
         <span class="product-image-wrap">
-          <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
+          <img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}" loading="lazy" />
         </span>
         <span class="product-card-content">
           ${product.premium ? '<span class="premium-badge">Premium</span>' : ''}
-          <span class="product-card-category">${getCategoryLabel(product.category)}</span>
-          <span class="product-card-name">${product.name}</span>
-          <span class="product-card-material">${product.material}</span>
-          <span class="product-card-value">${product.value}</span>
+          <span class="product-card-category">${escapeHtml(getCategoryLabel(product.category))}</span>
+          <span class="product-card-name">${escapeHtml(product.name)}</span>
+          <span class="product-card-material">${escapeHtml(product.material)}</span>
+          <span class="product-card-value">${escapeHtml(product.value)}</span>
           <span class="product-card-cta">Ver detalle</span>
         </span>
       </button>
@@ -355,18 +574,18 @@ function renderDetail() {
   selectors.detailMainImage.alt = product.name;
   selectors.detailDescription.textContent = product.description;
   selectors.detailSpecs.innerHTML = product.details
-    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`)
     .join('');
   selectors.detailMeasure.innerHTML = [
     '<option value="">Selecciona una medida</option>',
-    ...product.measurements.map((measure) => `<option value="${measure}">${measure}</option>`),
+    ...product.measurements.map((measure) => `<option value="${escapeHtml(measure)}">${escapeHtml(measure)}</option>`),
   ].join('');
   selectors.detailMeasure.value = selectedMeasure && product.measurements.includes(selectedMeasure) ? selectedMeasure : '';
   selectors.detailThumbs.innerHTML = product.images
     .map(
       (src, index) => `
-        <button class="${index === state.activeImageIndex ? 'active' : ''}" type="button" data-image-index="${index}" aria-label="Ver imagen ${index + 1} de ${product.name}">
-          <img src="${src}" alt="" loading="lazy" />
+        <button class="${index === state.activeImageIndex ? 'active' : ''}" type="button" data-image-index="${index}" aria-label="Ver imagen ${index + 1} de ${escapeHtml(product.name)}">
+          <img src="${escapeHtml(src)}" alt="" loading="lazy" />
         </button>
       `,
     )
@@ -423,13 +642,13 @@ function renderCart() {
     .map(
       ({ key, product, measure }) => `
         <article class="selection-item">
-          <img src="${product.images[0]}" alt="${product.name}" loading="lazy" />
+          <img src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" loading="lazy" />
           <div>
-            <strong>${product.name}</strong>
+            <strong>${escapeHtml(product.name)}</strong>
             <span>${getCategoryLabel(product.category)} · ${product.material}</span>
-            <small>Medida: ${measure}</small>
+            <small>Medida: ${escapeHtml(measure)}</small>
           </div>
-          <button class="icon-button" type="button" data-remove-cart="${key}" aria-label="Quitar ${product.name}">
+          <button class="icon-button" type="button" data-remove-cart="${escapeHtml(key)}" aria-label="Quitar ${escapeHtml(product.name)}">
             <i data-lucide="x"></i>
           </button>
         </article>
@@ -437,6 +656,264 @@ function renderCart() {
     )
     .join('');
   refreshIcons();
+}
+
+function isAdminLoggedIn() {
+  return localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+}
+
+function populateAdminCategoryOptions() {
+  if (!selectors.adminCategory) return;
+  const selectedCategory = selectors.adminCategory.value || 'anillos';
+
+  selectors.adminCategory.innerHTML = categories
+    .filter((category) => category.slug !== 'todos')
+    .map(
+      (category) =>
+        `<option value="${escapeHtml(category.slug)}"${category.slug === selectedCategory ? ' selected' : ''}>${escapeHtml(category.label)}</option>`,
+    )
+    .join('');
+}
+
+function getAdminVisibleProducts() {
+  const query = normalizeText(state.adminQuery.trim());
+
+  return products
+    .filter((product) => {
+      const searchableText = normalizeText(
+        `${product.name} ${getCategoryLabel(product.category)} ${product.material} ${product.value}`,
+      );
+      return !query || searchableText.includes(query);
+    })
+    .sort((first, second) => {
+      if (Boolean(first.premium) !== Boolean(second.premium)) return Number(second.premium) - Number(first.premium);
+      return first.name.localeCompare(second.name, 'es');
+    });
+}
+
+function renderAdminStats() {
+  if (!selectors.adminStats) return;
+
+  const normalProducts = products.filter((product) => !product.premium).length;
+  const premiumProducts = products.filter((product) => product.premium).length;
+  const categoriesUsed = new Set(products.map((product) => product.category)).size;
+  const estimatedValue = products.reduce((total, product) => total + getProductPrice(product), 0);
+
+  const stats = [
+    { icon: 'package', label: 'Productos', value: products.length },
+    { icon: 'bar-chart-3', label: 'Catalogo normal', value: normalProducts },
+    { icon: 'gem', label: 'Premium', value: premiumProducts },
+    { icon: 'shield-check', label: 'Categorias activas', value: categoriesUsed },
+    { icon: 'shopping-bag', label: 'Valor provisional', value: formatCurrency(estimatedValue) },
+  ];
+
+  selectors.adminStats.innerHTML = stats
+    .map(
+      (stat) => `
+        <article class="admin-stat">
+          <i data-lucide="${stat.icon}"></i>
+          <span>${escapeHtml(stat.label)}</span>
+          <strong>${escapeHtml(stat.value)}</strong>
+        </article>
+      `,
+    )
+    .join('');
+}
+
+function renderAdminProducts() {
+  if (!selectors.adminProductList) return;
+  const visibleProducts = getAdminVisibleProducts();
+
+  selectors.adminProductList.innerHTML = visibleProducts.length
+    ? visibleProducts
+        .map((product) => {
+          const image = product.images[0] || '/logo/querubim-symbol.png';
+          return `
+            <article class="admin-product-item${product.premium ? ' premium-admin-item' : ''}">
+              <img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}" loading="lazy" />
+              <div>
+                <strong>${escapeHtml(product.name)}</strong>
+                <span>${escapeHtml(getCategoryLabel(product.category))} / ${escapeHtml(product.material)}</span>
+                <small>${escapeHtml(product.value)}${product.premium ? ' / Premium' : ''}</small>
+              </div>
+              <div class="admin-product-actions">
+                <button class="icon-button" type="button" data-admin-edit="${escapeHtml(product.id)}" aria-label="Editar ${escapeHtml(product.name)}">
+                  <i data-lucide="edit-3"></i>
+                </button>
+                <button class="icon-button danger-button" type="button" data-admin-delete="${escapeHtml(product.id)}" aria-label="Eliminar ${escapeHtml(product.name)}">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join('')
+    : '<p class="empty-results">No hay productos que coincidan con la busqueda.</p>';
+}
+
+function renderAdminPanel() {
+  if (!selectors.adminStats || !isAdminLoggedIn()) return;
+
+  populateAdminCategoryOptions();
+  renderAdminStats();
+  renderAdminProducts();
+  refreshIcons();
+}
+
+function updateAdminViews() {
+  if (!selectors.adminLoginView || !selectors.adminPanelView) return;
+
+  const loggedIn = isAdminLoggedIn();
+  selectors.adminLoginView.hidden = loggedIn;
+  selectors.adminPanelView.hidden = !loggedIn;
+
+  if (loggedIn) {
+    populateAdminCategoryOptions();
+    renderAdminPanel();
+  }
+
+  refreshIcons();
+}
+
+function resetAdminForm() {
+  if (!selectors.adminProductForm) return;
+
+  state.editingProductId = null;
+  selectors.adminProductForm.reset();
+  selectors.adminEditId.value = '';
+  selectors.adminFormTitle.textContent = 'Crear producto';
+  selectors.adminMaterial.value = 'Oro amarillo 18K';
+  selectors.adminMeasurements.value = 'Medida personalizada';
+  selectors.adminDescription.value = '';
+  selectors.adminFormMessage.textContent = '';
+  selectors.adminFormMessage.classList.remove('error', 'success');
+  populateAdminCategoryOptions();
+}
+
+function fillAdminForm(productId) {
+  const product = products.find((item) => item.id === productId);
+  if (!product || !selectors.adminProductForm) return;
+
+  state.editingProductId = product.id;
+  selectors.adminEditId.value = product.id;
+  selectors.adminFormTitle.textContent = 'Editar producto';
+  selectors.adminName.value = product.name;
+  selectors.adminCategory.value = product.category;
+  selectors.adminPrice.value = getProductPrice(product);
+  selectors.adminMaterial.value = product.material;
+  selectors.adminImage.value = product.images[0] || '';
+  selectors.adminMeasurements.value = product.measurements.join(', ');
+  selectors.adminDescription.value = product.description;
+  selectors.adminPremium.checked = Boolean(product.premium);
+  selectors.adminFormMessage.textContent = '';
+  selectors.adminFormMessage.classList.remove('error', 'success');
+  selectors.adminName.focus();
+}
+
+function buildProductFromAdminForm() {
+  const name = selectors.adminName.value.trim();
+  const category = selectors.adminCategory.value;
+  const price = Number(selectors.adminPrice.value);
+  const material = selectors.adminMaterial.value.trim();
+  const image = selectors.adminImage.value.trim();
+  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  const description = selectors.adminDescription.value.trim();
+  const premium = selectors.adminPremium.checked;
+  const existingId = selectors.adminEditId.value || state.editingProductId;
+  const id = existingId || `${slugify(name || category)}-${Date.now()}`;
+  const value = formatCurrency(price);
+
+  return {
+    id,
+    name,
+    category,
+    material,
+    price,
+    value,
+    premium,
+    description,
+    measurements,
+    details: buildProductDetails({ category, material, value, premium }),
+    images: [image],
+  };
+}
+
+function saveAdminProduct(event) {
+  event.preventDefault();
+
+  if (!selectors.adminProductForm.checkValidity()) {
+    selectors.adminFormMessage.textContent = 'Revisa los campos requeridos antes de guardar.';
+    selectors.adminFormMessage.classList.add('error');
+    selectors.adminProductForm.reportValidity();
+    return;
+  }
+
+  const product = buildProductFromAdminForm();
+
+  if (!product.measurements.length) {
+    selectors.adminFormMessage.textContent = 'Agrega por lo menos una medida disponible.';
+    selectors.adminFormMessage.classList.add('error');
+    selectors.adminMeasurements.focus();
+    return;
+  }
+
+  const existingIndex = products.findIndex((item) => item.id === product.id);
+  if (existingIndex >= 0) products[existingIndex] = product;
+  else products.unshift(product);
+
+  state.activeProduct = product;
+  saveProducts();
+  resetAdminForm();
+  refreshCatalogViews();
+  selectors.adminFormMessage.textContent = 'Producto guardado correctamente.';
+  selectors.adminFormMessage.classList.add('success');
+}
+
+function deleteAdminProduct(productId) {
+  const product = products.find((item) => item.id === productId);
+  if (!product) return;
+  if (!window.confirm(`Eliminar ${product.name} del catalogo?`)) return;
+
+  products = products.filter((item) => item.id !== productId);
+  state.cartItems = state.cartItems.filter((item) => item.product.id !== productId);
+  if (state.activeProduct?.id === productId) state.activeProduct = products[0];
+
+  saveProducts();
+  refreshCatalogViews();
+}
+
+function handleAdminLogin(event) {
+  event.preventDefault();
+
+  if (!selectors.adminLoginForm.checkValidity()) {
+    selectors.adminLoginMessage.textContent = 'Completa el correo y la contrasena.';
+    selectors.adminLoginMessage.classList.add('error');
+    selectors.adminLoginForm.reportValidity();
+    return;
+  }
+
+  const formData = new FormData(selectors.adminLoginForm);
+  const email = String(formData.get('email') || '').trim();
+  const password = String(formData.get('password') || '');
+
+  if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+    localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    selectors.adminLoginForm.reset();
+    selectors.adminLoginMessage.textContent = '';
+    selectors.adminLoginMessage.classList.remove('error');
+    resetAdminForm();
+    updateAdminViews();
+    return;
+  }
+
+  selectors.adminLoginMessage.textContent = 'Credenciales incorrectas.';
+  selectors.adminLoginMessage.classList.add('error');
+}
+
+function handleAdminLogout() {
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+  state.editingProductId = null;
+  updateAdminViews();
 }
 
 function openPanel(panel) {
@@ -465,6 +942,8 @@ function updateActiveNavigation(sectionId) {
     const isActive =
       sectionId === 'premium'
         ? link.dataset.routeLink === 'premium'
+        : sectionId === 'admin'
+          ? link.dataset.routeLink === 'admin'
         : link.getAttribute('href') === `#${sectionId}`;
     link.classList.toggle('active', isActive);
     if (isActive) link.setAttribute('aria-current', 'page');
@@ -475,6 +954,11 @@ function updateActiveNavigation(sectionId) {
 function updateActiveNavigationFromScroll() {
   if (state.currentRoute === 'premium') {
     updateActiveNavigation('premium');
+    return;
+  }
+
+  if (state.currentRoute === 'admin') {
+    updateActiveNavigation('admin');
     return;
   }
 
@@ -495,7 +979,7 @@ function setupSectionObservers() {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
         entry.target.classList.add('visible');
-        if (state.currentRoute === 'premium') return;
+        if (state.currentRoute !== 'home') return;
         updateActiveNavigation(entry.target.id);
       });
     },
@@ -507,9 +991,9 @@ function setupSectionObservers() {
 
 function updateScrollTopButton() {
   state.ticking = false;
-  if (state.currentRoute === 'premium') {
+  if (state.currentRoute === 'premium' || state.currentRoute === 'admin') {
     selectors.scrollTopButton.classList.toggle('visible', window.scrollY > 320);
-    updateActiveNavigation('premium');
+    updateActiveNavigation(state.currentRoute);
     return;
   }
 
@@ -525,13 +1009,27 @@ function requestScrollUpdate() {
 }
 
 function getInitialRoute() {
-  return window.location.pathname.replace(/\/$/, '') === '/premium' ? 'premium' : 'home';
+  const pathname = window.location.pathname.replace(/\/$/, '');
+  if (pathname === '/premium') return 'premium';
+  if (pathname === '/admin') return 'admin';
+  return 'home';
 }
 
 function setRoute(route, { push = true, targetSection = null } = {}) {
   state.currentRoute = route;
   document.body.classList.toggle('premium-route', route === 'premium');
+  document.body.classList.toggle('admin-route', route === 'admin');
   closePanels();
+
+  if (route === 'admin') {
+    document.title = 'Panel administrativo Querubim';
+    updateActiveNavigation('admin');
+    updateAdminViews();
+    if (push) window.history.pushState({ route: 'admin' }, '', '/admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestScrollUpdate();
+    return;
+  }
 
   if (route === 'premium') {
     document.title = 'Catálogo Premium Querubim | Joyas en oro 18K';
@@ -566,10 +1064,10 @@ function setupEvents() {
   selectors.navLinks.forEach((link) => {
     link.addEventListener('click', (event) => {
       const href = link.getAttribute('href');
-      if (link.dataset.routeLink === 'premium') {
+      if (link.dataset.routeLink === 'premium' || link.dataset.routeLink === 'admin') {
         event.preventDefault();
         event.stopPropagation();
-        setRoute('premium');
+        setRoute(link.dataset.routeLink);
         return;
       }
 
@@ -607,6 +1105,21 @@ function setupEvents() {
     renderProducts({ premium: true });
   });
 
+  selectors.adminLoginForm?.addEventListener('submit', handleAdminLogin);
+  selectors.adminLogout?.addEventListener('click', handleAdminLogout);
+  selectors.adminProductForm?.addEventListener('submit', saveAdminProduct);
+  selectors.adminCancelEdit?.addEventListener('click', resetAdminForm);
+  selectors.adminSearchInput?.addEventListener('input', (event) => {
+    state.adminQuery = event.target.value;
+    renderAdminProducts();
+    refreshIcons();
+  });
+  selectors.adminResetCatalog?.addEventListener('click', () => {
+    if (!window.confirm('Restaurar el catalogo inicial de Querubim?')) return;
+    resetAdminForm();
+    resetProductsToDefault();
+  });
+
   document.querySelector('#catalog-search-button').addEventListener('click', () => {
     setRoute('home', { targetSection: 'coleccion' });
     window.requestAnimationFrame(() => selectors.searchInput.focus());
@@ -617,11 +1130,14 @@ function setupEvents() {
     const imageButton = event.target.closest('[data-image-index]');
     const removeButton = event.target.closest('[data-remove-cart]');
     const routeLink = event.target.closest('[data-route-link]');
+    const adminEditButton = event.target.closest('[data-admin-edit]');
+    const adminDeleteButton = event.target.closest('[data-admin-delete]');
 
     if (routeLink) {
       event.preventDefault();
-      if (routeLink.dataset.routeLink === 'premium') setRoute('premium');
-      else setRoute('home', { targetSection: routeLink.dataset.targetSection || 'home' });
+      if (routeLink.dataset.routeLink === 'premium' || routeLink.dataset.routeLink === 'admin') {
+        setRoute(routeLink.dataset.routeLink);
+      } else setRoute('home', { targetSection: routeLink.dataset.targetSection || 'home' });
       return;
     }
 
@@ -638,6 +1154,8 @@ function setupEvents() {
       renderDetail();
     }
     if (removeButton) removeCartItem(removeButton.dataset.removeCart);
+    if (adminEditButton) fillAdminForm(adminEditButton.dataset.adminEdit);
+    if (adminDeleteButton) deleteAdminProduct(adminDeleteButton.dataset.adminDelete);
   });
 
   selectors.detailMeasure.addEventListener('change', () => {
@@ -649,7 +1167,7 @@ function setupEvents() {
   selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
 
   selectors.scrollTopButton.addEventListener('click', () => {
-    if (state.currentRoute === 'premium') {
+    if (state.currentRoute === 'premium' || state.currentRoute === 'admin') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }

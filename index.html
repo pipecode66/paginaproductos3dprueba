@@ -45,6 +45,14 @@
       </nav>
 
       <div class="header-actions">
+        <a
+          class="icon-button admin-header-link"
+          href="/admin"
+          data-route-link="admin"
+          aria-label="Ingresar al panel administrativo"
+        >
+          <i data-lucide="lock-keyhole"></i>
+        </a>
         <button class="icon-button" id="catalog-search-button" type="button" aria-label="Buscar en la colección">
           <i data-lucide="search"></i>
         </button>
@@ -71,6 +79,7 @@
       <a class="nav-link nav-link-premium" href="/premium" data-route-link="premium">Premium</a>
       <a class="nav-link" href="#servicios">Servicios</a>
       <a class="nav-link" href="#contacto">Contacto</a>
+      <a class="nav-link" href="/admin" data-route-link="admin">Admin</a>
     </aside>
 
     <main>
@@ -304,6 +313,125 @@
             <div class="filter-group premium-filter-group" id="premium-category-filters" aria-label="Filtrar joyas premium"></div>
           </aside>
           <div class="premium-product-grid" id="premium-product-grid" aria-live="polite"></div>
+        </div>
+      </section>
+      <section class="page-section admin-section" id="admin" aria-label="Panel administrativo Querubim">
+        <div class="admin-login-view" id="admin-login-view">
+          <div class="admin-login-copy">
+            <span class="eyebrow">Administracion</span>
+            <h1>Ingreso al panel Querubim.</h1>
+            <p>Gestiona el catalogo, revisa indicadores y manten la informacion comercial organizada.</p>
+          </div>
+
+          <form class="admin-login-card" id="admin-login-form" novalidate>
+            <i data-lucide="lock-keyhole"></i>
+            <label for="admin-email">Correo administrativo <span>*</span></label>
+            <input id="admin-email" name="email" type="email" autocomplete="username" required />
+
+            <label for="admin-password">Contrasena <span>*</span></label>
+            <input id="admin-password" name="password" type="password" autocomplete="current-password" required />
+
+            <button class="button button-primary" type="submit">
+              Ingresar
+              <i data-lucide="arrow-right"></i>
+            </button>
+            <p class="form-message" id="admin-login-message" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div class="admin-panel-view" id="admin-panel-view" hidden>
+          <div class="admin-panel-header">
+            <div>
+              <span class="eyebrow">Panel administrativo</span>
+              <h1>Gestion del catalogo Querubim</h1>
+            </div>
+            <button class="button button-secondary-dark" id="admin-logout" type="button">
+              Salir
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+
+          <div class="admin-stats" id="admin-stats" aria-live="polite"></div>
+
+          <div class="admin-workspace">
+            <section class="admin-products-panel" aria-label="Productos del catalogo">
+              <div class="admin-panel-title">
+                <div>
+                  <span class="eyebrow">Productos</span>
+                  <h2>Catalogo editable</h2>
+                </div>
+                <button class="button button-secondary" id="admin-reset-catalog" type="button">
+                  Restaurar
+                  <i data-lucide="rotate-ccw"></i>
+                </button>
+              </div>
+
+              <label class="search-field admin-search-field" for="admin-product-search">
+                <span>Buscar producto</span>
+                <input id="admin-product-search" type="search" placeholder="Nombre, categoria o material" />
+              </label>
+
+              <div class="admin-product-list" id="admin-product-list" aria-live="polite"></div>
+            </section>
+
+            <section class="admin-editor-panel" aria-label="Editor de producto">
+              <div class="admin-panel-title">
+                <div>
+                  <span class="eyebrow">Editor</span>
+                  <h2 id="admin-form-title">Crear producto</h2>
+                </div>
+                <i data-lucide="package"></i>
+              </div>
+
+              <form class="admin-product-form" id="admin-product-form" novalidate>
+                <input id="admin-edit-id" name="id" type="hidden" />
+
+                <label for="admin-name">Nombre <span>*</span></label>
+                <input id="admin-name" name="name" type="text" required />
+
+                <label for="admin-category">Categoria <span>*</span></label>
+                <select id="admin-category" name="category" required></select>
+
+                <div class="admin-form-row">
+                  <label for="admin-price">
+                    Precio COP <span>*</span>
+                    <input id="admin-price" name="price" type="number" min="0" step="1000" required />
+                  </label>
+                  <label for="admin-material">
+                    Material <span>*</span>
+                    <input id="admin-material" name="material" type="text" required />
+                  </label>
+                </div>
+
+                <label for="admin-image">Ruta o URL de imagen <span>*</span></label>
+                <input id="admin-image" name="image" type="text" placeholder="/products/catalogo-real/anillos/anillos-01.jpg" required />
+
+                <label for="admin-measurements">Medidas disponibles <span>*</span></label>
+                <textarea id="admin-measurements" name="measurements" rows="3" required></textarea>
+
+                <label for="admin-description">Descripcion <span>*</span></label>
+                <textarea id="admin-description" name="description" rows="4" required></textarea>
+
+                <label class="admin-check" for="admin-premium">
+                  <input id="admin-premium" name="premium" type="checkbox" />
+                  <span>Producto premium</span>
+                </label>
+
+                <p class="form-message" id="admin-form-message" role="status" aria-live="polite"></p>
+
+                <div class="admin-form-actions">
+                  <button class="button button-primary" type="submit">
+                    Guardar producto
+                    <i data-lucide="save"></i>
+                  </button>
+                  <button class="button button-secondary" id="admin-cancel-edit" type="button">
+                    Nuevo
+                    <i data-lucide="plus"></i>
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
         </div>
       </section>
     </main>
