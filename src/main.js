@@ -384,6 +384,8 @@ const state = {
   ticking: false,
 };
 
+const standaloneRoutes = new Set(['premium', 'admin', 'historia']);
+
 const selectors = {
   pageSections: document.querySelectorAll('[data-page]'),
   navLinks: document.querySelectorAll('.nav-link'),
@@ -1607,6 +1609,8 @@ function updateActiveNavigation(sectionId) {
         ? link.dataset.routeLink === 'premium'
         : sectionId === 'admin'
           ? link.dataset.routeLink === 'admin'
+          : sectionId === 'historia'
+            ? link.dataset.routeLink === 'historia'
         : link.getAttribute('href') === `#${sectionId}`;
     link.classList.toggle('active', isActive);
     if (isActive) link.setAttribute('aria-current', 'page');
@@ -1615,13 +1619,8 @@ function updateActiveNavigation(sectionId) {
 }
 
 function updateActiveNavigationFromScroll() {
-  if (state.currentRoute === 'premium') {
-    updateActiveNavigation('premium');
-    return;
-  }
-
-  if (state.currentRoute === 'admin') {
-    updateActiveNavigation('admin');
+  if (standaloneRoutes.has(state.currentRoute)) {
+    updateActiveNavigation(state.currentRoute);
     return;
   }
 
@@ -1654,7 +1653,7 @@ function setupSectionObservers() {
 
 function updateScrollTopButton() {
   state.ticking = false;
-  if (state.currentRoute === 'premium' || state.currentRoute === 'admin') {
+  if (standaloneRoutes.has(state.currentRoute)) {
     selectors.scrollTopButton.classList.toggle('visible', window.scrollY > 320);
     updateActiveNavigation(state.currentRoute);
     return;
@@ -1675,6 +1674,7 @@ function getInitialRoute() {
   const pathname = window.location.pathname.replace(/\/$/, '');
   if (pathname === '/premium') return 'premium';
   if (pathname === '/admin') return 'admin';
+  if (pathname === '/historia') return 'historia';
   return 'home';
 }
 
@@ -1682,6 +1682,7 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
   state.currentRoute = route;
   document.body.classList.toggle('premium-route', route === 'premium');
   document.body.classList.toggle('admin-route', route === 'admin');
+  document.body.classList.toggle('history-route', route === 'historia');
   closePanels();
 
   if (route === 'admin') {
@@ -1700,6 +1701,15 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
     renderCategories({ premium: true });
     renderProducts({ premium: true });
     if (push) window.history.pushState({ route: 'premium' }, '', '/premium');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestScrollUpdate();
+    return;
+  }
+
+  if (route === 'historia') {
+    document.title = 'Historia, Misión y Visión | Joyería Querubim';
+    updateActiveNavigation('historia');
+    if (push) window.history.pushState({ route: 'historia' }, '', '/historia');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     requestScrollUpdate();
     return;
@@ -1727,7 +1737,7 @@ function setupEvents() {
   selectors.navLinks.forEach((link) => {
     link.addEventListener('click', (event) => {
       const href = link.getAttribute('href');
-      if (link.dataset.routeLink === 'premium' || link.dataset.routeLink === 'admin') {
+      if (standaloneRoutes.has(link.dataset.routeLink)) {
         event.preventDefault();
         event.stopPropagation();
         setRoute(link.dataset.routeLink);
@@ -1823,7 +1833,7 @@ function setupEvents() {
 
     if (routeLink) {
       event.preventDefault();
-      if (routeLink.dataset.routeLink === 'premium' || routeLink.dataset.routeLink === 'admin') {
+      if (standaloneRoutes.has(routeLink.dataset.routeLink)) {
         setRoute(routeLink.dataset.routeLink);
       } else setRoute('home', { targetSection: routeLink.dataset.targetSection || 'home' });
       return;
@@ -1855,7 +1865,7 @@ function setupEvents() {
   selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
 
   selectors.scrollTopButton.addEventListener('click', () => {
-    if (state.currentRoute === 'premium' || state.currentRoute === 'admin') {
+    if (standaloneRoutes.has(state.currentRoute)) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
