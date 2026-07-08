@@ -39,7 +39,7 @@ import {
 } from 'lucide';
 
 const WHATSAPP_NUMBER = '570000000000';
-const PRODUCT_STORAGE_KEY = 'querubim-products-v8';
+const PRODUCT_STORAGE_KEY = 'querubim-products-v9';
 const ADMIN_SESSION_KEY = 'querubim-admin-session';
 const ADMIN_BACKUP_KEY = 'querubim-last-catalog-backup';
 const ADMIN_ACTIVITY_KEY = 'querubim-admin-activity';
@@ -131,7 +131,7 @@ const importedCatalogGroups = [
     id: 'anillo-rubi-aurora',
     name: 'Anillo Rubí Aurora',
     category: 'anillos',
-    imageNumbers: [5, 6, 7, 8],
+    imageNumbers: [1, 2, 3, 4],
     price: 1120000,
     measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
     description:
@@ -142,7 +142,7 @@ const importedCatalogGroups = [
     id: 'anillo-corona-amatista',
     name: 'Anillo Corona Amatista',
     category: 'anillos',
-    imageNumbers: [13, 14, 15, 16],
+    imageNumbers: [9, 10, 11, 12],
     price: 1480000,
     measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
     description:
@@ -153,7 +153,7 @@ const importedCatalogGroups = [
     id: 'anillo-filigrana-celestial',
     name: 'Anillo Filigrana Celestial',
     category: 'anillos',
-    imageNumbers: [21, 22, 23, 24],
+    imageNumbers: [17, 18, 19, 20],
     price: 1250000,
     measurements: ['Talla 5', 'Talla 6', 'Talla 7', 'Talla 8', 'Talla 9', 'Talla personalizada'],
     description:
@@ -164,7 +164,7 @@ const importedCatalogGroups = [
     id: 'brazalete-placa-dorada',
     name: 'Brazalete Placa Dorada',
     category: 'brazaletes',
-    imageNumbers: [5, 6, 7, 8],
+    imageNumbers: [1, 2, 3, 4],
     price: 1320000,
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
     description:
@@ -175,7 +175,7 @@ const importedCatalogGroups = [
     id: 'brazalete-lazo-diamantado',
     name: 'Brazalete Lazo Diamantado',
     category: 'brazaletes',
-    imageNumbers: [13, 14, 15, 16],
+    imageNumbers: [9, 10, 11, 12],
     price: 1180000,
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
     description:
@@ -186,7 +186,7 @@ const importedCatalogGroups = [
     id: 'brazalete-greca-serena',
     name: 'Brazalete Greca Serena',
     category: 'brazaletes',
-    imageNumbers: [21, 22, 23, 24],
+    imageNumbers: [17, 18, 19, 20],
     price: 1090000,
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
     description:
@@ -197,7 +197,7 @@ const importedCatalogGroups = [
     id: 'brazalete-amuletos-esmeralda',
     name: 'Brazalete Amuletos Esmeralda',
     category: 'brazaletes',
-    imageNumbers: [29, 30, 31, 32],
+    imageNumbers: [25, 26, 27, 28],
     price: 1580000,
     measurements: ['15 cm', '16 cm', '17 cm', '18 cm', '19 cm', '20 cm', 'Medida personalizada'],
     description:
@@ -208,7 +208,7 @@ const importedCatalogGroups = [
     id: 'candongas-brillo-clasico',
     name: 'Candongas Brillo Clásico',
     category: 'candongas',
-    imageNumbers: [5, 6, 7, 8],
+    imageNumbers: [1, 2, 3, 4],
     price: 680000,
     measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
     description:
@@ -219,7 +219,7 @@ const importedCatalogGroups = [
     id: 'candongas-trenza-dorada',
     name: 'Candongas Trenza Dorada',
     category: 'candongas',
-    imageNumbers: [13, 14, 15, 16],
+    imageNumbers: [9, 10, 11, 12],
     price: 740000,
     measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
     description:
@@ -230,7 +230,7 @@ const importedCatalogGroups = [
     id: 'candongas-ovalo-diamantado',
     name: 'Candongas Óvalo Diamantado',
     category: 'candongas',
-    imageNumbers: [21, 22, 23, 24],
+    imageNumbers: [17, 18, 19, 20],
     price: 790000,
     measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
     description:
@@ -241,7 +241,7 @@ const importedCatalogGroups = [
     id: 'candongas-onda-organica',
     name: 'Candongas Onda Orgánica',
     category: 'candongas',
-    imageNumbers: [28, 29, 30],
+    imageNumbers: [25, 26, 27],
     price: 860000,
     measurements: ['Pequeñas', 'Medianas', 'Grandes', 'Ajuste especial'],
     description:
@@ -252,7 +252,7 @@ const importedCatalogGroups = [
     id: 'dije-mano-sagrada',
     name: 'Dije Mano Sagrada',
     category: 'dijes-para-manillas',
-    imageNumbers: [5, 6, 7, 8],
+    imageNumbers: [1, 2, 3, 4],
     price: 340000,
     measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
     description:
@@ -263,7 +263,7 @@ const importedCatalogGroups = [
     id: 'dije-medallon-corona-real',
     name: 'Dije Medallón Corona Real',
     category: 'dijes-para-manillas',
-    imageNumbers: [13, 14, 15, 16],
+    imageNumbers: [9, 10, 11, 12],
     price: 520000,
     measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
     description:
@@ -271,21 +271,10 @@ const importedCatalogGroups = [
     finish: 'Medallón bicolor',
   },
   {
-    id: 'dije-moneda-sol-querubim',
-    name: 'Dije Moneda Sol Querubim',
-    category: 'dijes-para-manillas',
-    imageNumbers: [17, 18, 19, 20],
-    price: 300000,
-    measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
-    description:
-      'Dije redondo en oro 18K con relieve central y borde texturizado, pensado para combinaciones discretas.',
-    finish: 'Relieve circular',
-  },
-  {
     id: 'dije-medalla-devocion',
     name: 'Dije Medalla Devoción',
     category: 'dijes-para-manillas',
-    imageNumbers: [25, 26, 27, 28],
+    imageNumbers: [21, 22, 23, 24],
     price: 460000,
     measurements: ['Mini', 'Pequeño', 'Mediano', 'Argolla reforzada', 'Medida personalizada'],
     description:
@@ -296,7 +285,7 @@ const importedCatalogGroups = [
     id: 'manilla-atenea-cristal',
     name: 'Manilla Atenea Cristal',
     category: 'manillas',
-    imageNumbers: [5, 6, 7, 8],
+    imageNumbers: [1, 2, 3, 4],
     price: 1280000,
     measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
     description:
@@ -307,7 +296,7 @@ const importedCatalogGroups = [
     id: 'manilla-esmeralda-enlace',
     name: 'Manilla Esmeralda Enlace',
     category: 'manillas',
-    imageNumbers: [13, 14, 15, 16],
+    imageNumbers: [9, 10, 11, 12],
     price: 1560000,
     measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
     description:
@@ -318,7 +307,7 @@ const importedCatalogGroups = [
     id: 'manilla-eslabon-dorado',
     name: 'Manilla Eslabón Dorado',
     category: 'manillas',
-    imageNumbers: [21, 22, 23, 24],
+    imageNumbers: [17, 18, 19, 20],
     price: 1380000,
     measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
     description:
@@ -329,7 +318,7 @@ const importedCatalogGroups = [
     id: 'manilla-placa-sello-dorado',
     name: 'Manilla Placa Sello Dorado',
     category: 'manillas',
-    imageNumbers: [29, 30, 31, 32],
+    imageNumbers: [25, 26, 27, 28],
     price: 1650000,
     measurements: ['14 cm', '15 cm', '16 cm', '17 cm', '18 cm', '19 cm', 'Medida personalizada'],
     description:
@@ -505,7 +494,6 @@ function getDefaultStockForGroup(id) {
     'candongas-onda-organica': 1,
     'dije-mano-sagrada': 5,
     'dije-medallon-corona-real': 2,
-    'dije-moneda-sol-querubim': 7,
     'dije-medalla-devocion': 3,
     'manilla-atenea-cristal': 2,
     'manilla-esmeralda-enlace': 1,
