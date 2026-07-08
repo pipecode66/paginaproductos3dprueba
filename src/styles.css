@@ -467,7 +467,6 @@ p {
   background: var(--color-gold-shine);
 }
 
-.story-section,
 .services-section {
   display: grid;
   grid-template-columns: minmax(320px, 1fr);
@@ -476,7 +475,6 @@ p {
   background: var(--color-bg-main);
 }
 
-.section-copy h2,
 .collection-intro h2,
 .services-heading h2,
 .contact-copy h2,
@@ -488,7 +486,6 @@ p {
   line-height: 0.96;
 }
 
-.section-copy p,
 .collection-intro p,
 .services-heading p,
 .contact-copy p {
@@ -496,37 +493,6 @@ p {
   margin: 0;
   color: var(--color-text-secondary);
   line-height: 1.75;
-}
-
-.mission-grid {
-  margin-top: 30px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--color-border);
-}
-
-.mission-grid article {
-  min-height: 230px;
-  padding: 24px;
-  background: var(--color-surface);
-}
-
-.mission-grid strong {
-  color: var(--color-primary-dark);
-  font-size: var(--text-sm);
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.mission-grid p {
-  margin-top: 16px;
-}
-
-.story-link {
-  width: max-content;
-  margin-top: 28px;
 }
 
 .collection-section {
@@ -1264,8 +1230,6 @@ p {
   letter-spacing: 0;
 }
 
-.mission-grid,
-.mission-grid article,
 .service-cards,
 .service-cards article,
 .contact-card,
@@ -1285,14 +1249,12 @@ p {
   border-radius: var(--radius-lg);
 }
 
-.mission-grid,
 .service-cards,
 .detail-specs {
   gap: 10px;
   background: transparent;
 }
 
-.mission-grid article,
 .service-cards article,
 .detail-specs div,
 .product-card,
@@ -2936,30 +2898,23 @@ body.premium-route .premium-back-link svg {
     display: inline-flex;
   }
 
-  .story-section,
   .services-section,
   .contact-card,
   .collection-intro {
     grid-template-columns: 1fr;
   }
 
-  .section-copy h2,
   .collection-intro h2,
   .services-heading h2,
   .contact-copy h2 {
     text-align: center;
   }
 
-  .section-copy .eyebrow,
   .collection-intro .eyebrow,
   .services-heading .eyebrow,
   .contact-copy .eyebrow {
     display: block;
     text-align: center;
-  }
-
-  .mission-grid {
-    grid-template-columns: 1fr;
   }
 
   .catalog-toolbar {
