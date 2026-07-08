@@ -2018,7 +2018,6 @@ body.premium-route .premium-back-link svg {
     linear-gradient(180deg, rgba(95, 38, 56, 0.08), transparent 34%, rgba(129, 95, 42, 0.08));
   pointer-events: none;
   transform: translateX(-8%);
-  animation: institutionalLightSweep 12s ease-in-out infinite;
 }
 
 .institutional-section > * {
@@ -2767,18 +2766,6 @@ body.premium-route .premium-back-link svg {
   100% {
     opacity: 0;
     transform: translateX(130%) skewX(-14deg);
-  }
-}
-
-@keyframes institutionalLightSweep {
-  0%,
-  100% {
-    opacity: 0.48;
-    transform: translateX(-8%);
-  }
-  50% {
-    opacity: 0.78;
-    transform: translateX(5%);
   }
 }
 
