@@ -978,7 +978,10 @@ p {
 
 .contact-map {
   width: 100%;
+  height: 100%;
   min-height: 410px;
+  align-self: stretch;
+  display: block;
   border: 0;
   filter: saturate(0.72) sepia(0.08) contrast(0.96);
 }
@@ -3240,6 +3243,7 @@ body.admin-route .whatsapp-button {
   }
 
   .contact-map {
+    height: 360px;
     min-height: 360px;
   }
 
@@ -3447,6 +3451,7 @@ body.admin-route .whatsapp-button {
   }
 
   .contact-map {
+    height: 320px;
     min-height: 320px;
   }
 
