@@ -4,6 +4,7 @@ import {
   Bell,
   BarChart3,
   ChevronUp,
+  Clock3,
   ClipboardList,
   CreditCard,
   Database,
@@ -37,8 +38,9 @@ import {
   X,
   createIcons,
 } from 'lucide';
+import { siFacebook, siInstagram, siTiktok } from 'simple-icons/icons';
 
-const WHATSAPP_NUMBER = '570000000000';
+const WHATSAPP_NUMBER = '573225435618';
 const PRODUCT_STORAGE_KEY = 'querubim-products-v9';
 const ADMIN_SESSION_KEY = 'querubim-admin-session';
 const ADMIN_BACKUP_KEY = 'querubim-last-catalog-backup';
@@ -336,6 +338,7 @@ const icons = {
   Bell,
   BarChart3,
   ChevronUp,
+  Clock3,
   ClipboardList,
   CreditCard,
   Database,
@@ -367,6 +370,12 @@ const icons = {
   UploadCloud,
   UserRound,
   X,
+};
+
+const brandIcons = {
+  facebook: siFacebook,
+  instagram: siInstagram,
+  tiktok: siTiktok,
 };
 
 const state = {
@@ -460,6 +469,15 @@ function refreshIcons() {
       'aria-hidden': 'true',
       'stroke-width': '1.5',
     },
+  });
+}
+
+function renderBrandIcons() {
+  document.querySelectorAll('[data-brand-icon]').forEach((container) => {
+    const icon = brandIcons[container.dataset.brandIcon];
+    if (!icon) return;
+
+    container.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="${icon.path}"></path></svg>`;
   });
 }
 
@@ -1882,7 +1900,16 @@ function setupEvents() {
       return;
     }
 
-    selectors.formMessage.textContent = 'Gracias. El equipo de Querubim revisará tu solicitud y te contactará pronto.';
+    const formData = new FormData(selectors.contactForm);
+    const message = [
+      `Hola Querubim, soy ${formData.get('name')}.`,
+      `Mi correo es ${formData.get('email')}.`,
+      `Estoy interesado(a) en: ${formData.get('interest')}.`,
+      `Consulta: ${formData.get('message')}`,
+    ].join('\n');
+
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+    selectors.formMessage.textContent = 'Abrimos WhatsApp con tu solicitud lista para enviar.';
     selectors.formMessage.classList.remove('error');
     selectors.formMessage.classList.add('success');
     selectors.contactForm.reset();
@@ -1911,6 +1938,8 @@ renderCart();
 setupEvents();
 setupSectionObservers();
 refreshIcons();
+renderBrandIcons();
+document.querySelector('#current-year').textContent = new Date().getFullYear();
 setRoute(getInitialRoute(), {
   push: false,
   targetSection: getInitialRoute() === 'home' ? window.location.hash.slice(1) || 'home' : null,

@@ -15,6 +15,44 @@
     <meta property="og:locale" content="es_CO" />
     <link rel="canonical" href="https://joyeriaquerubim.com" />
     <link rel="icon" type="image/png" href="/logo/querubim-symbol.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "JewelryStore",
+        "name": "Joyería Querubim",
+        "legalName": "QUERUBIM S.A.S.",
+        "taxID": "901965430-3",
+        "url": "https://joyeriaquerubim.com",
+        "logo": "https://joyeriaquerubim.com/logo/querubim-logo-full.png",
+        "telephone": "+57 322 543 5618",
+        "email": "joyeriaquerubimsas@gmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "CC Alejandría, entrada 5, local 1-161, Centro",
+          "addressLocality": "Cúcuta",
+          "addressRegion": "Norte de Santander",
+          "addressCountry": "CO"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "opens": "09:00",
+            "closes": "19:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": "Sunday",
+            "opens": "09:00",
+            "closes": "14:00"
+          }
+        ],
+        "sameAs": [
+          "https://www.instagram.com/joyeriaquerubim/",
+          "https://www.tiktok.com/@joyeria.querubim7"
+        ]
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -189,22 +227,57 @@
       <div class="section-divider" aria-hidden="true"></div>
 
       <section class="page-section contact-section" id="contacto" data-page>
-        <div class="contact-card">
+        <div class="contact-heading">
+          <div>
+            <span class="eyebrow">Contacto</span>
+            <h2>Visítanos o conversemos sobre tu próxima joya.</h2>
+          </div>
+          <p>
+            Nuestro equipo te orientará sobre tallas, estilos, disponibilidad, presupuestos y fabricaciones especiales.
+          </p>
+        </div>
+
+        <div class="contact-layout">
           <div class="contact-copy">
             <img src="/logo/querubim-logo-full.png" alt="Joyería Querubim" loading="lazy" />
-            <span class="eyebrow">Contacto</span>
-            <h2>Cuéntanos qué momento quieres celebrar.</h2>
-            <p>
-              Te guiaremos en talla, estilo, presupuesto, disponibilidad y opciones para piezas personalizadas.
-            </p>
             <div class="contact-lines">
-              <a href="mailto:contacto@querubim.co"><i data-lucide="mail"></i> contacto@querubim.co</a>
-              <a href="tel:+570000000000"><i data-lucide="phone"></i> +57 000 000 0000</a>
-              <span><i data-lucide="map-pin"></i> Bogotá, Colombia</span>
+              <a href="https://wa.me/573225435618?text=Hola%20Querubim,%20quiero%20recibir%20asesor%C3%ADa." target="_blank" rel="noopener">
+                <i data-lucide="message-circle"></i>
+                <span><small>WhatsApp</small>+57 322 543 5618</span>
+              </a>
+              <a href="mailto:joyeriaquerubimsas@gmail.com">
+                <i data-lucide="mail"></i>
+                <span><small>Correo electrónico</small>joyeriaquerubimsas@gmail.com</span>
+              </a>
+              <div>
+                <i data-lucide="map-pin"></i>
+                <span><small>Ubicación</small>CC Alejandría, entrada 5, local 1-161, Centro, Cúcuta</span>
+              </div>
+              <div>
+                <i data-lucide="clock-3"></i>
+                <span><small>Horario</small>Lunes a sábado: 9:00 a. m. - 7:00 p. m.<br />Domingos y festivos: 9:00 a. m. - 2:00 p. m.</span>
+              </div>
+            </div>
+
+            <div class="social-links" aria-label="Redes sociales de Joyería Querubim">
+              <a href="https://www.instagram.com/joyeriaquerubim/" target="_blank" rel="noopener" aria-label="Instagram: @joyeriaquerubim">
+                <span class="brand-icon" data-brand-icon="instagram"></span>
+                <span>@joyeriaquerubim</span>
+              </a>
+              <a href="https://www.facebook.com/search/top/?q=Joyeria%20Querubim" target="_blank" rel="noopener" aria-label="Facebook: Joyería Querubim">
+                <span class="brand-icon" data-brand-icon="facebook"></span>
+                <span>Joyería Querubim</span>
+              </a>
+              <a href="https://www.tiktok.com/@joyeria.querubim7" target="_blank" rel="noopener" aria-label="TikTok: @joyeria.querubim7">
+                <span class="brand-icon" data-brand-icon="tiktok"></span>
+                <span>@joyeria.querubim7</span>
+              </a>
             </div>
           </div>
 
           <form class="contact-form" id="contact-form" novalidate>
+            <span class="eyebrow">Asesoría personalizada</span>
+            <h3>Escríbenos por WhatsApp</h3>
             <label for="name">Nombre <span>*</span></label>
             <input id="name" name="name" type="text" autocomplete="name" required />
 
@@ -224,11 +297,36 @@
             <textarea id="message" name="message" rows="4" required></textarea>
 
             <button class="button button-primary" type="submit">
-              Enviar solicitud
-              <i data-lucide="send"></i>
+              Iniciar conversación
+              <i data-lucide="message-circle"></i>
             </button>
             <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
           </form>
+        </div>
+
+        <div class="location-panel">
+          <div class="location-copy">
+            <span class="eyebrow">Nuestra tienda</span>
+            <h3>Te esperamos en el Centro Comercial Alejandría.</h3>
+            <p>Entrada 5, local 1-161, Centro, Cúcuta, Norte de Santander.</p>
+            <a
+              class="button button-secondary-dark"
+              href="https://www.google.com/maps/search/?api=1&query=CC%20Alejandr%C3%ADa%20Entrada%205%20Local%201-161%20C%C3%BAcuta%20Norte%20de%20Santander"
+              target="_blank"
+              rel="noopener"
+            >
+              Abrir en Google Maps
+              <i data-lucide="map-pin"></i>
+            </a>
+          </div>
+          <iframe
+            class="contact-map"
+            title="Ubicación de Joyería Querubim en Cúcuta"
+            src="https://www.google.com/maps?q=CC%20Alejandr%C3%ADa%20Entrada%205%20Local%201-161%2C%20C%C3%BAcuta%2C%20Norte%20de%20Santander&output=embed"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
         </div>
       </section>
 
@@ -560,13 +658,65 @@
       </section>
     </main>
 
+    <footer class="site-footer" id="pie-de-pagina">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <img src="/logo/querubim-logo-full.png" alt="Joyería Querubim S.A.S." loading="lazy" />
+          <p>Joyas en oro de 18 quilates creadas para acompañar historias que trascienden generaciones.</p>
+          <div class="footer-socials" aria-label="Redes sociales">
+            <a href="https://www.instagram.com/joyeriaquerubim/" target="_blank" rel="noopener" aria-label="Instagram">
+              <span class="brand-icon" data-brand-icon="instagram"></span>
+            </a>
+            <a href="https://www.facebook.com/search/top/?q=Joyeria%20Querubim" target="_blank" rel="noopener" aria-label="Facebook">
+              <span class="brand-icon" data-brand-icon="facebook"></span>
+            </a>
+            <a href="https://www.tiktok.com/@joyeria.querubim7" target="_blank" rel="noopener" aria-label="TikTok">
+              <span class="brand-icon" data-brand-icon="tiktok"></span>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-column">
+          <h2>Contacto</h2>
+          <a href="https://wa.me/573225435618" target="_blank" rel="noopener">+57 322 543 5618</a>
+          <a href="mailto:joyeriaquerubimsas@gmail.com">joyeriaquerubimsas@gmail.com</a>
+          <p>CC Alejandría, entrada 5, local 1-161<br />Centro, Cúcuta, Norte de Santander</p>
+        </div>
+
+        <div class="footer-column">
+          <h2>Horarios</h2>
+          <p><strong>Lunes a sábado</strong><br />9:00 a. m. - 7:00 p. m.</p>
+          <p><strong>Domingos y festivos</strong><br />9:00 a. m. - 2:00 p. m.</p>
+        </div>
+
+        <div class="footer-column footer-legal">
+          <h2>Información fiscal</h2>
+          <dl>
+            <div><dt>Razón social</dt><dd>QUERUBIM S.A.S.</dd></div>
+            <div><dt>NIT</dt><dd>901965430-3</dd></div>
+            <div><dt>Condición</dt><dd>Contributivo</dd></div>
+            <div><dt>Dirección fiscal</dt><dd>Local 1-161, entrada 5, CC Alejandría, Centro, Cúcuta</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© <span id="current-year">2026</span> QUERUBIM S.A.S. Todos los derechos reservados.</p>
+        <div>
+          <a href="/historia" data-route-link="historia">Historia</a>
+          <a href="#coleccion">Catálogo</a>
+          <a href="#contacto">Contacto</a>
+        </div>
+      </div>
+    </footer>
+
     <button class="scroll-top-button" id="scroll-top-button" type="button" aria-label="Volver al inicio">
       <i data-lucide="chevron-up"></i>
     </button>
 
     <a
       class="whatsapp-button"
-      href="https://wa.me/570000000000?text=Hola%20Querubim,%20quiero%20recibir%20asesoría."
+      href="https://wa.me/573225435618?text=Hola%20Querubim,%20quiero%20recibir%20asesor%C3%ADa."
       target="_blank"
       rel="noopener"
       aria-label="Escríbenos por WhatsApp"
