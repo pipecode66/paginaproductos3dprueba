@@ -23,12 +23,10 @@ import {
   Package,
   PackageCheck,
   PenTool,
-  Phone,
   Plus,
   RotateCcw,
   Save,
   Search,
-  Send,
   ShieldCheck,
   ShoppingBag,
   Tags,
@@ -357,12 +355,10 @@ const icons = {
   Package,
   PackageCheck,
   PenTool,
-  Phone,
   Plus,
   RotateCcw,
   Save,
   Search,
-  Send,
   ShieldCheck,
   ShoppingBag,
   Tags,
@@ -393,7 +389,7 @@ const state = {
   ticking: false,
 };
 
-const standaloneRoutes = new Set(['premium', 'admin', 'historia']);
+const standaloneRoutes = new Set(['premium', 'admin', 'historia', 'contacto']);
 
 const selectors = {
   pageSections: document.querySelectorAll('[data-page]'),
@@ -1629,7 +1625,9 @@ function updateActiveNavigation(sectionId) {
           ? link.dataset.routeLink === 'admin'
           : sectionId === 'historia'
             ? link.dataset.routeLink === 'historia'
-        : link.getAttribute('href') === `#${sectionId}`;
+            : sectionId === 'contacto'
+              ? link.dataset.routeLink === 'contacto'
+              : link.getAttribute('href') === `#${sectionId}`;
     link.classList.toggle('active', isActive);
     if (isActive) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -1693,6 +1691,7 @@ function getInitialRoute() {
   if (pathname === '/premium') return 'premium';
   if (pathname === '/admin') return 'admin';
   if (pathname === '/historia') return 'historia';
+  if (pathname === '/contacto') return 'contacto';
   return 'home';
 }
 
@@ -1701,6 +1700,7 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
   document.body.classList.toggle('premium-route', route === 'premium');
   document.body.classList.toggle('admin-route', route === 'admin');
   document.body.classList.toggle('history-route', route === 'historia');
+  document.body.classList.toggle('contact-route', route === 'contacto');
   closePanels();
 
   if (route === 'admin') {
@@ -1728,6 +1728,15 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
     document.title = 'Historia, Misión y Visión | Joyería Querubim';
     updateActiveNavigation('historia');
     if (push) window.history.pushState({ route: 'historia' }, '', '/historia');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestScrollUpdate();
+    return;
+  }
+
+  if (route === 'contacto') {
+    document.title = 'Contacto y ubicación | Joyería Querubim';
+    updateActiveNavigation('contacto');
+    if (push) window.history.pushState({ route: 'contacto' }, '', '/contacto');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     requestScrollUpdate();
     return;
