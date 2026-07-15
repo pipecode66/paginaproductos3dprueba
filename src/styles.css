@@ -2466,21 +2466,32 @@ body.premium-route .premium-back-link svg {
 
 .admin-section {
   min-height: calc(100vh - var(--header-height));
-  padding-top: clamp(44px, 6vw, 78px);
+  padding-block: clamp(40px, 5vw, 64px);
+  overflow: clip;
+  isolation: isolate;
   color: #f8ead0;
   background:
-    radial-gradient(circle at 14% 4%, rgba(214, 182, 107, 0.22), transparent 32%),
-    radial-gradient(circle at 92% 12%, rgba(95, 38, 56, 0.18), transparent 28%),
-    linear-gradient(180deg, #17110e, #2d211b 48%, #f4ead8 48%, #efe4d4);
+    linear-gradient(120deg, rgba(214, 182, 107, 0.13), transparent 36%),
+    linear-gradient(215deg, rgba(95, 38, 56, 0.15), transparent 38%),
+    linear-gradient(135deg, #17110e 0%, #2d211b 58%, #201619 100%);
+}
+
+body.admin-route .whatsapp-button {
+  display: none;
 }
 
 .admin-login-view {
   width: min(1120px, 100%);
+  min-height: calc(100svh - var(--header-height) - 128px);
   margin-inline: auto;
   display: grid;
   grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 420px);
   align-items: center;
   gap: clamp(22px, 6vw, 82px);
+}
+
+.admin-login-copy {
+  min-width: 0;
 }
 
 .admin-login-copy h1,
@@ -2501,6 +2512,7 @@ body.premium-route .premium-back-link svg {
 .admin-login-copy p,
 .admin-panel-header p {
   max-width: 40rem;
+  margin: 0;
   color: rgba(255, 246, 223, 0.72);
   line-height: 1.7;
 }
@@ -2513,6 +2525,7 @@ body.premium-route .premium-back-link svg {
 .admin-stat {
   border: 1px solid rgba(214, 182, 107, 0.26);
   border-radius: var(--radius-xl);
+  color: var(--color-text-primary);
   background:
     linear-gradient(145deg, rgba(255, 249, 237, 0.95), rgba(245, 230, 200, 0.82)),
     var(--color-surface);
@@ -2520,9 +2533,12 @@ body.premium-route .premium-back-link svg {
 }
 
 .admin-login-card {
+  width: 100%;
   padding: clamp(22px, 4vw, 34px);
   display: grid;
+  align-content: start;
   gap: 14px;
+  color: var(--color-text-primary);
 }
 
 .admin-login-card > svg,
@@ -3508,6 +3524,12 @@ body.premium-route .premium-back-link svg {
 
   .admin-section {
     padding-inline: 14px;
+  }
+
+  .admin-login-copy h1 {
+    max-width: 8.5em;
+    font-size: clamp(2.35rem, 11vw, 3.15rem);
+    line-height: 1;
   }
 
   .admin-stats,
