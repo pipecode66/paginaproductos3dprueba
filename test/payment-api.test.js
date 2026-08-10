@@ -68,7 +68,7 @@ test('crea y consulta una orden por HTTP sin exponer la llave secreta', async (c
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-bold-signature': createWebhookSignature(Buffer.from(rawEvent), config.bold.secretKey),
+      'x-bold-signature': createWebhookSignature(Buffer.from(rawEvent), ''),
     },
     body: rawEvent,
   });

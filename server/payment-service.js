@@ -195,7 +195,8 @@ export class PaymentService {
 
   async processWebhook(rawBody, receivedSignature) {
     this.assertConfigured();
-    if (!verifyWebhookSignature(rawBody, receivedSignature, this.boldConfig.secretKey)) {
+    const webhookSecret = this.boldConfig.environment === 'test' ? '' : this.boldConfig.secretKey;
+    if (!verifyWebhookSignature(rawBody, receivedSignature, webhookSecret)) {
       throw new PaymentError('Firma de webhook inválida.', 401, 'INVALID_WEBHOOK_SIGNATURE');
     }
 

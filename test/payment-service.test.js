@@ -115,7 +115,7 @@ test('procesa un pago aprobado una sola vez', async () => {
     },
   };
   const rawBody = Buffer.from(JSON.stringify(event));
-  const signature = createWebhookSignature(rawBody, 'test-secret');
+  const signature = createWebhookSignature(rawBody, '');
 
   const first = await service.processWebhook(rawBody, signature);
   const second = await service.processWebhook(rawBody, signature);
@@ -138,7 +138,7 @@ test('envía a revisión una notificación cuyo monto no coincide', async () => 
     },
   };
   const rawBody = Buffer.from(JSON.stringify(event));
-  const signature = createWebhookSignature(rawBody, 'test-secret');
+  const signature = createWebhookSignature(rawBody, '');
   const result = await service.processWebhook(rawBody, signature);
 
   assert.equal(result.order.status, 'REVIEW_REQUIRED');

@@ -10,6 +10,8 @@
 6. El servidor valida `x-bold-signature` sobre el cuerpo crudo, evita eventos duplicados y actualiza la orden.
 7. `/pago/resultado` consulta el estado registrado por el servidor.
 
+En el ambiente de pruebas, Bold firma la notificación del botón `Probar el webhook` usando una clave vacía. En producción se utiliza la llave secreta del Botón de pagos.
+
 Estados internos: `CREATED`, `PAID`, `REJECTED`, `VOIDED` y `REVIEW_REQUIRED`.
 
 ## Variables

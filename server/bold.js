@@ -10,7 +10,7 @@ export function createWebhookSignature(rawBody, secretKey) {
 }
 
 export function verifyWebhookSignature(rawBody, receivedSignature, secretKey) {
-  if (!receivedSignature || !secretKey) return false;
+  if (!receivedSignature || secretKey === undefined || secretKey === null) return false;
   const expected = Buffer.from(createWebhookSignature(rawBody, secretKey), 'utf8');
   const received = Buffer.from(String(receivedSignature).trim(), 'utf8');
   return expected.length === received.length && timingSafeEqual(expected, received);

@@ -28,6 +28,13 @@ test('valida la firma del webhook sobre el cuerpo crudo en Base64', () => {
   assert.equal(verifyWebhookSignature(rawBody, 'invalid', secretKey), false);
 });
 
+test('acepta la firma de sandbox generada por Bold con una clave vacía', () => {
+  const rawBody = Buffer.from('{"id":"evt-sandbox","type":"SALE_APPROVED"}');
+  const signature = createWebhookSignature(rawBody, '');
+
+  assert.equal(verifyWebhookSignature(rawBody, signature, ''), true);
+});
+
 test('traduce únicamente los eventos que cambian el estado de la orden', () => {
   assert.equal(mapBoldEventType('SALE_APPROVED'), 'PAID');
   assert.equal(mapBoldEventType('SALE_REJECTED'), 'REJECTED');
