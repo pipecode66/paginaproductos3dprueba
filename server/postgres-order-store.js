@@ -40,6 +40,36 @@ export class PostgresOrderStore {
     return result.rows.map((row) => row.data);
   }
 
+  async update(orderId, updateOrder) {
+    await ensurePostgresSchema(this.pool);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const selected = await client.query(
+        'SELECT data FROM querubim_payment_orders WHERE id = $1 FOR UPDATE',
+        [orderId],
+      );
+      if (!selected.rows[0]) {
+        await client.query('COMMIT');
+        return null;
+      }
+      const order = updateOrder(selected.rows[0].data);
+      await client.query(
+        `UPDATE querubim_payment_orders
+         SET data = $2::jsonb, updated_at = NOW()
+         WHERE id = $1`,
+        [orderId, JSON.stringify(order)],
+      );
+      await client.query('COMMIT');
+      return order;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async recordEvent(eventId, eventRecord, updateOrder) {
     await ensurePostgresSchema(this.pool);
     const client = await this.pool.connect();

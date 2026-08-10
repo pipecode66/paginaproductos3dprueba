@@ -1961,7 +1961,7 @@ body:not(.contact-route) .contact-section {
   display: none;
 }
 
-body.admin-route main > :not(.admin-section) {
+body.admin-route main > :not(.admin-section):not(.admin-order-dialog) {
   display: none;
 }
 
@@ -2780,6 +2780,7 @@ body.admin-route .whatsapp-button {
 .admin-products-panel,
 .admin-editor-panel,
 .admin-diagnostics-panel,
+.admin-orders-management,
 .admin-ops-card,
 .admin-stat {
   border: 1px solid rgba(214, 182, 107, 0.26);
@@ -3052,6 +3053,232 @@ body.admin-route .whatsapp-button {
   display: grid;
   grid-template-columns: repeat(5, minmax(180px, 1fr));
   gap: 12px;
+}
+
+.admin-orders-management {
+  padding: clamp(18px, 3vw, 26px);
+  display: grid;
+  gap: 18px;
+}
+
+.admin-orders-management > .admin-panel-title h2 {
+  margin: 4px 0 0;
+}
+
+.admin-order-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.38fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.admin-order-toolbar > label {
+  display: grid;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 900;
+}
+
+.admin-order-toolbar select,
+.admin-order-form input,
+.admin-order-form select,
+.admin-order-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.admin-order-form textarea {
+  min-height: 108px;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+.admin-order-list {
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-order-pagination {
+  padding-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.admin-order-pagination span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  text-align: center;
+}
+
+.admin-order-row {
+  width: 100%;
+  min-height: 82px;
+  padding: 14px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: minmax(210px, 1.15fr) minmax(170px, 0.9fr) minmax(150px, 0.7fr) minmax(130px, 0.55fr) 42px;
+  align-items: center;
+  gap: 14px;
+  color: var(--color-text-primary);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.admin-order-row:hover,
+.admin-order-row:focus-visible {
+  background: rgba(179, 132, 52, 0.08);
+}
+
+.admin-order-row strong,
+.admin-order-row span,
+.admin-order-row small {
+  display: block;
+}
+
+.admin-order-row strong {
+  overflow-wrap: anywhere;
+}
+
+.admin-order-row span,
+.admin-order-row small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.admin-order-row > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary-dark);
+}
+
+.admin-order-badge {
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-primary);
+  background: rgba(255, 249, 237, 0.72);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-order-badge.status-paid,
+.admin-order-badge.status-delivered {
+  border-color: rgba(34, 116, 76, 0.3);
+  color: #1d6845;
+  background: rgba(222, 244, 232, 0.78);
+}
+
+.admin-order-badge.status-review-required,
+.admin-order-badge.status-cancelled,
+.admin-order-badge.status-rejected,
+.admin-order-badge.status-voided {
+  border-color: rgba(130, 40, 55, 0.28);
+  color: #7e2637;
+  background: rgba(250, 226, 230, 0.78);
+}
+
+.admin-order-dialog {
+  width: min(820px, calc(100% - 32px));
+  max-height: min(90dvh, 900px);
+  padding: clamp(20px, 4vw, 34px);
+  border: 1px solid rgba(179, 132, 52, 0.46);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: #fffaf0;
+  box-shadow: 0 28px 100px rgba(24, 14, 9, 0.34);
+  overflow-y: auto;
+}
+
+.admin-order-dialog::backdrop {
+  background: rgba(23, 15, 11, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.admin-order-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-order-dialog-header h2 {
+  margin: 5px 0 0;
+}
+
+.admin-order-detail-content {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-order-detail-block {
+  padding: 14px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-order-detail-block.wide {
+  grid-column: 1 / -1;
+}
+
+.admin-order-detail-block h3,
+.admin-order-detail-block p {
+  margin: 0;
+}
+
+.admin-order-detail-block h3 {
+  margin-bottom: 8px;
+  font-size: var(--text-sm);
+}
+
+.admin-order-detail-block p,
+.admin-order-detail-block li {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.admin-order-detail-block ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.admin-order-form {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.admin-order-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 900;
+}
+
+.admin-order-warning {
+  margin: 0;
+  padding: 11px 13px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-text-secondary);
+  background: rgba(179, 132, 52, 0.08);
+  font-size: var(--text-sm);
+  line-height: 1.5;
 }
 
 .admin-diagnostic-card {
@@ -3827,6 +4054,57 @@ body.admin-route .whatsapp-button {
   .admin-product-actions {
     grid-column: 1 / -1;
     justify-content: flex-end;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-order-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-order-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .admin-order-row > div {
+    grid-column: 1;
+  }
+
+  .admin-order-row > svg {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .admin-orders-management {
+    padding: 16px;
+  }
+
+  .admin-order-detail-content,
+  .admin-order-form .admin-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-order-detail-block.wide {
+    grid-column: auto;
+  }
+
+  .admin-order-dialog {
+    width: calc(100% - 20px);
+    max-height: calc(100dvh - 20px);
+    padding: 18px;
+  }
+
+  .admin-order-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-order-pagination .button {
+    width: 100%;
   }
 }
 

@@ -123,6 +123,7 @@ test('procesa un pago aprobado una sola vez', async () => {
   assert.equal(first.order.status, 'PAID');
   assert.equal(first.order.paymentId, 'BOLD-PAYMENT-1');
   assert.equal(second.duplicate, true);
+  assert.equal((await orderStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CONFIRMED');
 });
 
 test('envía a revisión una notificación cuyo monto no coincide', async () => {

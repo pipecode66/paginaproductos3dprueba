@@ -8,6 +8,7 @@ import {
   verifyAdminCredentials,
 } from './admin-auth.js';
 import { validateCatalogProduct } from './catalog-validation.js';
+import { normalizeManagedOrder, updateManagedOrder } from './order-management.js';
 import { PaymentError, PaymentService } from './payment-service.js';
 import { createPersistence } from './persistence.js';
 
@@ -140,7 +141,8 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
 
   app.get('/api/admin/dashboard', async (request, response) => {
     try {
-      const [products, orders] = await Promise.all([resolvedCatalog.listAll(), resolvedOrders.list(100)]);
+      const [products, storedOrders] = await Promise.all([resolvedCatalog.listAll(), resolvedOrders.list(100)]);
+      const orders = storedOrders.map(normalizeManagedOrder);
       const activeProducts = products.filter((product) => product.active !== false);
       const customers = new Set(
         orders.map((order) => order.customer?.email || order.customer?.phone).filter(Boolean),
@@ -164,6 +166,28 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
     } catch (error) {
       const serialized = serializeError(error);
       logger.error('Error consultando el panel administrativo', error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.patch('/api/admin/orders/:orderId', async (request, response) => {
+    const orderId = String(request.params.orderId || '');
+    if (!/^[A-Za-z0-9_-]{1,60}$/.test(orderId)) {
+      response.status(400).json({ error: 'La referencia de la orden no es válida.', code: 'INVALID_ORDER_ID' });
+      return;
+    }
+
+    try {
+      const order = await resolvedOrders.update(orderId, (current) =>
+        updateManagedOrder(current, request.body, request.admin.sub),
+      );
+      if (!order) {
+        response.status(404).json({ error: 'No encontramos la orden solicitada.', code: 'ORDER_NOT_FOUND' });
+        return;
+      }
+      response.json({ order: normalizeManagedOrder(order) });
+    } catch (error) {
+      const serialized = serializeError(error);
       response.status(serialized.statusCode).json(serialized.body);
     }
   });

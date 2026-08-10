@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { createIntegritySignature, mapBoldEventType, verifyWebhookSignature } from './bold.js';
+import { getDefaultFulfillmentStatus } from './order-management.js';
 
 const ORDER_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const MAX_ITEMS = 20;
@@ -163,6 +164,7 @@ export class PaymentService {
       createdAt: new Date(now).toISOString(),
       expiresAt: new Date(expiresAt).toISOString(),
       environment: this.boldConfig.environment,
+      fulfillmentStatus: 'PENDING',
     };
 
     await this.orderStore.create(order);
@@ -243,7 +245,27 @@ export class PaymentService {
         if (isSandboxProbe) next.sandboxWebhookTest = true;
         delete next.reviewReason;
         next.status = mapBoldEventType(eventType, order.status);
-        if (eventType === 'SALE_APPROVED') next.paidAt = receivedAt;
+        if (eventType === 'SALE_APPROVED') {
+          next.paidAt = receivedAt;
+          if (getDefaultFulfillmentStatus(order) === 'PENDING') {
+            next.fulfillmentStatus = 'CONFIRMED';
+            next.fulfillmentHistory = [
+              ...(Array.isArray(order.fulfillmentHistory) ? order.fulfillmentHistory.slice(-24) : []),
+              { from: 'PENDING', to: 'CONFIRMED', at: receivedAt, by: 'Bold' },
+            ];
+          }
+        }
+        if (eventType === 'SALE_REJECTED' && getDefaultFulfillmentStatus(order) === 'PENDING') {
+          next.fulfillmentStatus = 'CANCELLED';
+        }
+        if (eventType === 'VOID_APPROVED') {
+          const previousFulfillment = getDefaultFulfillmentStatus(order);
+          next.fulfillmentStatus = 'CANCELLED';
+          next.fulfillmentHistory = [
+            ...(Array.isArray(order.fulfillmentHistory) ? order.fulfillmentHistory.slice(-24) : []),
+            { from: previousFulfillment, to: 'CANCELLED', at: receivedAt, by: 'Bold' },
+          ];
+        }
         if (eventType === 'VOID_REJECTED') next.voidStatus = 'REJECTED';
         return next;
       },

@@ -511,6 +511,42 @@
 
           <div class="admin-operations" id="admin-operations" aria-live="polite"></div>
 
+          <section class="admin-orders-management" aria-labelledby="admin-orders-title">
+            <div class="admin-panel-title">
+              <div>
+                <span class="eyebrow">Gestión de pedidos</span>
+                <h2 id="admin-orders-title">Seguimiento operativo</h2>
+              </div>
+              <i data-lucide="package-check"></i>
+            </div>
+
+            <div class="admin-order-toolbar">
+              <label class="search-field" for="admin-order-search">
+                <span>Buscar pedido</span>
+                <input id="admin-order-search" type="search" placeholder="Orden, cliente, correo o producto" />
+              </label>
+              <label for="admin-order-filter">
+                Filtrar por estado
+                <select id="admin-order-filter">
+                  <option value="todos">Todos los pedidos</option>
+                  <option value="payment:PAID">Pago aprobado</option>
+                  <option value="payment:CREATED">Pago pendiente</option>
+                  <option value="payment:REJECTED">Pago rechazado</option>
+                  <option value="payment:VOIDED">Pago anulado</option>
+                  <option value="payment:REVIEW_REQUIRED">Revisión de pago</option>
+                  <option value="fulfillment:CONFIRMED">Pedido confirmado</option>
+                  <option value="fulfillment:PREPARING">En preparación</option>
+                  <option value="fulfillment:READY">Listo para entregar</option>
+                  <option value="fulfillment:SHIPPED">Enviado</option>
+                  <option value="fulfillment:DELIVERED">Entregado</option>
+                  <option value="fulfillment:CANCELLED">Cancelado</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="admin-order-list" id="admin-order-list" aria-live="polite"></div>
+          </section>
+
           <div class="admin-workspace">
             <section class="admin-products-panel" aria-label="Productos del catálogo">
               <div class="admin-panel-title">
@@ -654,6 +690,54 @@
           </div>
         </div>
       </section>
+
+      <dialog class="admin-order-dialog" id="admin-order-dialog" aria-labelledby="admin-order-dialog-title">
+        <div class="admin-order-dialog-header">
+          <div>
+            <span class="eyebrow">Detalle del pedido</span>
+            <h2 id="admin-order-dialog-title">Orden Querubim</h2>
+          </div>
+          <button class="icon-button" id="admin-order-close" type="button" aria-label="Cerrar detalle del pedido">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <div class="admin-order-detail-content" id="admin-order-detail-content"></div>
+
+        <form class="admin-order-form" id="admin-order-form" novalidate>
+          <label for="admin-order-status">
+            Estado de preparación
+            <select id="admin-order-status" name="fulfillmentStatus" required></select>
+          </label>
+
+          <div class="admin-form-row">
+            <label for="admin-order-carrier">
+              Transportadora
+              <input id="admin-order-carrier" name="shippingCarrier" type="text" maxlength="100" />
+            </label>
+            <label for="admin-order-tracking">
+              Número de guía
+              <input id="admin-order-tracking" name="trackingNumber" type="text" maxlength="120" />
+            </label>
+          </div>
+
+          <label for="admin-order-notes">
+            Notas internas
+            <textarea id="admin-order-notes" name="internalNotes" rows="4" maxlength="2000" placeholder="Grabado, empaque, entrega o seguimiento interno"></textarea>
+          </label>
+
+          <p class="admin-order-warning">El estado del pago es informado por Bold y no puede modificarse desde este panel.</p>
+          <p class="form-message" id="admin-order-message" role="status" aria-live="polite"></p>
+
+          <div class="admin-form-actions">
+            <button class="button button-primary" type="submit">
+              Guardar seguimiento
+              <i data-lucide="save"></i>
+            </button>
+            <button class="button button-secondary" id="admin-order-cancel" type="button">Cerrar</button>
+          </div>
+        </form>
+      </dialog>
 
       <section class="page-section payment-result-section" id="payment-result" aria-label="Resultado del pago">
         <div class="payment-result-shell">

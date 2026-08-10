@@ -335,6 +335,10 @@ const state = {
   adminSummary: null,
   adminLoading: false,
   adminHeartbeatAt: 0,
+  adminOrderQuery: '',
+  adminOrderFilter: 'todos',
+  adminOrderPage: 1,
+  activeAdminOrderId: null,
   cartItems: [],
   checkoutBusy: false,
   paymentPollAttempts: 0,
@@ -364,6 +368,20 @@ const selectors = {
   adminStats: document.querySelector('#admin-stats'),
   adminDiagnostics: document.querySelector('#admin-diagnostics'),
   adminOperations: document.querySelector('#admin-operations'),
+  adminOrderList: document.querySelector('#admin-order-list'),
+  adminOrderSearch: document.querySelector('#admin-order-search'),
+  adminOrderFilter: document.querySelector('#admin-order-filter'),
+  adminOrderDialog: document.querySelector('#admin-order-dialog'),
+  adminOrderDialogTitle: document.querySelector('#admin-order-dialog-title'),
+  adminOrderDetailContent: document.querySelector('#admin-order-detail-content'),
+  adminOrderForm: document.querySelector('#admin-order-form'),
+  adminOrderStatus: document.querySelector('#admin-order-status'),
+  adminOrderCarrier: document.querySelector('#admin-order-carrier'),
+  adminOrderTracking: document.querySelector('#admin-order-tracking'),
+  adminOrderNotes: document.querySelector('#admin-order-notes'),
+  adminOrderMessage: document.querySelector('#admin-order-message'),
+  adminOrderClose: document.querySelector('#admin-order-close'),
+  adminOrderCancel: document.querySelector('#admin-order-cancel'),
   adminExportCatalog: document.querySelector('#admin-export-catalog'),
   adminBackupStatus: document.querySelector('#admin-backup-status'),
   adminSecurityAction: document.querySelector('#admin-security-action'),
@@ -1321,6 +1339,171 @@ function getOrderStatusLabel(status) {
   }[status] || status || 'Sin estado';
 }
 
+const fulfillmentTransitions = {
+  PENDING: ['PENDING', 'CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['CONFIRMED', 'PREPARING', 'CANCELLED'],
+  PREPARING: ['CONFIRMED', 'PREPARING', 'READY', 'CANCELLED'],
+  READY: ['PREPARING', 'READY', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
+  SHIPPED: ['READY', 'SHIPPED', 'DELIVERED'],
+  DELIVERED: ['DELIVERED'],
+  CANCELLED: ['CANCELLED', 'CONFIRMED'],
+};
+
+function getFulfillmentStatusLabel(status) {
+  return {
+    PENDING: 'Pendiente de pago',
+    CONFIRMED: 'Pedido confirmado',
+    PREPARING: 'En preparación',
+    READY: 'Listo para entregar',
+    SHIPPED: 'Enviado',
+    DELIVERED: 'Entregado',
+    CANCELLED: 'Cancelado',
+  }[status] || status || 'Pendiente';
+}
+
+function getOrderStatusClass(status) {
+  return `status-${String(status || 'pending').toLowerCase().replace(/_/g, '-')}`;
+}
+
+function formatAdminDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Fecha no disponible';
+  return new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function getAdminVisibleOrders() {
+  const query = normalizeText(state.adminOrderQuery);
+  const [filterType, filterValue] = state.adminOrderFilter.split(':');
+  return state.adminOrders.filter((order) => {
+    const searchable = normalizeText([
+      order.id,
+      order.customer?.fullName,
+      order.customer?.email,
+      order.customer?.phone,
+      order.items?.map((item) => item.name).join(' '),
+    ].join(' '));
+    if (query && !searchable.includes(query)) return false;
+    if (filterType === 'payment' && order.status !== filterValue) return false;
+    if (filterType === 'fulfillment' && order.fulfillmentStatus !== filterValue) return false;
+    return true;
+  });
+}
+
+function renderAdminOrderManagement() {
+  if (!selectors.adminOrderList) return;
+  const orders = getAdminVisibleOrders();
+  const pageSize = 10;
+  const pageCount = Math.max(1, Math.ceil(orders.length / pageSize));
+  state.adminOrderPage = Math.min(state.adminOrderPage, pageCount);
+  const pageOrders = orders.slice((state.adminOrderPage - 1) * pageSize, state.adminOrderPage * pageSize);
+  selectors.adminOrderList.innerHTML = orders.length
+    ? `${pageOrders.map((order) => `
+        <button class="admin-order-row" type="button" data-admin-order="${escapeHtml(order.id)}">
+          <div>
+            <strong>${escapeHtml(order.id)}</strong>
+            <small>${escapeHtml(formatAdminDate(order.createdAt))}</small>
+          </div>
+          <div>
+            <strong>${escapeHtml(order.customer?.fullName || 'Cliente')}</strong>
+            <span>${escapeHtml(order.items?.map((item) => item.name).join(', ') || 'Sin detalle')}</span>
+          </div>
+          <div>
+            <span class="admin-order-badge ${getOrderStatusClass(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span>
+            <small>${escapeHtml(formatCurrency(order.amount))}</small>
+          </div>
+          <div>
+            <span class="admin-order-badge ${getOrderStatusClass(order.fulfillmentStatus)}">${escapeHtml(getFulfillmentStatusLabel(order.fulfillmentStatus))}</span>
+            <small>${escapeHtml(order.trackingNumber || 'Sin guía')}</small>
+          </div>
+          <i data-lucide="arrow-right"></i>
+        </button>`).join('')}
+        <div class="admin-order-pagination" aria-label="Paginación de pedidos">
+          <button class="button button-secondary" type="button" data-admin-order-page="${state.adminOrderPage - 1}"${state.adminOrderPage === 1 ? ' disabled' : ''}>Anterior</button>
+          <span>Página ${state.adminOrderPage} de ${pageCount} · ${orders.length} pedidos</span>
+          <button class="button button-secondary" type="button" data-admin-order-page="${state.adminOrderPage + 1}"${state.adminOrderPage === pageCount ? ' disabled' : ''}>Siguiente</button>
+        </div>`
+    : '<p class="empty-results">No hay pedidos que coincidan con la búsqueda o el filtro.</p>';
+}
+
+function closeAdminOrderDialog() {
+  state.activeAdminOrderId = null;
+  if (selectors.adminOrderDialog?.open) selectors.adminOrderDialog.close();
+}
+
+function openAdminOrder(orderId) {
+  const order = state.adminOrders.find((item) => item.id === orderId);
+  if (!order || !selectors.adminOrderDialog) return;
+  state.activeAdminOrderId = order.id;
+  selectors.adminOrderDialogTitle.textContent = order.id;
+  selectors.adminOrderDetailContent.innerHTML = `
+    <section class="admin-order-detail-block">
+      <h3>Cliente</h3>
+      <p>${escapeHtml(order.customer?.fullName || 'Sin nombre')}<br />${escapeHtml(order.customer?.email || 'Sin correo')}<br />${escapeHtml(order.customer?.phone || 'Sin celular')}</p>
+    </section>
+    <section class="admin-order-detail-block">
+      <h3>Pago verificado por Bold</h3>
+      <p><span class="admin-order-badge ${getOrderStatusClass(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span><br />${escapeHtml(formatCurrency(order.amount))} · ${escapeHtml(order.paymentMethod || 'Método pendiente')}</p>
+    </section>
+    <section class="admin-order-detail-block wide">
+      <h3>Piezas solicitadas</h3>
+      <ul>${(order.items || []).map((item) => `<li>${escapeHtml(item.name)} · ${escapeHtml(item.measure)} · ${item.quantity} unidad${item.quantity === 1 ? '' : 'es'}</li>`).join('')}</ul>
+    </section>
+    <section class="admin-order-detail-block wide">
+      <h3>Historial operativo</h3>
+      ${(order.fulfillmentHistory || []).length
+        ? `<ul>${order.fulfillmentHistory.slice(-5).reverse().map((item) => `<li>${escapeHtml(getFulfillmentStatusLabel(item.from))} → ${escapeHtml(getFulfillmentStatusLabel(item.to))} · ${escapeHtml(formatAdminDate(item.at))}</li>`).join('')}</ul>`
+        : '<p>Aún no se han registrado cambios manuales.</p>'}
+    </section>`;
+
+  const currentStatus = order.fulfillmentStatus || 'PENDING';
+  selectors.adminOrderStatus.innerHTML = (fulfillmentTransitions[currentStatus] || [currentStatus])
+    .map((status) => `<option value="${status}"${status === currentStatus ? ' selected' : ''}>${escapeHtml(getFulfillmentStatusLabel(status))}</option>`)
+    .join('');
+  selectors.adminOrderCarrier.value = order.shippingCarrier || '';
+  selectors.adminOrderTracking.value = order.trackingNumber || '';
+  selectors.adminOrderNotes.value = order.internalNotes || '';
+  selectors.adminOrderMessage.textContent = '';
+  selectors.adminOrderMessage.classList.remove('error', 'success');
+  if (!selectors.adminOrderDialog.open) selectors.adminOrderDialog.showModal();
+  refreshIcons();
+}
+
+async function saveAdminOrder(event) {
+  event.preventDefault();
+  const orderId = state.activeAdminOrderId;
+  if (!orderId || !selectors.adminOrderForm.checkValidity()) return;
+  const submitButton = selectors.adminOrderForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  selectors.adminOrderMessage.textContent = 'Guardando seguimiento...';
+  selectors.adminOrderMessage.classList.remove('error', 'success');
+
+  try {
+    const result = await apiRequest(`/api/admin/orders/${encodeURIComponent(orderId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        fulfillmentStatus: selectors.adminOrderStatus.value,
+        shippingCarrier: selectors.adminOrderCarrier.value,
+        trackingNumber: selectors.adminOrderTracking.value,
+        internalNotes: selectors.adminOrderNotes.value,
+      }),
+    });
+    const index = state.adminOrders.findIndex((order) => order.id === orderId);
+    if (index >= 0) state.adminOrders[index] = result.order;
+    renderAdminOrderManagement();
+    renderAdminOperations();
+    openAdminOrder(orderId);
+    selectors.adminOrderMessage.textContent = 'Seguimiento actualizado correctamente.';
+    selectors.adminOrderMessage.classList.add('success');
+    recordAdminActivity(`Actualización del pedido ${orderId}: ${getFulfillmentStatusLabel(result.order.fulfillmentStatus)}.`);
+    refreshIcons();
+  } catch (error) {
+    selectors.adminOrderMessage.textContent = error.message;
+    selectors.adminOrderMessage.classList.add('error');
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
 function renderAdminOperations() {
   if (!selectors.adminOperations) return;
 
@@ -1453,6 +1636,7 @@ function renderAdminPanel() {
   renderAdminStats();
   renderAdminDiagnostics();
   renderAdminOperations();
+  renderAdminOrderManagement();
   renderAdminProducts();
   updateBackupState();
   refreshIcons();
@@ -1726,6 +1910,7 @@ async function handleAdminLogout() {
   state.adminSummary = null;
   state.adminHeartbeatAt = 0;
   state.editingProductId = null;
+  closeAdminOrderDialog();
   window.clearTimeout(state.adminTimeoutId);
   updateAdminViews();
 }
@@ -2049,6 +2234,21 @@ function setupEvents() {
   selectors.adminExportCatalog?.addEventListener('click', exportCatalogCsv);
   selectors.adminSecurityAction?.addEventListener('click', handlePasswordRecovery);
   selectors.adminProductForm?.addEventListener('submit', saveAdminProduct);
+  selectors.adminOrderForm?.addEventListener('submit', saveAdminOrder);
+  selectors.adminOrderClose?.addEventListener('click', closeAdminOrderDialog);
+  selectors.adminOrderCancel?.addEventListener('click', closeAdminOrderDialog);
+  selectors.adminOrderSearch?.addEventListener('input', (event) => {
+    state.adminOrderQuery = event.target.value;
+    state.adminOrderPage = 1;
+    renderAdminOrderManagement();
+    refreshIcons();
+  });
+  selectors.adminOrderFilter?.addEventListener('change', (event) => {
+    state.adminOrderFilter = event.target.value;
+    state.adminOrderPage = 1;
+    renderAdminOrderManagement();
+    refreshIcons();
+  });
   selectors.adminCancelEdit?.addEventListener('click', resetAdminForm);
   selectors.adminImages?.addEventListener('input', renderAdminImagePreview);
   selectors.adminImageFiles?.addEventListener('change', (event) => {
@@ -2089,6 +2289,8 @@ function setupEvents() {
     const routeLink = event.target.closest('[data-route-link]');
     const adminEditButton = event.target.closest('[data-admin-edit]');
     const adminDeleteButton = event.target.closest('[data-admin-delete]');
+    const adminOrderButton = event.target.closest('[data-admin-order]');
+    const adminOrderPageButton = event.target.closest('[data-admin-order-page]');
 
     if (routeLink) {
       event.preventDefault();
@@ -2113,6 +2315,12 @@ function setupEvents() {
     if (removeButton) removeCartItem(removeButton.dataset.removeCart);
     if (adminEditButton) fillAdminForm(adminEditButton.dataset.adminEdit);
     if (adminDeleteButton) deleteAdminProduct(adminDeleteButton.dataset.adminDelete);
+    if (adminOrderButton) openAdminOrder(adminOrderButton.dataset.adminOrder);
+    if (adminOrderPageButton && !adminOrderPageButton.disabled) {
+      state.adminOrderPage = Number(adminOrderPageButton.dataset.adminOrderPage) || 1;
+      renderAdminOrderManagement();
+      refreshIcons();
+    }
   });
 
   selectors.detailMeasure.addEventListener('change', () => {

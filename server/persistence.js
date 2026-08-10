@@ -44,6 +44,10 @@ class UnavailableRepository {
     throw new StorageConfigurationError();
   }
 
+  async update() {
+    throw new StorageConfigurationError();
+  }
+
   async create() {
     throw new StorageConfigurationError();
   }

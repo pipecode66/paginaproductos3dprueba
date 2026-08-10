@@ -22,6 +22,11 @@ En desarrollo local deben declararse las mismas tres variables dentro de `.env.l
 - Galería de hasta 12 rutas públicas o URL HTTPS.
 - Productos destacados y premium.
 - Órdenes, clientes, ingresos y estados recibidos desde Bold.
+- Búsqueda, filtros y paginación de pedidos.
+- Estados operativos de preparación, entrega y cancelación.
+- Transportadora, número de guía, notas internas e historial de cambios.
+
+El estado financiero es de solo lectura y únicamente cambia mediante los webhooks firmados de Bold. El seguimiento operativo se administra por separado para evitar que una acción interna pueda falsificar un pago.
 
 La eliminación es lógica: el producto se retira de la tienda y de nuevas compras, pero permanece en la base de datos para conservar la integridad de pedidos anteriores.
 

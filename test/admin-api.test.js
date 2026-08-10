@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { createApp } from '../server/app.js';
+import { createWebhookSignature } from '../server/bold.js';
 import { CatalogRepository } from '../server/catalog-repository.js';
 import { OrderStore } from '../server/order-store.js';
 
@@ -129,6 +130,52 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
   const paymentOrderData = await paymentOrder.json();
   assert.equal(paymentOrder.status, 201);
   assert.equal(paymentOrderData.order.amount, 1050000);
+
+  const blockedPreparation = await fetch(`${baseUrl}/api/admin/orders/${paymentOrderData.order.id}`, {
+    method: 'PATCH',
+    headers: adminHeaders,
+    body: JSON.stringify({ fulfillmentStatus: 'CONFIRMED' }),
+  });
+  assert.equal(blockedPreparation.status, 409);
+  assert.equal((await blockedPreparation.json()).code, 'PAYMENT_NOT_APPROVED');
+
+  const event = {
+    id: 'admin-order-approved-1',
+    type: 'SALE_APPROVED',
+    subject: 'BOLD-ADMIN-PAYMENT-1',
+    data: {
+      payment_id: 'BOLD-ADMIN-PAYMENT-1',
+      payment_method: 'CARD_WEB',
+      amount: { currency: 'COP', total: 1050000 },
+      metadata: { reference: paymentOrderData.order.id },
+    },
+  };
+  const rawEvent = JSON.stringify(event);
+  const approved = await fetch(`${baseUrl}/api/payments/bold/webhook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-bold-signature': createWebhookSignature(Buffer.from(rawEvent), ''),
+    },
+    body: rawEvent,
+  });
+  assert.equal(approved.status, 200);
+
+  const managed = await fetch(`${baseUrl}/api/admin/orders/${paymentOrderData.order.id}`, {
+    method: 'PATCH',
+    headers: adminHeaders,
+    body: JSON.stringify({
+      fulfillmentStatus: 'PREPARING',
+      internalNotes: 'Empaque de regalo solicitado.',
+      shippingCarrier: 'Transportadora de prueba',
+      trackingNumber: 'GUIA-001',
+    }),
+  });
+  const managedData = await managed.json();
+  assert.equal(managed.status, 200);
+  assert.equal(managedData.order.status, 'PAID');
+  assert.equal(managedData.order.fulfillmentStatus, 'PREPARING');
+  assert.equal(managedData.order.internalNotes, 'Empaque de regalo solicitado.');
 
   const removed = await fetch(`${baseUrl}/api/admin/products/${adminProduct.id}`, {
     method: 'DELETE',

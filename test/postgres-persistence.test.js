@@ -47,6 +47,9 @@ test('persiste órdenes y procesa cada evento Bold una sola vez', async (context
   await orders.create(order);
   assert.deepEqual(await orders.get(order.id), order);
   assert.deepEqual(await orders.list(10), [order]);
+  const managedOrder = await orders.update(order.id, (current) => ({ ...current, fulfillmentStatus: 'PREPARING' }));
+  assert.equal(managedOrder.fulfillmentStatus, 'PREPARING');
+  assert.equal((await orders.get(order.id)).fulfillmentStatus, 'PREPARING');
 
   const event = { id: 'bold-event-1', orderId: order.id, type: 'SALE_APPROVED' };
   const first = await orders.recordEvent(event.id, event, (current) => ({ ...current, status: 'PAID' }));

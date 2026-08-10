@@ -25,6 +25,15 @@ export class OrderStore {
       .slice(0, limit);
   }
 
+  async update(orderId, updateOrder) {
+    return this.store.transaction((data) => {
+      const order = data.orders[orderId] ?? null;
+      if (!order) return null;
+      data.orders[orderId] = updateOrder(order);
+      return data.orders[orderId];
+    });
+  }
+
   async recordEvent(eventId, eventRecord, updateOrder) {
     return this.store.transaction((data) => {
       if (data.events[eventId]) {
