@@ -126,6 +126,49 @@ test('procesa un pago aprobado una sola vez', async () => {
   assert.equal((await orderStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CONFIRMED');
 });
 
+test('cancela operativamente las ventas rechazadas y anuladas', async () => {
+  const rejectedStore = new MemoryOrders();
+  const rejectedService = createService({ orderStore: rejectedStore });
+  await rejectedService.createOrder(validPayload());
+  const rejectedEvent = {
+    id: 'event-rejected-1',
+    type: 'SALE_REJECTED',
+    subject: 'BOLD-REJECTED-1',
+    data: {
+      payment_id: 'BOLD-REJECTED-1',
+      payment_method: 'CARD_WEB',
+      amount: { currency: 'COP', total: 1250000 },
+      metadata: { reference: 'QBM-ORDER-001' },
+    },
+  };
+  const rawRejected = Buffer.from(JSON.stringify(rejectedEvent));
+  const rejected = await rejectedService.processWebhook(rawRejected, createWebhookSignature(rawRejected, ''));
+  assert.equal(rejected.order.status, 'REJECTED');
+  assert.equal((await rejectedStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CANCELLED');
+
+  const voidedStore = new MemoryOrders();
+  const voidedService = createService({ orderStore: voidedStore });
+  await voidedService.createOrder(validPayload());
+  const approvedEvent = {
+    id: 'event-before-void-1',
+    type: 'SALE_APPROVED',
+    subject: 'BOLD-VOID-1',
+    data: {
+      payment_id: 'BOLD-VOID-1',
+      payment_method: 'CARD_WEB',
+      amount: { currency: 'COP', total: 1250000 },
+      metadata: { reference: 'QBM-ORDER-001' },
+    },
+  };
+  const rawApproved = Buffer.from(JSON.stringify(approvedEvent));
+  await voidedService.processWebhook(rawApproved, createWebhookSignature(rawApproved, ''));
+  const voidEvent = { ...approvedEvent, id: 'event-void-approved-1', type: 'VOID_APPROVED' };
+  const rawVoid = Buffer.from(JSON.stringify(voidEvent));
+  const voided = await voidedService.processWebhook(rawVoid, createWebhookSignature(rawVoid, ''));
+  assert.equal(voided.order.status, 'VOIDED');
+  assert.equal((await voidedStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CANCELLED');
+});
+
 test('envía a revisión una notificación cuyo monto no coincide', async () => {
   const service = createService();
   await service.createOrder(validPayload());
