@@ -1,4 +1,13 @@
 import express from 'express';
+import {
+  clearAdminSessionCookie,
+  getAdminSession,
+  isAdminConfigured,
+  requireAdmin,
+  setAdminSessionCookie,
+  verifyAdminCredentials,
+} from './admin-auth.js';
+import { validateCatalogProduct } from './catalog-validation.js';
 import { PaymentError, PaymentService } from './payment-service.js';
 import { createPersistence } from './persistence.js';
 
@@ -47,6 +56,7 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
     orderStore: resolvedOrders,
     boldConfig: config.bold,
   });
+  const adminConfig = config.admin ?? {};
   const app = express();
 
   app.disable('x-powered-by');
@@ -91,6 +101,120 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
   app.use(express.json({ limit: '64kb' }));
 
   app.post(
+    '/api/admin/login',
+    createRateLimiter({ windowMs: 15 * 60_000, limit: 10 }),
+    (request, response) => {
+      try {
+        const email = String(request.body?.email || '').trim().toLowerCase();
+        const password = String(request.body?.password || '');
+        if (!verifyAdminCredentials(email, password, adminConfig)) {
+          response.status(401).json({ error: 'Credenciales incorrectas.', code: 'ADMIN_INVALID_CREDENTIALS' });
+          return;
+        }
+
+        setAdminSessionCookie(response, email, adminConfig);
+        response.json({ authenticated: true, user: { email } });
+      } catch (error) {
+        const serialized = serializeError(error);
+        response.status(serialized.statusCode).json(serialized.body);
+      }
+    },
+  );
+
+  app.get('/api/admin/session', (request, response) => {
+    const session = getAdminSession(request, adminConfig);
+    if (session) setAdminSessionCookie(response, session.sub, adminConfig);
+    response.json({
+      authenticated: Boolean(session),
+      configured: isAdminConfigured(adminConfig),
+      user: session ? { email: session.sub } : null,
+    });
+  });
+
+  app.post('/api/admin/logout', (request, response) => {
+    clearAdminSessionCookie(response, adminConfig);
+    response.json({ authenticated: false });
+  });
+
+  app.use('/api/admin', requireAdmin(adminConfig));
+
+  app.get('/api/admin/dashboard', async (request, response) => {
+    try {
+      const [products, orders] = await Promise.all([resolvedCatalog.listAll(), resolvedOrders.list(100)]);
+      const activeProducts = products.filter((product) => product.active !== false);
+      const customers = new Set(
+        orders.map((order) => order.customer?.email || order.customer?.phone).filter(Boolean),
+      );
+      response.json({
+        products,
+        orders,
+        summary: {
+          activeProducts: activeProducts.length,
+          inactiveProducts: products.length - activeProducts.length,
+          lowStockProducts: activeProducts.filter((product) => Number(product.stock) <= 1).length,
+          orders: orders.length,
+          paidOrders: orders.filter((order) => order.status === 'PAID').length,
+          reviewOrders: orders.filter((order) => order.status === 'REVIEW_REQUIRED').length,
+          customers: customers.size,
+          paidRevenue: orders
+            .filter((order) => order.status === 'PAID')
+            .reduce((total, order) => total + Number(order.amount || 0), 0),
+        },
+      });
+    } catch (error) {
+      const serialized = serializeError(error);
+      logger.error('Error consultando el panel administrativo', error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.post('/api/admin/products', async (request, response) => {
+    try {
+      const product = validateCatalogProduct(request.body);
+      const existing = (await resolvedCatalog.listAll()).find((item) => item.id === product.id);
+      if (existing) {
+        response.status(409).json({ error: 'Ya existe un producto con esa referencia.', code: 'PRODUCT_ALREADY_EXISTS' });
+        return;
+      }
+      response.status(201).json({ product: await resolvedCatalog.upsert(product) });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.put('/api/admin/products/:productId', async (request, response) => {
+    const productId = String(request.params.productId || '');
+    try {
+      const existing = (await resolvedCatalog.listAll()).find((item) => item.id === productId);
+      if (!existing) {
+        response.status(404).json({ error: 'No encontramos el producto solicitado.', code: 'PRODUCT_NOT_FOUND' });
+        return;
+      }
+      const product = validateCatalogProduct({ ...request.body, active: existing.active }, productId);
+      response.json({ product: await resolvedCatalog.upsert(product) });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.delete('/api/admin/products/:productId', async (request, response) => {
+    const productId = String(request.params.productId || '');
+    try {
+      const product = await resolvedCatalog.deactivate(productId);
+      if (!product) {
+        response.status(404).json({ error: 'No encontramos el producto solicitado.', code: 'PRODUCT_NOT_FOUND' });
+        return;
+      }
+      response.json({ product });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.post(
     '/api/payments/orders',
     createRateLimiter({ windowMs: 60_000, limit: 20 }),
     async (request, response) => {
@@ -133,6 +257,15 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
       });
     } catch (error) {
       logger.error('Error consultando el catálogo de pagos', error);
+      response.status(500).json({ error: 'No fue posible consultar el catálogo.', code: 'INTERNAL_ERROR' });
+    }
+  });
+
+  app.get('/api/catalog/products', async (request, response) => {
+    try {
+      response.json({ products: await resolvedCatalog.listActive() });
+    } catch (error) {
+      logger.error('Error consultando el catálogo público', error);
       response.status(500).json({ error: 'No fue posible consultar el catálogo.', code: 'INTERNAL_ERROR' });
     }
   });

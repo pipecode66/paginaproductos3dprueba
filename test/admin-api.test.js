@@ -1,0 +1,159 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import { createApp } from '../server/app.js';
+import { CatalogRepository } from '../server/catalog-repository.js';
+import { OrderStore } from '../server/order-store.js';
+
+const adminProduct = {
+  id: 'anillo-panel-prueba',
+  name: 'Anillo Panel Prueba',
+  category: 'anillos',
+  material: 'Oro amarillo 18K',
+  price: 990000,
+  stock: 3,
+  measurements: ['Talla 6', 'Talla 7'],
+  images: ['/products/catalogo-real/anillos/anillos-01.jpg'],
+  description: 'Producto creado desde la API administrativa para validar su persistencia.',
+  variants: {
+    metal: 'Oro amarillo',
+    purity: '18K',
+    gemstone: 'Sin piedra principal',
+    engraving: 'Disponible bajo solicitud',
+  },
+  premium: false,
+  featured: true,
+};
+
+async function createAdminServer(context) {
+  const runtimeDir = await mkdtemp(path.join(tmpdir(), 'querubim-admin-'));
+  context.after(() => rm(runtimeDir, { recursive: true, force: true }));
+  const catalogRepository = new CatalogRepository(path.join(runtimeDir, 'catalog.json'));
+  const orderStore = new OrderStore(path.join(runtimeDir, 'orders.json'));
+  await orderStore.create({
+    id: 'QBM-ADMIN-001',
+    status: 'PAID',
+    amount: 990000,
+    customer: { fullName: 'Cliente Panel', email: 'panel@example.com', phone: '3001234567' },
+    items: [{ name: 'Anillo Panel Prueba', quantity: 1 }],
+    createdAt: '2026-08-10T12:00:00.000Z',
+  });
+  const config = {
+    runtimeDir,
+    bold: {
+      environment: 'test',
+      identityKey: 'test-identity',
+      secretKey: 'test-secret',
+      publicBaseUrl: 'http://localhost:4173',
+      tax: '',
+      productionEnabled: false,
+    },
+    admin: {
+      email: 'admin@querubim.co',
+      password: 'correct-password',
+      sessionSecret: 'a-secure-test-session-secret-with-32-characters',
+      sessionTtlMs: 15 * 60 * 1000,
+      publicBaseUrl: 'http://localhost:4173',
+    },
+  };
+  const { app } = createApp({ config, catalogRepository, orderStore, logger: { error() {} } });
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  context.after(() => new Promise((resolve) => server.close(resolve)));
+  return `http://127.0.0.1:${server.address().port}`;
+}
+
+test('protege el panel y permite administrar el catálogo con una sesión válida', async (context) => {
+  const baseUrl = await createAdminServer(context);
+
+  const denied = await fetch(`${baseUrl}/api/admin/dashboard`);
+  assert.equal(denied.status, 401);
+
+  const invalidLogin = await fetch(`${baseUrl}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@querubim.co', password: 'incorrecta' }),
+  });
+  assert.equal(invalidLogin.status, 401);
+
+  const login = await fetch(`${baseUrl}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@querubim.co', password: 'correct-password' }),
+  });
+  assert.equal(login.status, 200);
+  const setCookie = login.headers.get('set-cookie');
+  assert.match(setCookie, /Max-Age=900/);
+  const cookie = setCookie.split(';')[0];
+  assert.match(cookie, /^querubim_admin_session=/);
+
+  const adminHeaders = {
+    'Content-Type': 'application/json',
+    Cookie: cookie,
+    'x-querubim-admin': '1',
+  };
+  const dashboard = await fetch(`${baseUrl}/api/admin/dashboard`, { headers: { Cookie: cookie } });
+  const dashboardData = await dashboard.json();
+  assert.equal(dashboard.status, 200);
+  assert.equal(dashboardData.summary.orders, 1);
+  assert.equal(dashboardData.summary.paidRevenue, 990000);
+
+  const created = await fetch(`${baseUrl}/api/admin/products`, {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify(adminProduct),
+  });
+  assert.equal(created.status, 201);
+
+  const updated = await fetch(`${baseUrl}/api/admin/products/${adminProduct.id}`, {
+    method: 'PUT',
+    headers: adminHeaders,
+    body: JSON.stringify({ ...adminProduct, price: 1050000, stock: 7 }),
+  });
+  assert.equal(updated.status, 200);
+  assert.equal((await updated.json()).product.price, 1050000);
+
+  let publicCatalog = await fetch(`${baseUrl}/api/catalog/products`).then((response) => response.json());
+  assert.equal(publicCatalog.products.find((product) => product.id === adminProduct.id).stock, 7);
+
+  const paymentOrder = await fetch(`${baseUrl}/api/payments/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      customer: { fullName: 'Compra desde panel', email: 'compra@example.com', phone: '3007654321' },
+      items: [{ productId: adminProduct.id, measure: 'Talla 6', quantity: 1 }],
+    }),
+  });
+  const paymentOrderData = await paymentOrder.json();
+  assert.equal(paymentOrder.status, 201);
+  assert.equal(paymentOrderData.order.amount, 1050000);
+
+  const removed = await fetch(`${baseUrl}/api/admin/products/${adminProduct.id}`, {
+    method: 'DELETE',
+    headers: adminHeaders,
+  });
+  assert.equal(removed.status, 200);
+
+  publicCatalog = await fetch(`${baseUrl}/api/catalog/products`).then((response) => response.json());
+  assert.equal(publicCatalog.products.some((product) => product.id === adminProduct.id), false);
+});
+
+test('rechaza modificaciones administrativas sin el encabezado de verificación', async (context) => {
+  const baseUrl = await createAdminServer(context);
+  const login = await fetch(`${baseUrl}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@querubim.co', password: 'correct-password' }),
+  });
+  const cookie = login.headers.get('set-cookie').split(';')[0];
+  const response = await fetch(`${baseUrl}/api/admin/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: cookie },
+    body: JSON.stringify(adminProduct),
+  });
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, 'ADMIN_REQUEST_REJECTED');
+});

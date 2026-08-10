@@ -29,6 +29,17 @@ export class PostgresOrderStore {
     return result.rows[0]?.data ?? null;
   }
 
+  async list(limit = 100) {
+    await ensurePostgresSchema(this.pool);
+    const result = await this.pool.query(
+      `SELECT data FROM querubim_payment_orders
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [limit],
+    );
+    return result.rows.map((row) => row.data);
+  }
+
   async recordEvent(eventId, eventRecord, updateOrder) {
     await ensurePostgresSchema(this.pool);
     const client = await this.pool.connect();

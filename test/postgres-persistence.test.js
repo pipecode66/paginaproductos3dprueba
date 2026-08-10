@@ -20,9 +20,23 @@ test('inicializa el catálogo de pagos y permite actualizar productos', async (c
   assert.ok(products.length >= 18);
 
   const original = await catalog.findById('anillo-rubi-aurora');
-  const updated = await catalog.upsert({ ...original, price: 1190000, stock: 7 });
+  const updated = await catalog.upsert({
+    ...original,
+    price: 1190000,
+    stock: 7,
+    material: 'Oro amarillo 18K',
+    description: 'Descripción administrable.',
+    images: ['/products/catalogo-real/anillos/anillos-01.jpg'],
+  });
   assert.equal(updated.price, 1190000);
+  assert.equal(updated.description, 'Descripción administrable.');
+  assert.equal(updated.images.length, 1);
   assert.equal((await catalog.findById(original.id)).stock, 7);
+
+  const deactivated = await catalog.deactivate(original.id);
+  assert.equal(deactivated.active, false);
+  assert.equal(await catalog.findById(original.id), null);
+  assert.equal((await catalog.listAll()).find((product) => product.id === original.id).active, false);
 });
 
 test('persiste órdenes y procesa cada evento Bold una sola vez', async (context) => {
@@ -32,6 +46,7 @@ test('persiste órdenes y procesa cada evento Bold una sola vez', async (context
   const order = { id: 'QBM-DB-001', status: 'CREATED', amount: 340000, currency: 'COP' };
   await orders.create(order);
   assert.deepEqual(await orders.get(order.id), order);
+  assert.deepEqual(await orders.list(10), [order]);
 
   const event = { id: 'bold-event-1', orderId: order.id, type: 'SALE_APPROVED' };
   const first = await orders.recordEvent(event.id, event, (current) => ({ ...current, status: 'PAID' }));

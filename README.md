@@ -28,6 +28,10 @@ La llave secreta permanece exclusivamente en el servidor. El navegador envía re
 
 Consulta el procedimiento completo en [Integración Bold](docs/BOLD.md).
 
+## Panel administrativo
+
+La configuración del acceso privado y del catálogo editable está en [Panel administrativo](docs/ADMIN.md).
+
 ## Despliegue
 
 Vercel ejecuta la API como una función de Node.js y PostgreSQL conserva el catálogo, las órdenes y los eventos de Bold. Los pasos de conexión y activación están en [Puesta en marcha en Vercel](docs/VERCEL.md).

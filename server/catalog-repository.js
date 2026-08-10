@@ -7,8 +7,12 @@ export class CatalogRepository {
   }
 
   async listActive() {
+    return (await this.listAll()).filter((product) => product.active !== false);
+  }
+
+  async listAll() {
     const data = await this.store.read();
-    return data.products.filter((product) => product.active !== false);
+    return data.products;
   }
 
   async findById(productId) {
@@ -22,6 +26,15 @@ export class CatalogRepository {
       if (index >= 0) data.products[index] = product;
       else data.products.push(product);
       return product;
+    });
+  }
+
+  async deactivate(productId) {
+    return this.store.transaction((data) => {
+      const index = data.products.findIndex((item) => item.id === productId);
+      if (index < 0) return null;
+      data.products[index] = { ...data.products[index], active: false };
+      return data.products[index];
     });
   }
 }

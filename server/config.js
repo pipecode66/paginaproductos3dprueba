@@ -19,6 +19,13 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
       databaseUrl,
       mode: databaseUrl ? 'postgresql' : isVercel ? 'unconfigured' : 'json',
     },
+    admin: {
+      email: String(env.ADMIN_EMAIL || '').trim().toLowerCase(),
+      password: String(env.ADMIN_PASSWORD || ''),
+      sessionSecret: String(env.ADMIN_SESSION_SECRET || ''),
+      sessionTtlMs: 15 * 60 * 1000,
+      publicBaseUrl,
+    },
     bold: {
       environment,
       identityKey: String(env.BOLD_IDENTITY_KEY || '').trim(),

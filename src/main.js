@@ -27,7 +27,6 @@ import {
   PackageCheck,
   PenTool,
   Plus,
-  RotateCcw,
   RotateCw,
   Save,
   Search,
@@ -43,15 +42,9 @@ import {
 import { siFacebook, siInstagram, siTiktok } from 'simple-icons/icons';
 
 const WHATSAPP_NUMBER = '573225435618';
-const PRODUCT_STORAGE_KEY = 'querubim-products-v9';
-const ADMIN_SESSION_KEY = 'querubim-admin-session';
 const ADMIN_BACKUP_KEY = 'querubim-last-catalog-backup';
 const ADMIN_ACTIVITY_KEY = 'querubim-admin-activity';
 const ADMIN_INACTIVITY_LIMIT = 15 * 60 * 1000;
-const ADMIN_CREDENTIALS = {
-  email: 'admin@querubim.co',
-  password: 'Querubim2026',
-};
 
 const categories = [
   { slug: 'todos', label: 'Todas' },
@@ -72,62 +65,6 @@ const categories = [
   { slug: 'balines', label: 'Balines' },
   { slug: 'argollas-matrimonio', label: 'Argollas Matrimonio' },
   { slug: 'fabricaciones', label: 'Fabricaciones' },
-];
-
-const sampleOrders = [
-  {
-    id: 'QBM-1028',
-    customer: 'María Fernanda R.',
-    status: 'Pendiente',
-    total: 1480000,
-    channel: 'WhatsApp',
-    items: ['Anillo Corona Amatista'],
-    date: 'Hoy',
-  },
-  {
-    id: 'QBM-1027',
-    customer: 'Andrés C.',
-    status: 'En preparación',
-    total: 1560000,
-    channel: 'Catálogo web',
-    items: ['Manilla Esmeralda Enlace'],
-    date: 'Ayer',
-  },
-  {
-    id: 'QBM-1026',
-    customer: 'Laura P.',
-    status: 'Entregado',
-    total: 860000,
-    channel: 'WhatsApp',
-    items: ['Candongas Onda Orgánica'],
-    date: 'Hace 3 días',
-  },
-];
-
-const sampleCustomers = [
-  {
-    name: 'María Fernanda R.',
-    phone: '+57 300 000 0001',
-    purchases: 3,
-    lastPurchase: 'Anillo Corona Amatista',
-  },
-  {
-    name: 'Andrés C.',
-    phone: '+57 300 000 0002',
-    purchases: 1,
-    lastPurchase: 'Manilla Esmeralda Enlace',
-  },
-  {
-    name: 'Laura P.',
-    phone: '+57 300 000 0003',
-    purchases: 2,
-    lastPurchase: 'Candongas Onda Orgánica',
-  },
-];
-
-const sampleCoupons = [
-  { code: 'QUERUBIM10', type: '10% descuento', scope: 'Primer pedido', status: 'Activo' },
-  { code: 'ENVIOBOG', type: 'Envío preferencial', scope: 'Bogotá', status: 'Activo' },
 ];
 
 const importedCatalogGroups = [
@@ -333,7 +270,7 @@ const importedCatalogGroups = [
 
 const defaultProducts = createImportedCatalogProducts();
 
-let products = loadStoredProducts();
+let products = cloneProductList();
 
 const icons = {
   ArrowRight,
@@ -363,7 +300,6 @@ const icons = {
   PackageCheck,
   PenTool,
   Plus,
-  RotateCcw,
   RotateCw,
   Save,
   Search,
@@ -392,6 +328,13 @@ const state = {
   adminQuery: '',
   editingProductId: null,
   adminTimeoutId: null,
+  adminAuthenticated: false,
+  adminSessionChecked: false,
+  adminUser: null,
+  adminOrders: [],
+  adminSummary: null,
+  adminLoading: false,
+  adminHeartbeatAt: 0,
   cartItems: [],
   checkoutBusy: false,
   paymentPollAttempts: 0,
@@ -614,30 +557,50 @@ function createImportedCatalogProducts() {
   });
 }
 
-function loadStoredProducts() {
-  try {
-    const storedProducts = localStorage.getItem(PRODUCT_STORAGE_KEY);
-    if (!storedProducts) return cloneProductList();
+function hydrateCatalogProduct(product) {
+  const fallback = defaultProducts.find((item) => item.id === product.id) || {};
+  const merged = { ...fallback, ...product };
+  merged.images = Array.isArray(product.images) && product.images.length ? product.images : getProductImages(fallback);
+  merged.measurements = Array.isArray(product.measurements) ? product.measurements : fallback.measurements || [];
+  merged.material = product.material || fallback.material || 'Oro amarillo 18K';
+  merged.description = product.description || fallback.description || 'Joya seleccionada por Querubim.';
+  merged.variants = { ...getProductVariants(fallback), ...(product.variants || {}) };
+  merged.value = formatCurrency(product.price);
+  merged.details = buildProductDetails(merged);
+  return merged;
+}
 
-    const parsedProducts = JSON.parse(storedProducts);
-    if (Array.isArray(parsedProducts)) return parsedProducts;
-  } catch {
-    localStorage.removeItem(PRODUCT_STORAGE_KEY);
+async function apiRequest(url, options = {}) {
+  const method = options.method || 'GET';
+  const headers = { Accept: 'application/json', ...(options.headers || {}) };
+  if (options.body) headers['Content-Type'] = 'application/json';
+  if (method !== 'GET') headers['x-querubim-admin'] = '1';
+
+  const response = await fetch(url, { ...options, method, headers, credentials: 'same-origin' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(result.error || 'No fue posible completar la solicitud.');
+    error.code = result.code;
+    error.status = response.status;
+    throw error;
   }
-
-  return cloneProductList();
+  return result;
 }
 
-function saveProducts() {
-  localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(products));
-}
-
-function resetProductsToDefault() {
-  products = cloneProductList();
-  saveProducts();
-  state.activeProduct = products[0];
-  state.editingProductId = null;
+function applyRemoteCatalog(remoteProducts) {
+  products = remoteProducts.filter((product) => product.active !== false).map(hydrateCatalogProduct);
+  if (!products.some((product) => product.id === state.activeProduct?.id)) state.activeProduct = products[0];
+  state.cartItems = state.cartItems.filter((item) => products.some((product) => product.id === item.product.id));
   refreshCatalogViews();
+}
+
+async function loadPublicCatalog() {
+  try {
+    const result = await apiRequest('/api/catalog/products');
+    if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
+  } catch {
+    // El catálogo incluido en la aplicación permanece disponible si la API está temporalmente fuera de línea.
+  }
 }
 
 function slugify(value) {
@@ -1070,7 +1033,53 @@ async function consultPaymentOrder({ scheduleNext = true } = {}) {
 }
 
 function isAdminLoggedIn() {
-  return localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+  return state.adminAuthenticated;
+}
+
+async function loadAdminDashboard() {
+  if (!isAdminLoggedIn() || state.adminLoading) return;
+  state.adminLoading = true;
+  try {
+    const result = await apiRequest('/api/admin/dashboard');
+    state.adminOrders = Array.isArray(result.orders) ? result.orders : [];
+    state.adminSummary = result.summary || null;
+    if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
+    renderAdminPanel();
+  } catch (error) {
+    if (error.status === 401) {
+      state.adminAuthenticated = false;
+      state.adminUser = null;
+      updateAdminViews();
+    } else if (selectors.adminBackupStatus) {
+      selectors.adminBackupStatus.textContent = error.message;
+    }
+  } finally {
+    state.adminLoading = false;
+  }
+}
+
+async function checkAdminSession() {
+  try {
+    const result = await apiRequest('/api/admin/session');
+    state.adminAuthenticated = Boolean(result.authenticated);
+    state.adminUser = result.user;
+    if (result.authenticated) state.adminHeartbeatAt = Date.now();
+    if (!result.configured && selectors.adminLoginMessage) {
+      selectors.adminLoginMessage.textContent = 'El acceso administrativo debe configurarse en Vercel antes de ingresar.';
+      selectors.adminLoginMessage.classList.add('error');
+    }
+  } catch (error) {
+    state.adminAuthenticated = false;
+    state.adminUser = null;
+    if (error.code === 'ADMIN_NOT_CONFIGURED' && selectors.adminLoginMessage) {
+      selectors.adminLoginMessage.textContent = 'El acceso administrativo debe configurarse en Vercel antes de ingresar.';
+      selectors.adminLoginMessage.classList.add('error');
+    }
+  } finally {
+    state.adminSessionChecked = true;
+    updateAdminViews();
+    if (state.adminAuthenticated) await loadAdminDashboard();
+  }
 }
 
 function populateAdminCategoryOptions() {
@@ -1123,7 +1132,7 @@ function getAdminActivityLog() {
   return [
     {
       action: 'Panel administrativo rediseñado con diagnóstico operativo.',
-      user: ADMIN_CREDENTIALS.email,
+      user: state.adminUser?.email || 'Administrador Querubim',
       date: new Date().toISOString(),
     },
   ];
@@ -1133,7 +1142,7 @@ function recordAdminActivity(action) {
   const activity = getAdminActivityLog();
   activity.unshift({
     action,
-    user: ADMIN_CREDENTIALS.email,
+    user: state.adminUser?.email || 'Administrador Querubim',
     date: new Date().toISOString(),
   });
   localStorage.setItem(ADMIN_ACTIVITY_KEY, JSON.stringify(activity.slice(0, 12)));
@@ -1151,37 +1160,31 @@ function getLastBackupLabel() {
 }
 
 function updateBackupState() {
-  const hasBackup = Boolean(localStorage.getItem(ADMIN_BACKUP_KEY));
   if (selectors.adminBackupStatus) {
-    selectors.adminBackupStatus.textContent = `${getLastBackupLabel()} · sesión expira tras 15 minutos de inactividad.`;
+    selectors.adminBackupStatus.textContent = `${getLastBackupLabel()} · sesión segura de 15 minutos.`;
   }
 
-  if (selectors.adminResetCatalog) {
-    selectors.adminResetCatalog.disabled = !hasBackup;
-    selectors.adminResetCatalog.title = hasBackup
-      ? 'Restaurar catálogo base'
-      : 'Exporta el catálogo antes de restaurar para conservar respaldo';
-  }
+  if (selectors.adminResetCatalog) selectors.adminResetCatalog.disabled = state.adminLoading;
 }
 
 function renderAdminStats() {
   if (!selectors.adminStats) return;
 
   const normalProducts = products.filter((product) => !product.premium).length;
-  const pendingOrders = sampleOrders.filter((order) => order.status !== 'Entregado' && order.status !== 'Cancelado').length;
+  const pendingOrders = state.adminOrders.filter((order) => order.status === 'CREATED').length;
   const categoriesUsed = new Set(products.map((product) => product.category)).size;
-  const estimatedValue = products.reduce((total, product) => total + getProductPrice(product), 0);
+  const paidRevenue = Number(state.adminSummary?.paidRevenue || 0);
   const lowStock = getLowStockProducts().length;
 
   const stats = [
     { icon: 'package', label: 'Productos', value: products.length },
     { icon: 'image-plus', label: 'Fotos gestionadas', value: getCatalogImageCount() },
     { icon: 'package-check', label: 'Stock bajo', value: lowStock },
-    { icon: 'clipboard-list', label: 'Pedidos abiertos', value: pendingOrders },
-    { icon: 'user-round', label: 'Clientes visibles', value: sampleCustomers.length },
+    { icon: 'clipboard-list', label: 'Pagos pendientes', value: pendingOrders },
+    { icon: 'user-round', label: 'Clientes reales', value: Number(state.adminSummary?.customers || 0) },
     { icon: 'shield-check', label: 'Categorías activas', value: categoriesUsed },
-    { icon: 'shopping-bag', label: 'Valor estimado', value: formatCurrency(estimatedValue) },
-    { icon: 'gem', label: 'Catálogo normal', value: normalProducts },
+    { icon: 'shopping-bag', label: 'Ingresos aprobados', value: formatCurrency(paidRevenue) },
+    { icon: 'gem', label: 'En revisión', value: Number(state.adminSummary?.reviewOrders || 0) },
   ];
 
   selectors.adminStats.innerHTML = stats
@@ -1203,10 +1206,10 @@ function renderAdminDiagnostics() {
   const diagnostics = [
     {
       icon: 'image-plus',
-      title: 'Imágenes limitadas',
-      before: 'Antes: una sola ruta por producto.',
-      improvement: 'Ahora: galería múltiple, vista previa y carga directa por arrastre o selección.',
-      status: 'Corregido',
+      title: 'Almacenamiento de imágenes',
+      before: 'Actual: galerías mediante rutas públicas o URL HTTPS.',
+      improvement: 'Siguiente mejora: carga directa cuando estén disponibles las credenciales de Cloudflare.',
+      status: 'En integración',
     },
     {
       icon: 'package-check',
@@ -1225,16 +1228,16 @@ function renderAdminDiagnostics() {
     {
       icon: 'clipboard-list',
       title: 'Pedidos sin seguimiento',
-      before: 'Antes: el panel terminaba en catálogo.',
-      improvement: 'Ahora: bandeja operativa con estado, cliente, canal, productos y valor.',
-      status: 'Mejorado',
+      before: 'Antes: la bandeja utilizaba datos de ejemplo.',
+      improvement: 'Ahora: muestra las órdenes y estados recibidos desde Bold.',
+      status: 'Corregido',
     },
     {
       icon: 'user-round',
       title: 'Clientes sin historial',
-      before: 'Antes: no había visibilidad de compradores.',
-      improvement: 'Ahora: ficha resumida con contacto, compras y última pieza adquirida.',
-      status: 'Mejorado',
+      before: 'Antes: los clientes visibles eran demostrativos.',
+      improvement: 'Ahora: el resumen se calcula a partir de compradores y pedidos reales.',
+      status: 'Corregido',
     },
     {
       icon: 'download',
@@ -1244,32 +1247,32 @@ function renderAdminDiagnostics() {
       status: 'Corregido',
     },
     {
-      icon: 'tags',
-      title: 'Sin cupones ni destacados',
-      before: 'Antes: no había marketing operativo.',
-      improvement: 'Ahora: cupones visibles y opción de marcar productos como destacados.',
-      status: 'Mejorado',
+      icon: 'database',
+      title: 'Catálogo aislado',
+      before: 'Antes: los cambios solo existían en el navegador del administrador.',
+      improvement: 'Ahora: tienda, panel, inventario y pagos consumen la misma base de datos.',
+      status: 'Corregido',
     },
     {
       icon: 'shield-check',
       title: 'Roles y trazabilidad',
-      before: 'Antes: no había roles ni registro de cambios.',
-      improvement: 'Ahora: rol administrativo visible y actividad reciente con usuario, acción y fecha.',
+      before: 'Antes: las credenciales estaban incluidas en el JavaScript público.',
+      improvement: 'Ahora: el servidor valida al administrador y entrega una sesión protegida.',
       status: 'Mejorado',
     },
     {
       icon: 'key-round',
-      title: 'Seguridad básica',
-      before: 'Antes: sin recuperación ni expiración.',
-      improvement: 'Ahora: acción de recuperación y cierre automático por inactividad.',
-      status: 'Mejorado',
+      title: 'Sesión administrativa',
+      before: 'Antes: el acceso dependía de localStorage.',
+      improvement: 'Ahora: cookie segura, inaccesible al JavaScript y cierre tras 15 minutos.',
+      status: 'Corregido',
     },
     {
       icon: 'credit-card',
-      title: 'Pagos y envíos pendientes',
-      before: 'Antes: no se visualizaban.',
-      improvement: 'Ahora: módulo de preparación para métodos de pago y costos de envío conectables.',
-      status: 'Preparado',
+      title: 'Pagos sin conexión',
+      before: 'Antes: se mostraban proveedores de pago simulados.',
+      improvement: 'Ahora: ingresos y alertas reflejan directamente la integración con Bold.',
+      status: 'Corregido',
     },
   ];
 
@@ -1288,140 +1291,123 @@ function renderAdminDiagnostics() {
     .join('');
 }
 
+function getAdminCustomers() {
+  const customers = new Map();
+  state.adminOrders.forEach((order) => {
+    const customer = order.customer || {};
+    const key = customer.email || customer.phone;
+    if (!key) return;
+    const current = customers.get(key) || {
+      name: customer.fullName || 'Cliente sin nombre',
+      email: customer.email || '',
+      phone: customer.phone || '',
+      purchases: 0,
+      lastPurchase: '',
+    };
+    current.purchases += 1;
+    if (!current.lastPurchase) current.lastPurchase = order.items?.map((item) => item.name).join(', ') || 'Sin detalle';
+    customers.set(key, current);
+  });
+  return [...customers.values()];
+}
+
+function getOrderStatusLabel(status) {
+  return {
+    CREATED: 'Pendiente de pago',
+    PAID: 'Pago aprobado',
+    REJECTED: 'Pago rechazado',
+    VOIDED: 'Pago anulado',
+    REVIEW_REQUIRED: 'Revisión requerida',
+  }[status] || status || 'Sin estado';
+}
+
 function renderAdminOperations() {
   if (!selectors.adminOperations) return;
 
   const activity = getAdminActivityLog();
   const lowStockProducts = getLowStockProducts().slice(0, 4);
+  const recentOrders = state.adminOrders.slice(0, 5);
+  const customers = getAdminCustomers().slice(0, 5);
+  const paymentCounts = state.adminOrders.reduce((counts, order) => {
+    counts[order.status] = (counts[order.status] || 0) + 1;
+    return counts;
+  }, {});
 
   selectors.adminOperations.innerHTML = `
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
-        <div>
-          <span class="eyebrow">Pedidos</span>
-          <h2>Bandeja operativa</h2>
-        </div>
+        <div><span class="eyebrow">Pedidos</span><h2>Órdenes recientes</h2></div>
         <i data-lucide="clipboard-list"></i>
       </div>
       <div class="admin-mini-list">
-        ${sampleOrders
-          .map(
-            (order) => `
+        ${recentOrders.length
+          ? recentOrders.map((order) => `
               <article>
-                <strong>${escapeHtml(order.id)} · ${escapeHtml(order.customer)}</strong>
-                <span>${escapeHtml(order.items.join(', '))}</span>
-                <small>${escapeHtml(order.status)} / ${escapeHtml(order.channel)} / ${escapeHtml(formatCurrency(order.total))}</small>
-              </article>
-            `,
-          )
-          .join('')}
+                <strong>${escapeHtml(order.id)} · ${escapeHtml(order.customer?.fullName || 'Cliente')}</strong>
+                <span>${escapeHtml(order.items?.map((item) => `${item.name} × ${item.quantity}`).join(', ') || 'Sin detalle')}</span>
+                <small>${escapeHtml(getOrderStatusLabel(order.status))} / ${escapeHtml(formatCurrency(order.amount))}</small>
+              </article>`).join('')
+          : '<article><strong>Aún no hay pedidos</strong><span>Las órdenes creadas con Bold aparecerán aquí.</span><small>Sin movimientos</small></article>'}
       </div>
     </section>
 
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
-        <div>
-          <span class="eyebrow">Clientes</span>
-          <h2>Historial resumido</h2>
-        </div>
+        <div><span class="eyebrow">Clientes</span><h2>Compradores reales</h2></div>
         <i data-lucide="user-round"></i>
       </div>
       <div class="admin-mini-list">
-        ${sampleCustomers
-          .map(
-            (customer) => `
+        ${customers.length
+          ? customers.map((customer) => `
               <article>
                 <strong>${escapeHtml(customer.name)}</strong>
-                <span>${escapeHtml(customer.phone)}</span>
-                <small>${customer.purchases} compras / Última pieza: ${escapeHtml(customer.lastPurchase)}</small>
-              </article>
-            `,
-          )
-          .join('')}
+                <span>${escapeHtml(customer.email || customer.phone)}</span>
+                <small>${customer.purchases} pedido${customer.purchases === 1 ? '' : 's'} / Última pieza: ${escapeHtml(customer.lastPurchase)}</small>
+              </article>`).join('')
+          : '<article><strong>Sin compradores registrados</strong><span>Los datos aparecerán después de la primera orden.</span><small>Historial vacío</small></article>'}
       </div>
     </section>
 
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
-        <div>
-          <span class="eyebrow">Inventario</span>
-          <h2>Alertas de stock</h2>
-        </div>
+        <div><span class="eyebrow">Inventario</span><h2>Alertas de stock</h2></div>
         <i data-lucide="bell"></i>
       </div>
       <div class="admin-mini-list">
-        ${
-          lowStockProducts.length
-            ? lowStockProducts
-                .map(
-                  (product) => `
-                    <article>
-                      <strong>${escapeHtml(product.name)}</strong>
-                      <span>${escapeHtml(getCategoryLabel(product.category))}</span>
-                      <small>${getProductStock(product) === 0 ? 'Agotado' : 'Última unidad disponible'}</small>
-                    </article>
-                  `,
-                )
-                .join('')
-            : '<article><strong>Inventario estable</strong><span>No hay alertas de stock bajo.</span><small>Seguimiento activo</small></article>'
-        }
+        ${lowStockProducts.length
+          ? lowStockProducts.map((product) => `
+              <article>
+                <strong>${escapeHtml(product.name)}</strong>
+                <span>${escapeHtml(getCategoryLabel(product.category))}</span>
+                <small>${getProductStock(product) === 0 ? 'Agotado' : 'Última unidad disponible'}</small>
+              </article>`).join('')
+          : '<article><strong>Inventario estable</strong><span>No hay alertas de stock bajo.</span><small>Seguimiento activo</small></article>'}
       </div>
     </section>
 
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
-        <div>
-          <span class="eyebrow">Marketing</span>
-          <h2>Cupones y pagos</h2>
-        </div>
-        <i data-lucide="tags"></i>
+        <div><span class="eyebrow">Bold</span><h2>Estados de pago</h2></div>
+        <i data-lucide="credit-card"></i>
       </div>
       <div class="admin-mini-list">
-        ${sampleCoupons
-          .map(
-            (coupon) => `
-              <article>
-                <strong>${escapeHtml(coupon.code)}</strong>
-                <span>${escapeHtml(coupon.type)} / ${escapeHtml(coupon.scope)}</span>
-                <small>${escapeHtml(coupon.status)}</small>
-              </article>
-            `,
-          )
-          .join('')}
-        <article>
-          <strong>Pagos conectables</strong>
-          <span>Wompi, PayU, Mercado Pago o ePayco</span>
-          <small>Preparado para API real</small>
-        </article>
+        <article><strong>${paymentCounts.PAID || 0} pagos aprobados</strong><span>${formatCurrency(state.adminSummary?.paidRevenue || 0)}</span><small>Confirmados por webhook</small></article>
+        <article><strong>${paymentCounts.CREATED || 0} pagos pendientes</strong><span>${paymentCounts.REJECTED || 0} rechazados / ${paymentCounts.VOIDED || 0} anulados</span><small>${paymentCounts.REVIEW_REQUIRED || 0} requieren revisión</small></article>
       </div>
     </section>
 
     <section class="admin-ops-card wide">
       <div class="admin-panel-title compact">
-        <div>
-          <span class="eyebrow">Actividad</span>
-          <h2>Registro de cambios</h2>
-        </div>
+        <div><span class="eyebrow">Actividad</span><h2>Registro local de cambios</h2></div>
         <i data-lucide="database"></i>
       </div>
       <div class="admin-mini-list activity-list">
-        ${activity
-          .slice(0, 6)
-          .map(
-            (item) => `
-              <article>
-                <strong>${escapeHtml(item.action)}</strong>
-                <span>${escapeHtml(item.user)}</span>
-                <small>${escapeHtml(
-                  new Intl.DateTimeFormat('es-CO', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(new Date(item.date)),
-                )}</small>
-              </article>
-            `,
-          )
-          .join('')}
+        ${activity.slice(0, 6).map((item) => `
+            <article>
+              <strong>${escapeHtml(item.action)}</strong>
+              <span>${escapeHtml(item.user)}</span>
+              <small>${escapeHtml(new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.date)))}</small>
+            </article>`).join('')}
       </div>
     </section>
   `;
@@ -1507,40 +1493,13 @@ function renderAdminImagePreview() {
     : '<p>La vista previa aparecerá cuando agregues rutas o cargues imágenes.</p>';
 }
 
-function appendAdminImages(imageSources) {
-  if (!selectors.adminImages || !imageSources.length) return;
-
-  const currentImages = normalizeMultilineList(selectors.adminImages.value);
-  selectors.adminImages.value = [...currentImages, ...imageSources].join('\n');
-  renderAdminImagePreview();
-}
-
 function handleAdminImageFiles(files) {
   const imageFiles = Array.from(files || []).filter((file) => file.type.startsWith('image/'));
   if (!imageFiles.length) return;
-
-  Promise.all(
-    imageFiles.map(
-      (file) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result || ''));
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        }),
-    ),
-  )
-    .then((imageSources) => {
-      appendAdminImages(imageSources);
-      selectors.adminFormMessage.textContent = `${imageSources.length} imagen${imageSources.length === 1 ? '' : 'es'} agregada${imageSources.length === 1 ? '' : 's'} a la galería.`;
-      selectors.adminFormMessage.classList.remove('error');
-      selectors.adminFormMessage.classList.add('success');
-      recordAdminActivity(`Carga directa de ${imageSources.length} imagen${imageSources.length === 1 ? '' : 'es'} en el editor.`);
-    })
-    .catch(() => {
-      selectors.adminFormMessage.textContent = 'No fue posible leer las imágenes seleccionadas.';
-      selectors.adminFormMessage.classList.add('error');
-    });
+  selectors.adminFormMessage.textContent =
+    'La carga directa se habilitará al conectar Cloudflare. Por ahora agrega rutas públicas o URL HTTPS en el campo de galería.';
+  selectors.adminFormMessage.classList.remove('success');
+  selectors.adminFormMessage.classList.add('error');
 }
 
 function resetAdminForm() {
@@ -1632,7 +1591,7 @@ function buildProductFromAdminForm() {
   };
 }
 
-function saveAdminProduct(event) {
+async function saveAdminProduct(event) {
   event.preventDefault();
 
   if (!selectors.adminProductForm.checkValidity()) {
@@ -1659,33 +1618,58 @@ function saveAdminProduct(event) {
   }
 
   const existingIndex = products.findIndex((item) => item.id === product.id);
-  if (existingIndex >= 0) products[existingIndex] = product;
-  else products.unshift(product);
+  const submitButton = selectors.adminProductForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  selectors.adminFormMessage.textContent = 'Guardando producto...';
+  selectors.adminFormMessage.classList.remove('error', 'success');
 
-  state.activeProduct = product;
-  saveProducts();
-  resetAdminForm();
-  refreshCatalogViews();
-  selectors.adminFormMessage.textContent = 'Producto guardado correctamente.';
-  selectors.adminFormMessage.classList.add('success');
-  recordAdminActivity(`${existingIndex >= 0 ? 'Actualización' : 'Creación'} de producto: ${product.name}.`);
+  try {
+    const result = await apiRequest(
+      existingIndex >= 0 ? `/api/admin/products/${encodeURIComponent(product.id)}` : '/api/admin/products',
+      {
+        method: existingIndex >= 0 ? 'PUT' : 'POST',
+        body: JSON.stringify(product),
+      },
+    );
+    const savedProduct = hydrateCatalogProduct(result.product);
+    if (existingIndex >= 0) products[existingIndex] = savedProduct;
+    else products.unshift(savedProduct);
+    state.activeProduct = savedProduct;
+    resetAdminForm();
+    refreshCatalogViews();
+    selectors.adminFormMessage.textContent = 'Producto guardado en el catálogo y conectado con pagos.';
+    selectors.adminFormMessage.classList.add('success');
+    recordAdminActivity(`${existingIndex >= 0 ? 'Actualización' : 'Creación'} de producto: ${savedProduct.name}.`);
+    await loadAdminDashboard();
+  } catch (error) {
+    selectors.adminFormMessage.textContent = error.message;
+    selectors.adminFormMessage.classList.add('error');
+    if (error.status === 401) await checkAdminSession();
+  } finally {
+    submitButton.disabled = false;
+  }
 }
 
-function deleteAdminProduct(productId) {
+async function deleteAdminProduct(productId) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
   if (!window.confirm(`¿Eliminar ${product.name} del catálogo?`)) return;
 
-  products = products.filter((item) => item.id !== productId);
-  state.cartItems = state.cartItems.filter((item) => item.product.id !== productId);
-  if (state.activeProduct?.id === productId) state.activeProduct = products[0];
-
-  saveProducts();
-  refreshCatalogViews();
-  recordAdminActivity(`Eliminación de producto: ${product.name}.`);
+  try {
+    await apiRequest(`/api/admin/products/${encodeURIComponent(productId)}`, { method: 'DELETE' });
+    products = products.filter((item) => item.id !== productId);
+    state.cartItems = state.cartItems.filter((item) => item.product.id !== productId);
+    if (state.activeProduct?.id === productId) state.activeProduct = products[0];
+    refreshCatalogViews();
+    recordAdminActivity(`Retiro de producto: ${product.name}.`);
+    await loadAdminDashboard();
+  } catch (error) {
+    window.alert(error.message);
+    if (error.status === 401) await checkAdminSession();
+  }
 }
 
-function handleAdminLogin(event) {
+async function handleAdminLogin(event) {
   event.preventDefault();
 
   if (!selectors.adminLoginForm.checkValidity()) {
@@ -1699,8 +1683,20 @@ function handleAdminLogin(event) {
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
 
-  if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-    localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+  const submitButton = selectors.adminLoginForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  selectors.adminLoginMessage.textContent = 'Verificando acceso...';
+  selectors.adminLoginMessage.classList.remove('error');
+
+  try {
+    const result = await apiRequest('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    state.adminAuthenticated = true;
+    state.adminSessionChecked = true;
+    state.adminUser = result.user;
+    state.adminHeartbeatAt = Date.now();
     selectors.adminLoginForm.reset();
     selectors.adminLoginMessage.textContent = '';
     selectors.adminLoginMessage.classList.remove('error');
@@ -1708,15 +1704,27 @@ function handleAdminLogin(event) {
     scheduleAdminTimeout();
     updateAdminViews();
     recordAdminActivity('Ingreso al panel administrativo.');
-    return;
+    await loadAdminDashboard();
+  } catch (error) {
+    selectors.adminLoginMessage.textContent = error.message;
+    selectors.adminLoginMessage.classList.add('error');
+  } finally {
+    submitButton.disabled = false;
   }
-
-  selectors.adminLoginMessage.textContent = 'Credenciales incorrectas.';
-  selectors.adminLoginMessage.classList.add('error');
 }
 
-function handleAdminLogout() {
-  localStorage.removeItem(ADMIN_SESSION_KEY);
+async function handleAdminLogout() {
+  try {
+    await apiRequest('/api/admin/logout', { method: 'POST' });
+  } catch {
+    // La interfaz debe cerrar la sesión incluso si la solicitud de salida no responde.
+  }
+  state.adminAuthenticated = false;
+  state.adminSessionChecked = true;
+  state.adminUser = null;
+  state.adminOrders = [];
+  state.adminSummary = null;
+  state.adminHeartbeatAt = 0;
   state.editingProductId = null;
   window.clearTimeout(state.adminTimeoutId);
   updateAdminViews();
@@ -1727,9 +1735,7 @@ function scheduleAdminTimeout() {
   if (!isAdminLoggedIn()) return;
 
   state.adminTimeoutId = window.setTimeout(() => {
-    localStorage.removeItem(ADMIN_SESSION_KEY);
-    state.editingProductId = null;
-    updateAdminViews();
+    handleAdminLogout();
     if (state.currentRoute === 'admin') {
       selectors.adminLoginMessage.textContent = 'La sesión se cerró por inactividad.';
       selectors.adminLoginMessage.classList.add('error');
@@ -1738,7 +1744,16 @@ function scheduleAdminTimeout() {
 }
 
 function registerAdminActivity() {
-  if (isAdminLoggedIn()) scheduleAdminTimeout();
+  if (!isAdminLoggedIn()) return;
+  scheduleAdminTimeout();
+  const now = Date.now();
+  if (now - state.adminHeartbeatAt < 5 * 60 * 1000) return;
+  state.adminHeartbeatAt = now;
+  apiRequest('/api/admin/session')
+    .then((result) => {
+      if (!result.authenticated) handleAdminLogout();
+    })
+    .catch(() => undefined);
 }
 
 function exportCatalogCsv() {
@@ -1800,8 +1815,8 @@ function exportCatalogCsv() {
 function handlePasswordRecovery() {
   if (!selectors.adminBackupStatus) return;
   selectors.adminBackupStatus.textContent =
-    'Recuperación solicitada: en producción este botón enviaría un enlace seguro al correo administrativo.';
-  recordAdminActivity('Solicitud de recuperación de contraseña.');
+    'La recuperación por correo se habilitará al conectar el proveedor de correo transaccional. Por seguridad, solicita el cambio al responsable técnico.';
+  recordAdminActivity('Consulta de recuperación de contraseña.');
 }
 
 function openPanel(panel) {
@@ -1930,6 +1945,7 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
     document.title = 'Panel administrativo Querubim';
     updateActiveNavigation('admin');
     updateAdminViews();
+    checkAdminSession();
     if (push) window.history.pushState({ route: 'admin' }, '', '/admin');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     requestScrollUpdate();
@@ -2056,16 +2072,9 @@ function setupEvents() {
     renderAdminProducts();
     refreshIcons();
   });
-  selectors.adminResetCatalog?.addEventListener('click', () => {
-    if (!localStorage.getItem(ADMIN_BACKUP_KEY)) {
-      window.alert('Primero exporta el catálogo en CSV para conservar un respaldo antes de restaurar.');
-      updateBackupState();
-      return;
-    }
-    if (!window.confirm('¿Restaurar el catálogo inicial de Querubim?')) return;
-    resetAdminForm();
-    resetProductsToDefault();
-    recordAdminActivity('Restauración del catálogo a versión base después de respaldo.');
+  selectors.adminResetCatalog?.addEventListener('click', async () => {
+    await loadAdminDashboard();
+    recordAdminActivity('Actualización manual de catálogo, pedidos y estadísticas.');
   });
 
   document.querySelector('#catalog-search-button').addEventListener('click', () => {
@@ -2169,6 +2178,7 @@ renderProducts();
 renderCategories({ premium: true });
 renderProducts({ premium: true });
 renderCart();
+loadPublicCatalog();
 setupEvents();
 setupSectionObservers();
 refreshIcons();

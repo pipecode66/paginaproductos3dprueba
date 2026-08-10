@@ -24,11 +24,23 @@ class UnavailableRepository {
     throw new StorageConfigurationError();
   }
 
+  async listAll() {
+    throw new StorageConfigurationError();
+  }
+
   async findById() {
     throw new StorageConfigurationError();
   }
 
   async upsert() {
+    throw new StorageConfigurationError();
+  }
+
+  async deactivate() {
+    throw new StorageConfigurationError();
+  }
+
+  async list() {
     throw new StorageConfigurationError();
   }
 

@@ -34,9 +34,14 @@ async function createSchema(pool) {
         stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
         measurements JSONB NOT NULL DEFAULT '[]'::jsonb,
         active BOOLEAN NOT NULL DEFAULT TRUE,
+        data JSONB NOT NULL DEFAULT '{}'::jsonb,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
+    `);
+    await client.query(`
+      ALTER TABLE querubim_catalog_products
+      ADD COLUMN IF NOT EXISTS data JSONB NOT NULL DEFAULT '{}'::jsonb
     `);
     await client.query(`
       CREATE TABLE IF NOT EXISTS querubim_payment_orders (
@@ -62,8 +67,8 @@ async function createSchema(pool) {
     for (const product of catalogSeed) {
       await client.query(
         `INSERT INTO querubim_catalog_products
-          (id, name, category, price, stock, measurements, active)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+          (id, name, category, price, stock, measurements, active, data)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb)
          ON CONFLICT (id) DO NOTHING`,
         [
           product.id,
@@ -73,6 +78,7 @@ async function createSchema(pool) {
           product.stock,
           JSON.stringify(product.measurements),
           product.active !== false,
+          JSON.stringify(product),
         ],
       );
     }

@@ -18,6 +18,13 @@ export class OrderStore {
     return data.orders[orderId] ?? null;
   }
 
+  async list(limit = 100) {
+    const data = await this.store.read();
+    return Object.values(data.orders)
+      .sort((first, second) => String(second.createdAt).localeCompare(String(first.createdAt)))
+      .slice(0, limit);
+  }
+
   async recordEvent(eventId, eventRecord, updateOrder) {
     return this.store.transaction((data) => {
       if (data.events[eventId]) {
