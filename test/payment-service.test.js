@@ -145,6 +145,28 @@ test('envía a revisión una notificación cuyo monto no coincide', async () => 
   assert.match(result.order.reviewReason, /monto/i);
 });
 
+test('acepta la notificación anonimizada del botón Probar el webhook', async () => {
+  const service = createService();
+  await service.createOrder(validPayload());
+  const event = {
+    id: 'event-sandbox-probe-1',
+    type: 'SALE_APPROVED',
+    subject: 'XXXX',
+    data: {
+      payment_id: 'XXXX',
+      payment_method: 'CARD_WEB',
+      amount: { currency: 'COP', total: 1000 },
+      metadata: { reference: 'QBM-ORDER-001' },
+    },
+  };
+  const rawBody = Buffer.from(JSON.stringify(event));
+  const signature = createWebhookSignature(rawBody, '');
+  const result = await service.processWebhook(rawBody, signature);
+
+  assert.equal(result.order.status, 'PAID');
+  assert.equal(result.order.reviewReason, null);
+});
+
 test('bloquea producción mientras no exista habilitación explícita', async () => {
   const service = createService({ boldConfig: { environment: 'production', productionEnabled: false } });
 

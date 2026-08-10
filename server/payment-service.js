@@ -223,21 +223,25 @@ export class PaymentService {
       (order) => {
         const amountMatches = eventAmount === order.amount;
         const currencyMatches = eventCurrency === order.currency;
+        const paymentId = cleanText(event.data?.payment_id || event.subject, 100);
+        const isSandboxProbe = this.boldConfig.environment === 'test' && /^X+$/i.test(paymentId);
         const next = {
           ...order,
           lastEventType: eventType,
           lastWebhookAt: receivedAt,
-          paymentId: cleanText(event.data?.payment_id || event.subject, 100),
+          paymentId,
           paymentMethod: cleanText(event.data?.payment_method, 40),
           payerEmail: cleanText(event.data?.payer_email, 160),
         };
 
-        if (!amountMatches || !currencyMatches) {
+        if ((!amountMatches || !currencyMatches) && !isSandboxProbe) {
           next.status = 'REVIEW_REQUIRED';
           next.reviewReason = 'El monto o la moneda notificados por Bold no coinciden con la orden.';
           return next;
         }
 
+        if (isSandboxProbe) next.sandboxWebhookTest = true;
+        delete next.reviewReason;
         next.status = mapBoldEventType(eventType, order.status);
         if (eventType === 'SALE_APPROVED') next.paidAt = receivedAt;
         if (eventType === 'VOID_REJECTED') next.voidStatus = 'REJECTED';
