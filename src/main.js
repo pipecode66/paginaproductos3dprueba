@@ -4,6 +4,8 @@ import {
   Bell,
   BarChart3,
   ChevronUp,
+  CircleCheck,
+  CircleX,
   Clock3,
   ClipboardList,
   CreditCard,
@@ -14,6 +16,7 @@ import {
   ImagePlus,
   KeyRound,
   Layers,
+  LoaderCircle,
   LockKeyhole,
   LogOut,
   Mail,
@@ -25,6 +28,7 @@ import {
   PenTool,
   Plus,
   RotateCcw,
+  RotateCw,
   Save,
   Search,
   ShieldCheck,
@@ -336,6 +340,8 @@ const icons = {
   Bell,
   BarChart3,
   ChevronUp,
+  CircleCheck,
+  CircleX,
   Clock3,
   ClipboardList,
   CreditCard,
@@ -346,6 +352,7 @@ const icons = {
   ImagePlus,
   KeyRound,
   Layers,
+  LoaderCircle,
   LockKeyhole,
   LogOut,
   Mail,
@@ -357,6 +364,7 @@ const icons = {
   PenTool,
   Plus,
   RotateCcw,
+  RotateCw,
   Save,
   Search,
   ShieldCheck,
@@ -385,11 +393,14 @@ const state = {
   editingProductId: null,
   adminTimeoutId: null,
   cartItems: [],
+  checkoutBusy: false,
+  paymentPollAttempts: 0,
+  paymentPollTimer: null,
   currentRoute: 'home',
   ticking: false,
 };
 
-const standaloneRoutes = new Set(['premium', 'admin', 'historia', 'contacto']);
+const standaloneRoutes = new Set(['premium', 'admin', 'historia', 'contacto', 'payment']);
 
 const selectors = {
   pageSections: document.querySelectorAll('[data-page]'),
@@ -452,7 +463,17 @@ const selectors = {
   selectionDrawer: document.querySelector('#selection-drawer'),
   selectionItems: document.querySelector('#selection-items'),
   selectionEmpty: document.querySelector('#selection-empty'),
+  checkoutForm: document.querySelector('#checkout-form'),
+  checkoutTotal: document.querySelector('#checkout-total'),
+  checkoutMessage: document.querySelector('#checkout-message'),
+  checkoutPayButton: document.querySelector('#checkout-pay-button'),
+  checkoutPayLabel: document.querySelector('#checkout-pay-label'),
   cartCount: document.querySelector('#cart-count'),
+  paymentResultIcon: document.querySelector('#payment-result-icon'),
+  paymentResultTitle: document.querySelector('#payment-result-title'),
+  paymentResultMessage: document.querySelector('#payment-result-message'),
+  paymentResultSummary: document.querySelector('#payment-result-summary'),
+  paymentResultRefresh: document.querySelector('#payment-result-refresh'),
   scrollTopButton: document.querySelector('#scroll-top-button'),
   contactForm: document.querySelector('#contact-form'),
   formMessage: document.querySelector('#form-message'),
@@ -840,6 +861,10 @@ function removeCartItem(key) {
 function renderCart() {
   selectors.cartCount.textContent = String(state.cartItems.length);
   selectors.selectionEmpty.hidden = state.cartItems.length > 0;
+  selectors.checkoutForm.hidden = state.cartItems.length === 0;
+  selectors.checkoutTotal.textContent = formatCurrency(
+    state.cartItems.reduce((total, item) => total + getProductPrice(item.product), 0),
+  );
   selectors.selectionItems.innerHTML = state.cartItems
     .map(
       ({ key, product, measure }) => `
@@ -858,6 +883,190 @@ function renderCart() {
     )
     .join('');
   refreshIcons();
+}
+
+let boldCheckoutScriptPromise;
+
+function loadBoldCheckoutScript() {
+  if (window.BoldCheckout) return Promise.resolve(window.BoldCheckout);
+  if (boldCheckoutScriptPromise) return boldCheckoutScriptPromise;
+
+  boldCheckoutScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector('script[src="https://checkout.bold.co/library/boldPaymentButton.js"]');
+    const script = existingScript || document.createElement('script');
+    const handleLoad = () => {
+      if (window.BoldCheckout) resolve(window.BoldCheckout);
+      else reject(new Error('Bold Checkout no quedó disponible después de cargar la librería.'));
+    };
+    const handleError = () => reject(new Error('No fue posible cargar la pasarela segura de Bold.'));
+
+    script.addEventListener('load', handleLoad, { once: true });
+    script.addEventListener('error', handleError, { once: true });
+    if (!existingScript) {
+      script.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  });
+
+  return boldCheckoutScriptPromise;
+}
+
+function setCheckoutBusy(isBusy) {
+  state.checkoutBusy = isBusy;
+  selectors.checkoutPayButton.disabled = isBusy;
+  selectors.checkoutPayButton.classList.toggle('loading', isBusy);
+  selectors.checkoutPayLabel.textContent = isBusy ? 'Preparando pago' : 'Pagar con Bold';
+}
+
+async function handleCheckoutSubmit(event) {
+  event.preventDefault();
+  if (state.checkoutBusy || state.cartItems.length === 0) return;
+
+  selectors.checkoutMessage.textContent = '';
+  selectors.checkoutMessage.classList.remove('error', 'success');
+  if (!selectors.checkoutForm.checkValidity()) {
+    selectors.checkoutMessage.textContent = 'Completa tus datos para continuar con el pago.';
+    selectors.checkoutMessage.classList.add('error');
+    selectors.checkoutForm.reportValidity();
+    return;
+  }
+
+  setCheckoutBusy(true);
+  try {
+    const formData = new FormData(selectors.checkoutForm);
+    const customer = {
+      fullName: String(formData.get('fullName') || '').trim(),
+      email: String(formData.get('email') || '').trim(),
+      phone: String(formData.get('phone') || '').trim(),
+    };
+    const response = await fetch('/api/payments/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer,
+        items: state.cartItems.map(({ product, measure }) => ({ productId: product.id, measure, quantity: 1 })),
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'No fue posible crear la orden de pago.');
+
+    const BoldCheckout = await loadBoldCheckoutScript();
+    const checkoutConfig = {
+      orderId: result.payment.orderId,
+      currency: result.payment.currency,
+      amount: result.payment.amount,
+      apiKey: result.payment.apiKey,
+      integritySignature: result.payment.integritySignature,
+      description: result.payment.description,
+      renderMode: 'embedded',
+    };
+    if (result.payment.redirectionUrl) checkoutConfig.redirectionUrl = result.payment.redirectionUrl;
+    if (result.payment.tax) checkoutConfig.tax = result.payment.tax;
+    const checkout = new BoldCheckout(checkoutConfig);
+
+    sessionStorage.setItem('querubim-last-order', result.order.id);
+    selectors.checkoutMessage.textContent = `Orden ${result.order.id} creada correctamente.`;
+    selectors.checkoutMessage.classList.add('success');
+    closePanels();
+    checkout.open();
+  } catch (error) {
+    selectors.checkoutMessage.textContent = error.message || 'No fue posible iniciar el pago. Inténtalo nuevamente.';
+    selectors.checkoutMessage.classList.add('error');
+  } finally {
+    setCheckoutBusy(false);
+  }
+}
+
+const paymentStatusContent = {
+  PAID: {
+    icon: 'circle-check',
+    tone: 'success',
+    title: 'Tu pago fue confirmado.',
+    message: 'Recibimos el pago correctamente. Querubim continuará con la preparación de tu pedido.',
+  },
+  REJECTED: {
+    icon: 'circle-x',
+    tone: 'error',
+    title: 'El pago no fue aprobado.',
+    message: 'No se realizó ningún cobro confirmado. Puedes volver al catálogo e intentarlo de nuevo.',
+  },
+  VOIDED: {
+    icon: 'circle-x',
+    tone: 'neutral',
+    title: 'El pago fue anulado.',
+    message: 'La transacción figura como anulada. Comunícate con Querubim si necesitas ayuda con tu pedido.',
+  },
+  REVIEW_REQUIRED: {
+    icon: 'shield-check',
+    tone: 'warning',
+    title: 'El pago requiere verificación.',
+    message: 'Detectamos una diferencia en la notificación y el pedido quedó protegido para revisión manual.',
+  },
+  CREATED: {
+    icon: 'loader-circle',
+    tone: 'pending',
+    title: 'Estamos confirmando tu pago.',
+    message: 'Bold todavía no ha enviado la confirmación definitiva. Esta página se actualizará automáticamente.',
+  },
+};
+
+const paymentStatusLabels = {
+  CREATED: 'Confirmación pendiente',
+  PAID: 'Pago aprobado',
+  REJECTED: 'Pago rechazado',
+  VOIDED: 'Pago anulado',
+  REVIEW_REQUIRED: 'Revisión requerida',
+};
+
+function renderPaymentResult(order, errorMessage = '') {
+  const content = errorMessage
+    ? { icon: 'circle-x', tone: 'error', title: 'No pudimos consultar el pago.', message: errorMessage }
+    : paymentStatusContent[order?.status] || paymentStatusContent.CREATED;
+  selectors.paymentResultIcon.className = `payment-result-icon ${content.tone}`;
+  selectors.paymentResultIcon.innerHTML = `<i data-lucide="${content.icon}"></i>`;
+  selectors.paymentResultTitle.textContent = content.title;
+  selectors.paymentResultMessage.textContent = content.message;
+  selectors.paymentResultSummary.innerHTML = order
+    ? `
+        <div><dt>Orden</dt><dd>${escapeHtml(order.id)}</dd></div>
+        <div><dt>Total</dt><dd>${formatCurrency(order.amount)}</dd></div>
+        <div><dt>Estado</dt><dd>${escapeHtml(paymentStatusLabels[order.status] || order.status)}</dd></div>
+      `
+    : '';
+  if (order?.status === 'PAID') {
+    state.cartItems = [];
+    renderCart();
+  }
+  refreshIcons();
+}
+
+async function consultPaymentOrder({ scheduleNext = true } = {}) {
+  window.clearTimeout(state.paymentPollTimer);
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('orden') || sessionStorage.getItem('querubim-last-order');
+  if (!orderId) {
+    renderPaymentResult(null, 'No encontramos una referencia de orden para verificar.');
+    return;
+  }
+
+  selectors.paymentResultRefresh.disabled = true;
+  try {
+    const response = await fetch(`/api/payments/orders/${encodeURIComponent(orderId)}`, { headers: { Accept: 'application/json' } });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'No fue posible consultar la orden.');
+    renderPaymentResult(result.order);
+
+    const isPending = result.order.status === 'CREATED';
+    if (scheduleNext && isPending && state.paymentPollAttempts < 60) {
+      state.paymentPollAttempts += 1;
+      state.paymentPollTimer = window.setTimeout(() => consultPaymentOrder(), 10_000);
+    }
+  } catch (error) {
+    renderPaymentResult(null, error.message || 'Inténtalo de nuevo en unos minutos.');
+  } finally {
+    selectors.paymentResultRefresh.disabled = false;
+  }
 }
 
 function isAdminLoggedIn() {
@@ -1688,6 +1897,7 @@ function requestScrollUpdate() {
 
 function getInitialRoute() {
   const pathname = window.location.pathname.replace(/\/$/, '');
+  if (pathname === '/pago/resultado') return 'payment';
   if (pathname === '/premium') return 'premium';
   if (pathname === '/admin') return 'admin';
   if (pathname === '/historia') return 'historia';
@@ -1697,11 +1907,24 @@ function getInitialRoute() {
 
 function setRoute(route, { push = true, targetSection = null } = {}) {
   state.currentRoute = route;
+  window.clearTimeout(state.paymentPollTimer);
   document.body.classList.toggle('premium-route', route === 'premium');
   document.body.classList.toggle('admin-route', route === 'admin');
   document.body.classList.toggle('history-route', route === 'historia');
   document.body.classList.toggle('contact-route', route === 'contacto');
+  document.body.classList.toggle('payment-route', route === 'payment');
   closePanels();
+
+  if (route === 'payment') {
+    document.title = 'Estado del pago | Joyería Querubim';
+    state.paymentPollAttempts = 0;
+    if (push) window.history.pushState({ route: 'payment' }, '', `/pago/resultado${window.location.search}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderPaymentResult(null);
+    consultPaymentOrder();
+    requestScrollUpdate();
+    return;
+  }
 
   if (route === 'admin') {
     document.title = 'Panel administrativo Querubim';
@@ -1890,6 +2113,8 @@ function setupEvents() {
   });
 
   selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
+  selectors.checkoutForm.addEventListener('submit', handleCheckoutSubmit);
+  selectors.paymentResultRefresh.addEventListener('click', () => consultPaymentOrder({ scheduleNext: true }));
 
   selectors.scrollTopButton.addEventListener('click', () => {
     if (standaloneRoutes.has(state.currentRoute)) {

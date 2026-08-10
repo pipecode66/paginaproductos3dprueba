@@ -4,15 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "node server/index.js --dev",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "start": "node server/index.js",
+    "preview": "node server/index.js",
+    "test": "node --test",
+    "test:browser": "node scripts/verify-bold-checkout.mjs",
+    "test:payment": "node scripts/verify-bold-checkout.mjs --complete",
+    "test:ui": "node scripts/verify-payment-ui.mjs"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "lucide": "latest",
     "simple-icons": "^16.26.0"
   },
   "devDependencies": {
-    "vite": "latest"
+    "playwright-core": "^1.62.1",
+    "vite": "^8.2.1"
   }
 }

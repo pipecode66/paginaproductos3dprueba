@@ -4,3 +4,6 @@ dist/
 *.log
 .env
 .env.*
+!.env.example
+var/
+test-results/

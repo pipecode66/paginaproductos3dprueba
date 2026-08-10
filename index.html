@@ -654,6 +654,30 @@
           </div>
         </div>
       </section>
+
+      <section class="page-section payment-result-section" id="payment-result" aria-label="Resultado del pago">
+        <div class="payment-result-shell">
+          <div class="payment-result-icon" id="payment-result-icon" aria-hidden="true">
+            <i data-lucide="loader-circle"></i>
+          </div>
+          <span class="eyebrow">Pago en línea</span>
+          <h1 id="payment-result-title">Estamos verificando tu pago.</h1>
+          <p id="payment-result-message">
+            Espera un momento mientras confirmamos la respuesta de Bold de forma segura.
+          </p>
+          <dl class="payment-result-summary" id="payment-result-summary"></dl>
+          <div class="payment-result-actions">
+            <button class="button button-primary" id="payment-result-refresh" type="button">
+              Consultar estado
+              <i data-lucide="rotate-cw"></i>
+            </button>
+            <a class="button button-secondary" href="/" data-route-link="home" data-target-section="coleccion">
+              Volver al catálogo
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer" id="pie-de-pagina">
@@ -768,6 +792,32 @@
       </div>
       <div class="selection-items" id="selection-items"></div>
       <p class="selection-empty" id="selection-empty">Aún no has añadido joyas a la canasta.</p>
+      <form class="checkout-form" id="checkout-form" novalidate hidden>
+        <div class="checkout-total">
+          <span>Total de productos</span>
+          <strong id="checkout-total">$0</strong>
+        </div>
+        <div class="checkout-customer-fields">
+          <label for="checkout-name">
+            Nombre completo
+            <input id="checkout-name" name="fullName" type="text" maxlength="100" autocomplete="name" required />
+          </label>
+          <label for="checkout-email">
+            Correo electrónico
+            <input id="checkout-email" name="email" type="email" maxlength="160" autocomplete="email" required />
+          </label>
+          <label for="checkout-phone">
+            Celular
+            <input id="checkout-phone" name="phone" type="tel" maxlength="24" autocomplete="tel" required />
+          </label>
+        </div>
+        <p class="checkout-message" id="checkout-message" role="status" aria-live="polite"></p>
+        <button class="button button-primary checkout-pay-button" id="checkout-pay-button" type="submit">
+          <span id="checkout-pay-label">Pagar con Bold</span>
+          <i data-lucide="credit-card"></i>
+        </button>
+        <p class="checkout-security"><i data-lucide="shield-check"></i> Pago protegido por Bold</p>
+      </form>
     </aside>
 
     <div class="overlay" id="overlay"></div>

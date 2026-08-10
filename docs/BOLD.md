@@ -1,0 +1,61 @@
+# Integración Bold
+
+## Flujo implementado
+
+1. El cliente añade joyas y medidas a la canasta.
+2. `POST /api/payments/orders` valida cada referencia contra el catálogo del servidor.
+3. El servidor calcula el total en COP, crea una referencia única y genera el hash SHA-256 con la llave secreta.
+4. El navegador abre `BoldCheckout` con `renderMode: embedded`.
+5. Bold envía el resultado a `POST /api/payments/bold/webhook`.
+6. El servidor valida `x-bold-signature` sobre el cuerpo crudo, evita eventos duplicados y actualiza la orden.
+7. `/pago/resultado` consulta el estado registrado por el servidor.
+
+Estados internos: `CREATED`, `PAID`, `REJECTED`, `VOIDED` y `REVIEW_REQUIRED`.
+
+## Variables
+
+```dotenv
+BOLD_ENVIRONMENT=test
+BOLD_IDENTITY_KEY=
+BOLD_SECRET_KEY=
+PUBLIC_BASE_URL=http://localhost:4173
+PORT=4173
+BOLD_TAX=
+ALLOW_BOLD_PRODUCTION=false
+```
+
+No se deben incluir llaves reales en Git, JavaScript del navegador, capturas, registros ni documentación. La llave de identidad se entrega al checkout desde el servidor; la llave secreta nunca sale del backend.
+
+## Pruebas
+
+`npm test` cubre firma de integridad, firma del webhook, manipulación de precios, medidas, existencias, idempotencia, discrepancias de monto, bloqueo de producción y endpoints HTTP.
+
+`npm run test:browser` verifica que la librería oficial abra Embedded Checkout. `npm run test:payment` completa una venta aprobada con la tarjeta de sandbox publicada por Bold.
+
+En el ambiente de pruebas Bold no envía el webhook automáticamente después de una venta simulada. Debe utilizarse la opción "Probar el webhook" del panel una vez exista una URL HTTPS pública.
+
+## Configuración en Bold
+
+Registrar como webhook:
+
+```text
+https://DOMINIO/api/payments/bold/webhook
+```
+
+La aplicación debe desplegarse en un servicio que ejecute Node.js. GitHub Pages por sí solo no puede firmar órdenes ni recibir webhooks.
+
+## Paso a producción
+
+1. Rotar las llaves que hayan sido compartidas por canales no destinados a secretos.
+2. Desplegar el servidor con HTTPS y almacenamiento persistente.
+3. Configurar las llaves de producción como secretos del proveedor de hosting.
+4. Definir `BOLD_ENVIRONMENT=production` y la URL pública real.
+5. Confirmar con contabilidad el tratamiento de impuestos antes de definir `BOLD_TAX`.
+6. Registrar y probar el webhook desde el panel Bold.
+7. Confirmar los límites de monto habilitados para el comercio.
+8. Ejecutar una compra real controlada de bajo valor.
+9. Solo después de esas validaciones, establecer `ALLOW_BOLD_PRODUCTION=true`.
+
+## Próxima fase administrativa
+
+El registro de órdenes y el catálogo de pagos usan por ahora archivos persistentes bajo `var/`. En la finalización del panel administrativo se migrarán a la base de datos definitiva, se protegerán con autenticación del servidor y se conectarán las altas, ediciones, imágenes, precios, existencias y pedidos al mismo catálogo autoritativo que utiliza Bold.
