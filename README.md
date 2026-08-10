@@ -27,3 +27,7 @@ npm start
 La llave secreta permanece exclusivamente en el servidor. El navegador envía referencias y medidas; el servidor consulta su propio catálogo, valida existencias, recalcula el total, crea la orden y genera la firma de integridad.
 
 Consulta el procedimiento completo en [Integración Bold](docs/BOLD.md).
+
+## Despliegue
+
+Vercel ejecuta la API como una función de Node.js y PostgreSQL conserva el catálogo, las órdenes y los eventos de Bold. Los pasos de conexión y activación están en [Puesta en marcha en Vercel](docs/VERCEL.md).

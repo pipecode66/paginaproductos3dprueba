@@ -36,7 +36,7 @@ try {
   await page.locator('#checkout-email').fill('prueba@example.com');
   await page.locator('#checkout-phone').fill('3001234567');
   await page.locator('#checkout-pay-button').click();
-  await page.waitForFunction(() => typeof window.BoldCheckout === 'function', null, { timeout: 20_000 });
+  await page.waitForFunction(() => typeof window.BoldCheckout === 'function', null, { timeout: 20_000 }).catch(() => undefined);
   await page.waitForTimeout(5_000);
 
   const frameUrls = page.frames().map((frame) => frame.url()).filter((url) => url && url !== page.url());

@@ -1,8 +1,6 @@
 import express from 'express';
-import path from 'node:path';
-import { CatalogRepository } from './catalog-repository.js';
-import { OrderStore } from './order-store.js';
 import { PaymentError, PaymentService } from './payment-service.js';
+import { createPersistence } from './persistence.js';
 
 function createRateLimiter({ windowMs, limit }) {
   const clients = new Map();
@@ -30,13 +28,20 @@ function serializeError(error) {
   if (error instanceof PaymentError) {
     return { statusCode: error.statusCode, body: { error: error.message, code: error.code } };
   }
+  if (error?.expose && Number.isInteger(error.statusCode)) {
+    return { statusCode: error.statusCode, body: { error: error.message, code: error.code } };
+  }
   return { statusCode: 500, body: { error: 'No fue posible procesar la solicitud.', code: 'INTERNAL_ERROR' } };
 }
 
 export function createApp({ config, catalogRepository, orderStore, logger = console } = {}) {
   if (!config) throw new Error('La configuración del servidor es obligatoria.');
-  const resolvedCatalog = catalogRepository ?? new CatalogRepository(path.join(config.runtimeDir, 'catalog.json'));
-  const resolvedOrders = orderStore ?? new OrderStore(path.join(config.runtimeDir, 'orders.json'));
+  const persistence = !catalogRepository || !orderStore ? createPersistence(config) : null;
+  const resolvedCatalog = catalogRepository ?? persistence.catalogRepository;
+  const resolvedOrders = orderStore ?? persistence.orderStore;
+  const storage = catalogRepository && orderStore
+    ? { mode: 'injected', configured: true, ready: () => Promise.resolve(true) }
+    : persistence.storage;
   const paymentService = new PaymentService({
     catalogRepository: resolvedCatalog,
     orderStore: resolvedOrders,
@@ -47,11 +52,24 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
-  app.get('/api/payments/health', (request, response) => {
+  app.get('/api/payments/health', async (request, response) => {
+    let storageReady = false;
+    try {
+      storageReady = await storage.ready();
+    } catch (error) {
+      logger.error('Error verificando el almacenamiento de pagos', error);
+    }
+    const boldConfigured = Boolean(config.bold.identityKey && config.bold.secretKey);
     response.json({
-      configured: Boolean(config.bold.identityKey && config.bold.secretKey),
+      configured: boldConfigured && storageReady,
+      boldConfigured,
       environment: config.bold.environment,
       productionEnabled: config.bold.environment !== 'production' || config.bold.productionEnabled,
+      storage: {
+        mode: storage.mode,
+        configured: storage.configured,
+        ready: storageReady,
+      },
     });
   });
 

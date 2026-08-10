@@ -11,15 +11,19 @@
     "test": "node --test",
     "test:browser": "node scripts/verify-bold-checkout.mjs",
     "test:payment": "node scripts/verify-bold-checkout.mjs --complete",
-    "test:ui": "node scripts/verify-payment-ui.mjs"
+    "test:ui": "node scripts/verify-payment-ui.mjs",
+    "test:deployment": "node scripts/verify-vercel-deployment.mjs"
   },
   "dependencies": {
+    "@vercel/functions": "^3.9.2",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide": "latest",
+    "pg": "^8.23.0",
     "simple-icons": "^16.26.0"
   },
   "devDependencies": {
+    "pg-mem": "^3.0.14",
     "playwright-core": "^1.62.1",
     "vite": "^8.2.1"
   }

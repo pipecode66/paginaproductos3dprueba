@@ -18,6 +18,7 @@ Estados internos: `CREATED`, `PAID`, `REJECTED`, `VOIDED` y `REVIEW_REQUIRED`.
 BOLD_ENVIRONMENT=test
 BOLD_IDENTITY_KEY=
 BOLD_SECRET_KEY=
+DATABASE_URL=
 PUBLIC_BASE_URL=http://localhost:4173
 PORT=4173
 BOLD_TAX=
@@ -42,12 +43,12 @@ Registrar como webhook:
 https://DOMINIO/api/payments/bold/webhook
 ```
 
-La aplicación debe desplegarse en un servicio que ejecute Node.js. GitHub Pages por sí solo no puede firmar órdenes ni recibir webhooks.
+La aplicación está preparada para ejecutarse como una función de Node.js en Vercel. En producción utiliza PostgreSQL mediante `DATABASE_URL`; los archivos de `var/` se reservan exclusivamente para desarrollo local.
 
 ## Paso a producción
 
 1. Rotar las llaves que hayan sido compartidas por canales no destinados a secretos.
-2. Desplegar el servidor con HTTPS y almacenamiento persistente.
+2. Conectar una base de datos PostgreSQL persistente al proyecto de Vercel.
 3. Configurar las llaves de producción como secretos del proveedor de hosting.
 4. Definir `BOLD_ENVIRONMENT=production` y la URL pública real.
 5. Confirmar con contabilidad el tratamiento de impuestos antes de definir `BOLD_TAX`.
@@ -56,6 +57,6 @@ La aplicación debe desplegarse en un servicio que ejecute Node.js. GitHub Pages
 8. Ejecutar una compra real controlada de bajo valor.
 9. Solo después de esas validaciones, establecer `ALLOW_BOLD_PRODUCTION=true`.
 
-## Próxima fase administrativa
+## Persistencia y panel administrativo
 
-El registro de órdenes y el catálogo de pagos usan por ahora archivos persistentes bajo `var/`. En la finalización del panel administrativo se migrarán a la base de datos definitiva, se protegerán con autenticación del servidor y se conectarán las altas, ediciones, imágenes, precios, existencias y pedidos al mismo catálogo autoritativo que utiliza Bold.
+El registro de órdenes y el catálogo de pagos utilizan PostgreSQL en Vercel. Esta misma base queda preparada para conectar las altas, ediciones, precios, existencias y pedidos del panel administrativo al catálogo autoritativo que utiliza Bold. Consulta la guía [Puesta en marcha en Vercel](VERCEL.md).

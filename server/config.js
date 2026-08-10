@@ -8,11 +8,17 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
   const port = Number(env.PORT) || 4173;
   const environment = normalizeEnvironment(env.BOLD_ENVIRONMENT);
   const publicBaseUrl = env.PUBLIC_BASE_URL || `http://localhost:${port}`;
+  const databaseUrl = String(env.DATABASE_URL || '').trim();
+  const isVercel = Boolean(env.VERCEL);
 
   return {
     port,
     rootDir,
     runtimeDir: path.resolve(rootDir, env.RUNTIME_DATA_DIR || 'var'),
+    storage: {
+      databaseUrl,
+      mode: databaseUrl ? 'postgresql' : isVercel ? 'unconfigured' : 'json',
+    },
     bold: {
       environment,
       identityKey: String(env.BOLD_IDENTITY_KEY || '').trim(),
