@@ -45,11 +45,61 @@ if (!webhookResponse.ok) throw new Error(`No fue posible aprobar la orden admini
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
 const page = await context.newPage();
 const browserErrors = [];
+const uploadedImageUrl = 'https://media.example/products/prueba-panel/imagen-prueba.png';
+const tinyPng = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
+);
 
 page.on('console', (message) => {
   if (message.type() === 'error') browserErrors.push(message.text().slice(0, 300));
 });
 page.on('pageerror', (error) => browserErrors.push(error.message.slice(0, 300)));
+
+await page.route('**/api/admin/dashboard', async (route) => {
+  const response = await route.fetch();
+  const dashboard = await response.json();
+  const headers = response.headers();
+  delete headers['content-length'];
+  await route.fulfill({
+    status: response.status(),
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      ...dashboard,
+      storage: {
+        configured: true,
+        publicUrl: 'https://media.example',
+        maxImageSize: 8 * 1024 * 1024,
+        acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+      },
+    }),
+  });
+});
+await page.route('**/api/admin/uploads/presign', async (route) => {
+  await route.fulfill({
+    status: 201,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      upload: {
+        uploadUrl: 'https://upload.example/signed-image',
+        publicUrl: uploadedImageUrl,
+        contentType: 'image/png',
+        expiresIn: 300,
+      },
+    }),
+  });
+});
+await page.route('**/api/admin/uploads', async (route) => {
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ deleted: { publicUrl: uploadedImageUrl } }),
+  });
+});
+await page.route('https://upload.example/**', async (route) => route.fulfill({ status: 200, body: '' }));
+await page.route('https://media.example/**', async (route) =>
+  route.fulfill({ status: 200, contentType: 'image/png', body: tinyPng }),
+);
 
 try {
   await mkdir('test-results', { recursive: true });
@@ -59,6 +109,27 @@ try {
   await page.locator('#admin-login-form button[type="submit"]').click();
   await page.locator('#admin-panel-view:not([hidden])').waitFor();
   await page.locator('#admin-stats .admin-stat').first().waitFor();
+  await page.getByText('Arrastra imágenes o selecciónalas').waitFor();
+
+  await page.locator('#admin-image-files').setInputFiles({
+    name: 'imagen-prueba.png',
+    mimeType: 'image/png',
+    buffer: tinyPng,
+  });
+  await page.waitForTimeout(1200);
+  const uploadMessage = (await page.locator('#admin-form-message').textContent()).trim();
+  if (uploadMessage !== '1 imagen fue cargada correctamente. Guarda el producto para publicarla.') {
+    const storageState = await page.evaluate(() =>
+      fetch('/api/admin/dashboard').then((response) => response.json()).then((result) => result.storage),
+    );
+    const dropTitle = (await page.locator('#admin-image-drop-title').textContent()).trim();
+    throw new Error(
+      `La carga visual no terminó correctamente: ${uploadMessage}. Estado: ${JSON.stringify(storageState)}. Control: ${dropTitle}`,
+    );
+  }
+  const uploadVerified = (await page.locator('#admin-images').inputValue()) === uploadedImageUrl;
+  await page.locator('[data-admin-image-remove="0"]').click();
+  await page.locator('#admin-images').waitFor();
 
   await page.locator(`[data-admin-order="${order.id}"]`).click();
   await page.locator('#admin-order-dialog[open]').waitFor();
@@ -104,12 +175,13 @@ try {
     statCount: await page.locator('#admin-stats .admin-stat').count(),
     productCount: await page.locator('#admin-product-list .admin-product-item').count(),
     orderUpdated: (await page.locator('#admin-order-status').inputValue()) === 'PREPARING',
+    uploadVerified,
     dialogInsideViewport: Boolean(dialogBox && dialogBox.x >= 0 && dialogBox.x + dialogBox.width <= 390),
     hasHorizontalOverflow,
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || result.statCount < 6 || result.productCount < 1 || !result.orderUpdated || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || result.statCount < 6 || result.productCount < 1 || !result.orderUpdated || !result.uploadVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {

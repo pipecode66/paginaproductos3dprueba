@@ -11,6 +11,7 @@ import { validateCatalogProduct } from './catalog-validation.js';
 import { normalizeManagedOrder, updateManagedOrder } from './order-management.js';
 import { PaymentError, PaymentService } from './payment-service.js';
 import { createPersistence } from './persistence.js';
+import { R2Storage } from './r2-storage.js';
 
 function createRateLimiter({ windowMs, limit }) {
   const clients = new Map();
@@ -44,7 +45,7 @@ function serializeError(error) {
   return { statusCode: 500, body: { error: 'No fue posible procesar la solicitud.', code: 'INTERNAL_ERROR' } };
 }
 
-export function createApp({ config, catalogRepository, orderStore, logger = console } = {}) {
+export function createApp({ config, catalogRepository, orderStore, r2Storage, logger = console } = {}) {
   if (!config) throw new Error('La configuración del servidor es obligatoria.');
   const persistence = !catalogRepository || !orderStore ? createPersistence(config) : null;
   const resolvedCatalog = catalogRepository ?? persistence.catalogRepository;
@@ -58,6 +59,7 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
     boldConfig: config.bold,
   });
   const adminConfig = config.admin ?? {};
+  const imageStorage = r2Storage ?? new R2Storage(config.r2);
   const app = express();
 
   app.disable('x-powered-by');
@@ -82,6 +84,10 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
         ready: storageReady,
       },
     });
+  });
+
+  app.get('/api/storage/health', (request, response) => {
+    response.json(imageStorage.status());
   });
 
   app.post(
@@ -139,6 +145,30 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
 
   app.use('/api/admin', requireAdmin(adminConfig));
 
+  app.post(
+    '/api/admin/uploads/presign',
+    createRateLimiter({ windowMs: 60_000, limit: 60 }),
+    async (request, response) => {
+      try {
+        const upload = await imageStorage.createPresignedUpload(request.body || {});
+        response.status(201).json({ upload });
+      } catch (error) {
+        const serialized = serializeError(error);
+        response.status(serialized.statusCode).json(serialized.body);
+      }
+    },
+  );
+
+  app.delete('/api/admin/uploads', async (request, response) => {
+    try {
+      response.json({ deleted: await imageStorage.deletePublicObject(request.body?.publicUrl) });
+    } catch (error) {
+      const serialized = serializeError(error);
+      if (serialized.statusCode >= 500) logger.error('Error eliminando imagen de Cloudflare R2', error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
   app.get('/api/admin/dashboard', async (request, response) => {
     try {
       const [products, storedOrders] = await Promise.all([resolvedCatalog.listAll(), resolvedOrders.list(100)]);
@@ -162,6 +192,7 @@ export function createApp({ config, catalogRepository, orderStore, logger = cons
             .filter((order) => order.status === 'PAID')
             .reduce((total, order) => total + Number(order.amount || 0), 0),
         },
+        storage: imageStorage.status(),
       });
     } catch (error) {
       const serialized = serializeError(error);

@@ -26,6 +26,13 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
       sessionTtlMs: 15 * 60 * 1000,
       publicBaseUrl,
     },
+    r2: {
+      accountId: String(env.CLOUDFLARE_R2_ACCOUNT_ID || '').trim(),
+      accessKeyId: String(env.CLOUDFLARE_R2_ACCESS_KEY_ID || '').trim(),
+      secretAccessKey: String(env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '').trim(),
+      bucket: String(env.CLOUDFLARE_R2_BUCKET || '').trim(),
+      publicUrl: String(env.CLOUDFLARE_R2_PUBLIC_URL || '').trim().replace(/\/+$/, ''),
+    },
     bold: {
       environment,
       identityKey: String(env.BOLD_IDENTITY_KEY || '').trim(),

@@ -59,7 +59,24 @@ async function createAdminServer(context) {
       publicBaseUrl: 'http://localhost:4173',
     },
   };
-  const { app } = createApp({ config, catalogRepository, orderStore, logger: { error() {} } });
+  const r2Storage = {
+    status: () => ({
+      configured: true,
+      publicUrl: 'https://pub.example.r2.dev',
+      maxImageSize: 8 * 1024 * 1024,
+      acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+    }),
+    createPresignedUpload: async ({ productId, contentType, size }) => ({
+      key: `products/${productId}/test-image.jpg`,
+      uploadUrl: 'https://upload.example/signed',
+      publicUrl: `https://pub.example.r2.dev/products/${productId}/test-image.jpg`,
+      expiresIn: 300,
+      contentType,
+      size,
+    }),
+    deletePublicObject: async (publicUrl) => ({ key: 'products/test-image.jpg', publicUrl }),
+  };
+  const { app } = createApp({ config, catalogRepository, orderStore, r2Storage, logger: { error() {} } });
   const server = app.listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
   context.after(() => new Promise((resolve) => server.close(resolve)));
@@ -100,6 +117,35 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
   assert.equal(dashboard.status, 200);
   assert.equal(dashboardData.summary.orders, 1);
   assert.equal(dashboardData.summary.paidRevenue, 990000);
+  assert.equal(dashboardData.storage.configured, true);
+
+  const storageHealth = await fetch(`${baseUrl}/api/storage/health`).then((response) => response.json());
+  assert.equal(storageHealth.configured, true);
+
+  const presigned = await fetch(`${baseUrl}/api/admin/uploads/presign`, {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify({
+      productId: adminProduct.id,
+      fileName: 'anillo.jpg',
+      contentType: 'image/jpeg',
+      size: 2048,
+    }),
+  });
+  const presignedData = await presigned.json();
+  assert.equal(presigned.status, 201);
+  assert.equal(
+    presignedData.upload.publicUrl,
+    `https://pub.example.r2.dev/products/${adminProduct.id}/test-image.jpg`,
+  );
+
+  const deletedUpload = await fetch(`${baseUrl}/api/admin/uploads`, {
+    method: 'DELETE',
+    headers: adminHeaders,
+    body: JSON.stringify({ publicUrl: presignedData.upload.publicUrl }),
+  });
+  assert.equal(deletedUpload.status, 200);
+  assert.equal((await deletedUpload.json()).deleted.publicUrl, presignedData.upload.publicUrl);
 
   const created = await fetch(`${baseUrl}/api/admin/products`, {
     method: 'POST',

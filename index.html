@@ -650,10 +650,23 @@
                 <div class="admin-image-drop" id="admin-image-drop">
                   <i data-lucide="upload-cloud"></i>
                   <div>
-                    <strong>Carga directa pendiente de Cloudflare</strong>
-                    <span>Mientras se conecta, agrega rutas públicas o URL HTTPS en el campo superior.</span>
+                    <strong id="admin-image-drop-title">Verificando almacenamiento de imágenes</strong>
+                    <span id="admin-image-drop-description">Espera mientras el panel comprueba la conexión con Cloudflare.</span>
                   </div>
-                  <input id="admin-image-files" type="file" accept="image/*" multiple />
+                  <input
+                    id="admin-image-files"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    multiple
+                    disabled
+                  />
+                </div>
+                <div class="admin-image-upload-status" id="admin-image-upload-status" hidden>
+                  <div>
+                    <span id="admin-image-upload-text">Preparando imágenes...</span>
+                    <strong id="admin-image-upload-progress">0%</strong>
+                  </div>
+                  <progress id="admin-image-upload-bar" max="100" value="0">0%</progress>
                 </div>
                 <div class="admin-image-preview" id="admin-image-preview" aria-label="Vista previa de galería"></div>
 

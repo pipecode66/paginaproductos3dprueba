@@ -318,6 +318,14 @@ const brandIcons = {
   tiktok: siTiktok,
 };
 
+const DEFAULT_ADMIN_STORAGE = {
+  configured: false,
+  publicUrl: '',
+  maxImageSize: 8 * 1024 * 1024,
+  acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
+};
+const MAX_PRODUCT_IMAGES = 12;
+
 const state = {
   activeFilter: 'todos',
   activePremiumFilter: 'todos',
@@ -339,6 +347,11 @@ const state = {
   adminOrderFilter: 'todos',
   adminOrderPage: 1,
   activeAdminOrderId: null,
+  adminStorage: { ...DEFAULT_ADMIN_STORAGE },
+  adminImageUploading: false,
+  adminUploadProgress: 0,
+  originalAdminImages: [],
+  pendingR2Uploads: new Set(),
   cartItems: [],
   checkoutBusy: false,
   paymentPollAttempts: 0,
@@ -397,6 +410,12 @@ const selectors = {
   adminImages: document.querySelector('#admin-images'),
   adminImageFiles: document.querySelector('#admin-image-files'),
   adminImageDrop: document.querySelector('#admin-image-drop'),
+  adminImageDropTitle: document.querySelector('#admin-image-drop-title'),
+  adminImageDropDescription: document.querySelector('#admin-image-drop-description'),
+  adminImageUploadStatus: document.querySelector('#admin-image-upload-status'),
+  adminImageUploadText: document.querySelector('#admin-image-upload-text'),
+  adminImageUploadProgress: document.querySelector('#admin-image-upload-progress'),
+  adminImageUploadBar: document.querySelector('#admin-image-upload-bar'),
   adminImagePreview: document.querySelector('#admin-image-preview'),
   adminStock: document.querySelector('#admin-stock'),
   adminMetal: document.querySelector('#admin-metal'),
@@ -1061,6 +1080,8 @@ async function loadAdminDashboard() {
     const result = await apiRequest('/api/admin/dashboard');
     state.adminOrders = Array.isArray(result.orders) ? result.orders : [];
     state.adminSummary = result.summary || null;
+    state.adminStorage = { ...DEFAULT_ADMIN_STORAGE, ...(result.storage || {}) };
+    updateAdminImageUploadState();
     if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
     renderAdminPanel();
   } catch (error) {
@@ -1220,14 +1241,19 @@ function renderAdminStats() {
 
 function renderAdminDiagnostics() {
   if (!selectors.adminDiagnostics) return;
+  const storageReady = Boolean(state.adminStorage.configured);
 
   const diagnostics = [
     {
       icon: 'image-plus',
       title: 'Almacenamiento de imágenes',
-      before: 'Actual: galerías mediante rutas públicas o URL HTTPS.',
-      improvement: 'Siguiente mejora: carga directa cuando estén disponibles las credenciales de Cloudflare.',
-      status: 'En integración',
+      before: storageReady
+        ? 'Antes: las galerías dependían de rutas escritas manualmente.'
+        : 'Actual: galerías mediante rutas públicas o URL HTTPS.',
+      improvement: storageReady
+        ? 'Ahora: carga múltiple directa y segura mediante Cloudflare R2.'
+        : 'Siguiente mejora: completar las variables de Cloudflare R2 en el servidor.',
+      status: storageReady ? 'Corregido' : 'En integración',
     },
     {
       icon: 'package-check',
@@ -1664,32 +1690,220 @@ function renderAdminImagePreview() {
   const images = normalizeMultilineList(selectors.adminImages.value);
   selectors.adminImagePreview.innerHTML = images.length
     ? images
-        .slice(0, 8)
+        .slice(0, MAX_PRODUCT_IMAGES)
         .map(
           (image, index) => `
             <figure class="${index === 0 ? 'primary' : ''}">
               <img src="${escapeHtml(image)}" alt="Vista previa ${index + 1}" loading="lazy" />
+              <button
+                class="icon-button admin-image-remove"
+                type="button"
+                data-admin-image-remove="${index}"
+                aria-label="Retirar imagen ${index + 1}"
+                title="Retirar imagen"
+              >
+                <i data-lucide="trash-2"></i>
+              </button>
               <figcaption>${index === 0 ? 'Principal' : `Foto ${index + 1}`}</figcaption>
             </figure>
           `,
         )
         .join('')
     : '<p>La vista previa aparecerá cuando agregues rutas o cargues imágenes.</p>';
+  refreshIcons();
 }
 
-function handleAdminImageFiles(files) {
-  const imageFiles = Array.from(files || []).filter((file) => file.type.startsWith('image/'));
-  if (!imageFiles.length) return;
-  selectors.adminFormMessage.textContent =
-    'La carga directa se habilitará al conectar Cloudflare. Por ahora agrega rutas públicas o URL HTTPS en el campo de galería.';
-  selectors.adminFormMessage.classList.remove('success');
-  selectors.adminFormMessage.classList.add('error');
+function updateAdminImageUploadState() {
+  if (!selectors.adminImageFiles) return;
+  const storageReady = Boolean(state.adminStorage.configured);
+  selectors.adminImageFiles.disabled = !storageReady || state.adminImageUploading;
+  selectors.adminImageDrop?.classList.toggle('uploading', state.adminImageUploading);
+
+  if (selectors.adminImageDropTitle) {
+    selectors.adminImageDropTitle.textContent = state.adminImageUploading
+      ? 'Subiendo imágenes al catálogo'
+      : storageReady
+        ? 'Arrastra imágenes o selecciónalas'
+        : 'Carga directa pendiente de configuración';
+  }
+  if (selectors.adminImageDropDescription) {
+    selectors.adminImageDropDescription.textContent = storageReady
+      ? `JPEG, PNG, WebP o AVIF · máximo ${Math.round(state.adminStorage.maxImageSize / 1024 / 1024)} MB · hasta ${MAX_PRODUCT_IMAGES} fotos.`
+      : 'Completa las cinco variables de Cloudflare R2 en Vercel y vuelve a desplegar.';
+  }
+  if (selectors.adminImageUploadStatus) selectors.adminImageUploadStatus.hidden = !state.adminImageUploading;
+}
+
+function setAdminUploadProgress(progress, message) {
+  const normalizedProgress = Math.max(0, Math.min(100, Math.round(progress)));
+  state.adminUploadProgress = normalizedProgress;
+  if (selectors.adminImageUploadText) selectors.adminImageUploadText.textContent = message;
+  if (selectors.adminImageUploadProgress) selectors.adminImageUploadProgress.textContent = `${normalizedProgress}%`;
+  if (selectors.adminImageUploadBar) {
+    selectors.adminImageUploadBar.value = normalizedProgress;
+    selectors.adminImageUploadBar.textContent = `${normalizedProgress}%`;
+  }
+}
+
+function setAdminFormMessage(message, type = '') {
+  if (!selectors.adminFormMessage) return;
+  selectors.adminFormMessage.textContent = message;
+  selectors.adminFormMessage.classList.remove('error', 'success');
+  if (type) selectors.adminFormMessage.classList.add(type);
+}
+
+function appendAdminImages(imageUrls) {
+  const currentImages = normalizeMultilineList(selectors.adminImages.value);
+  const mergedImages = [...new Set([...currentImages, ...imageUrls])].slice(0, MAX_PRODUCT_IMAGES);
+  selectors.adminImages.value = mergedImages.join('\n');
+  renderAdminImagePreview();
+}
+
+function uploadFileToSignedUrl(file, upload, onProgress) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('PUT', upload.uploadUrl);
+    request.setRequestHeader('Content-Type', upload.contentType);
+    request.timeout = 120_000;
+    request.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) onProgress(event.loaded / event.total);
+    });
+    request.addEventListener('load', () => {
+      if (request.status >= 200 && request.status < 300) resolve();
+      else reject(new Error(`Cloudflare rechazó la imagen con estado ${request.status}.`));
+    });
+    request.addEventListener('error', () =>
+      reject(new Error('No fue posible enviar la imagen a Cloudflare. Revisa la configuración CORS del bucket.')),
+    );
+    request.addEventListener('timeout', () => reject(new Error('La carga de la imagen tardó demasiado.')));
+    request.send(file);
+  });
+}
+
+function isManagedR2Image(publicUrl) {
+  const baseUrl = String(state.adminStorage.publicUrl || '').replace(/\/+$/, '');
+  return Boolean(baseUrl && String(publicUrl).startsWith(`${baseUrl}/products/`));
+}
+
+async function deleteR2Images(publicUrls) {
+  const managedUrls = [...new Set(publicUrls.filter(isManagedR2Image))];
+  if (!managedUrls.length) return [];
+  return Promise.allSettled(
+    managedUrls.map((publicUrl) =>
+      apiRequest('/api/admin/uploads', {
+        method: 'DELETE',
+        body: JSON.stringify({ publicUrl }),
+      }),
+    ),
+  );
+}
+
+async function discardPendingR2Uploads() {
+  const pendingUrls = [...state.pendingR2Uploads];
+  await deleteR2Images(pendingUrls);
+  state.pendingR2Uploads.clear();
+}
+
+async function removeAdminImage(index) {
+  if (state.adminImageUploading) return;
+  const images = normalizeMultilineList(selectors.adminImages.value);
+  const publicUrl = images[index];
+  if (!publicUrl) return;
+
+  if (state.pendingR2Uploads.has(publicUrl)) {
+    const [result] = await deleteR2Images([publicUrl]);
+    if (result?.status === 'rejected') {
+      setAdminFormMessage('No fue posible retirar la imagen recién cargada. Inténtalo de nuevo.', 'error');
+      return;
+    }
+    state.pendingR2Uploads.delete(publicUrl);
+  }
+
+  images.splice(index, 1);
+  selectors.adminImages.value = images.join('\n');
+  setAdminFormMessage('Imagen retirada de la galería. Guarda el producto para confirmar el cambio.');
+  renderAdminImagePreview();
+}
+
+async function handleAdminImageFiles(files) {
+  const imageFiles = Array.from(files || []);
+  if (!imageFiles.length || state.adminImageUploading) return;
+  if (!state.adminStorage.configured) {
+    setAdminFormMessage('Cloudflare R2 todavía no está disponible en este despliegue.', 'error');
+    return;
+  }
+
+  const acceptedTypes = new Set(state.adminStorage.acceptedTypes);
+  const invalidType = imageFiles.find((file) => !acceptedTypes.has(file.type));
+  if (invalidType) {
+    setAdminFormMessage(`${invalidType.name} no es JPEG, PNG, WebP ni AVIF.`, 'error');
+    return;
+  }
+  const oversizedFile = imageFiles.find((file) => file.size > state.adminStorage.maxImageSize || file.size < 1);
+  if (oversizedFile) {
+    setAdminFormMessage(`${oversizedFile.name} supera el límite permitido de 8 MB.`, 'error');
+    return;
+  }
+
+  const currentImages = normalizeMultilineList(selectors.adminImages.value);
+  if (currentImages.length + imageFiles.length > MAX_PRODUCT_IMAGES) {
+    setAdminFormMessage(`Cada producto admite un máximo de ${MAX_PRODUCT_IMAGES} imágenes.`, 'error');
+    return;
+  }
+
+  state.adminImageUploading = true;
+  setAdminFormMessage('Preparando la carga segura de imágenes...');
+  setAdminUploadProgress(0, `Preparando 1 de ${imageFiles.length}`);
+  updateAdminImageUploadState();
+  let uploadedCount = 0;
+
+  try {
+    for (let index = 0; index < imageFiles.length; index += 1) {
+      const file = imageFiles[index];
+      setAdminUploadProgress((index / imageFiles.length) * 100, `Subiendo ${index + 1} de ${imageFiles.length}: ${file.name}`);
+      const result = await apiRequest('/api/admin/uploads/presign', {
+        method: 'POST',
+        body: JSON.stringify({
+          productId: selectors.adminEditId.value || slugify(selectors.adminName.value) || 'nuevo-producto',
+          fileName: file.name,
+          contentType: file.type,
+          size: file.size,
+        }),
+      });
+      await uploadFileToSignedUrl(file, result.upload, (fileProgress) => {
+        setAdminUploadProgress(
+          ((index + fileProgress) / imageFiles.length) * 100,
+          `Subiendo ${index + 1} de ${imageFiles.length}: ${file.name}`,
+        );
+      });
+      state.pendingR2Uploads.add(result.upload.publicUrl);
+      appendAdminImages([result.upload.publicUrl]);
+      uploadedCount += 1;
+    }
+
+    setAdminUploadProgress(100, `${uploadedCount} ${uploadedCount === 1 ? 'imagen cargada' : 'imágenes cargadas'}`);
+    setAdminFormMessage(
+      `${uploadedCount} ${uploadedCount === 1 ? 'imagen fue cargada' : 'imágenes fueron cargadas'} correctamente. Guarda el producto para ${uploadedCount === 1 ? 'publicarla' : 'publicarlas'}.`,
+      'success',
+    );
+    recordAdminActivity(`Carga de ${uploadedCount} ${uploadedCount === 1 ? 'imagen' : 'imágenes'} para el catálogo.`);
+  } catch (error) {
+    setAdminFormMessage(
+      `${uploadedCount ? `Se cargaron ${uploadedCount} imágenes. ` : ''}${error.message || 'No fue posible completar la carga.'}`,
+      'error',
+    );
+  } finally {
+    state.adminImageUploading = false;
+    updateAdminImageUploadState();
+  }
 }
 
 function resetAdminForm() {
   if (!selectors.adminProductForm) return;
 
   state.editingProductId = null;
+  state.originalAdminImages = [];
+  state.pendingR2Uploads.clear();
   selectors.adminProductForm.reset();
   selectors.adminEditId.value = '';
   selectors.adminFormTitle.textContent = 'Crear producto';
@@ -1714,6 +1928,8 @@ function fillAdminForm(productId) {
   if (!product || !selectors.adminProductForm) return;
 
   state.editingProductId = product.id;
+  state.originalAdminImages = [...getProductImages(product)];
+  state.pendingR2Uploads.clear();
   selectors.adminEditId.value = product.id;
   selectors.adminFormTitle.textContent = 'Editar producto';
   selectors.adminName.value = product.name;
@@ -1778,6 +1994,11 @@ function buildProductFromAdminForm() {
 async function saveAdminProduct(event) {
   event.preventDefault();
 
+  if (state.adminImageUploading) {
+    setAdminFormMessage('Espera a que termine la carga de imágenes antes de guardar.', 'error');
+    return;
+  }
+
   if (!selectors.adminProductForm.checkValidity()) {
     selectors.adminFormMessage.textContent = 'Revisa los campos requeridos antes de guardar.';
     selectors.adminFormMessage.classList.add('error');
@@ -1801,6 +2022,12 @@ async function saveAdminProduct(event) {
     return;
   }
 
+  if (product.images.length > MAX_PRODUCT_IMAGES) {
+    setAdminFormMessage(`Cada producto admite un máximo de ${MAX_PRODUCT_IMAGES} imágenes.`, 'error');
+    selectors.adminImages.focus();
+    return;
+  }
+
   const existingIndex = products.findIndex((item) => item.id === product.id);
   const submitButton = selectors.adminProductForm.querySelector('button[type="submit"]');
   submitButton.disabled = true;
@@ -1819,10 +2046,19 @@ async function saveAdminProduct(event) {
     if (existingIndex >= 0) products[existingIndex] = savedProduct;
     else products.unshift(savedProduct);
     state.activeProduct = savedProduct;
+    const removedManagedImages = state.originalAdminImages.filter(
+      (image) => !savedProduct.images.includes(image) && isManagedR2Image(image),
+    );
+    const cleanupResults = await deleteR2Images(removedManagedImages);
+    const cleanupFailed = cleanupResults.some((cleanup) => cleanup.status === 'rejected');
     resetAdminForm();
     refreshCatalogViews();
-    selectors.adminFormMessage.textContent = 'Producto guardado en el catálogo y conectado con pagos.';
-    selectors.adminFormMessage.classList.add('success');
+    setAdminFormMessage(
+      cleanupFailed
+        ? 'Producto guardado. Una imagen retirada quedó pendiente de limpieza en Cloudflare.'
+        : 'Producto guardado en el catálogo y conectado con pagos.',
+      'success',
+    );
     recordAdminActivity(`${existingIndex >= 0 ? 'Actualización' : 'Creación'} de producto: ${savedProduct.name}.`);
     await loadAdminDashboard();
   } catch (error) {
@@ -2249,7 +2485,10 @@ function setupEvents() {
     renderAdminOrderManagement();
     refreshIcons();
   });
-  selectors.adminCancelEdit?.addEventListener('click', resetAdminForm);
+  selectors.adminCancelEdit?.addEventListener('click', async () => {
+    await discardPendingR2Uploads();
+    resetAdminForm();
+  });
   selectors.adminImages?.addEventListener('input', renderAdminImagePreview);
   selectors.adminImageFiles?.addEventListener('change', (event) => {
     handleAdminImageFiles(event.target.files);
@@ -2257,7 +2496,7 @@ function setupEvents() {
   });
   selectors.adminImageDrop?.addEventListener('dragover', (event) => {
     event.preventDefault();
-    selectors.adminImageDrop.classList.add('dragging');
+    if (!selectors.adminImageFiles.disabled) selectors.adminImageDrop.classList.add('dragging');
   });
   selectors.adminImageDrop?.addEventListener('dragleave', () => {
     selectors.adminImageDrop.classList.remove('dragging');
@@ -2282,13 +2521,14 @@ function setupEvents() {
     window.requestAnimationFrame(() => selectors.searchInput.focus());
   });
 
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const productButton = event.target.closest('[data-open-product]');
     const imageButton = event.target.closest('[data-image-index]');
     const removeButton = event.target.closest('[data-remove-cart]');
     const routeLink = event.target.closest('[data-route-link]');
     const adminEditButton = event.target.closest('[data-admin-edit]');
     const adminDeleteButton = event.target.closest('[data-admin-delete]');
+    const adminImageRemoveButton = event.target.closest('[data-admin-image-remove]');
     const adminOrderButton = event.target.closest('[data-admin-order]');
     const adminOrderPageButton = event.target.closest('[data-admin-order-page]');
 
@@ -2313,7 +2553,15 @@ function setupEvents() {
       renderDetail();
     }
     if (removeButton) removeCartItem(removeButton.dataset.removeCart);
-    if (adminEditButton) fillAdminForm(adminEditButton.dataset.adminEdit);
+    if (adminImageRemoveButton) await removeAdminImage(Number(adminImageRemoveButton.dataset.adminImageRemove));
+    if (adminEditButton) {
+      if (state.pendingR2Uploads.size) {
+        const shouldDiscard = window.confirm('Hay imágenes nuevas sin guardar. ¿Deseas descartarlas y editar otro producto?');
+        if (!shouldDiscard) return;
+        await discardPendingR2Uploads();
+      }
+      fillAdminForm(adminEditButton.dataset.adminEdit);
+    }
     if (adminDeleteButton) deleteAdminProduct(adminDeleteButton.dataset.adminDelete);
     if (adminOrderButton) openAdminOrder(adminOrderButton.dataset.adminOrder);
     if (adminOrderPageButton && !adminOrderPageButton.disabled) {
@@ -2386,6 +2634,7 @@ renderProducts();
 renderCategories({ premium: true });
 renderProducts({ premium: true });
 renderCart();
+updateAdminImageUploadState();
 loadPublicCatalog();
 setupEvents();
 setupSectionObservers();
