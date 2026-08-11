@@ -75,11 +75,16 @@ export class PaymentService {
     this.orderIdFactory = orderIdFactory;
   }
 
-  assertConfigured() {
-    const { environment, identityKey, secretKey, productionEnabled, publicBaseUrl, tax } = this.boldConfig;
+  assertCredentialsConfigured() {
+    const { identityKey, secretKey } = this.boldConfig;
     if (!identityKey || !secretKey) {
       throw new PaymentError('El servicio de pagos todavía no está configurado.', 503, 'PAYMENTS_NOT_CONFIGURED');
     }
+  }
+
+  assertConfigured() {
+    const { environment, productionEnabled, publicBaseUrl, tax } = this.boldConfig;
+    this.assertCredentialsConfigured();
     if (environment === 'production' && !productionEnabled) {
       throw new PaymentError('Los pagos de producción están bloqueados hasta completar la validación final.', 503, 'PRODUCTION_LOCKED');
     }
@@ -196,7 +201,8 @@ export class PaymentService {
   }
 
   async processWebhook(rawBody, receivedSignature) {
-    this.assertConfigured();
+    // El interruptor de ventas no debe impedir confirmar pagos que ya estaban en curso.
+    this.assertCredentialsConfigured();
     const webhookSecret = this.boldConfig.environment === 'test' ? '' : this.boldConfig.secretKey;
     if (!verifyWebhookSignature(rawBody, receivedSignature, webhookSecret)) {
       throw new PaymentError('Firma de webhook inválida.', 401, 'INVALID_WEBHOOK_SIGNATURE');

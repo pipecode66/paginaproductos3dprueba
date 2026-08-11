@@ -10,6 +10,7 @@ import {
 import { validateCatalogProduct } from './catalog-validation.js';
 import { normalizeManagedOrder, updateManagedOrder } from './order-management.js';
 import { PaymentError, PaymentService } from './payment-service.js';
+import { buildPaymentReadiness } from './payment-readiness.js';
 import { createPersistence } from './persistence.js';
 import { R2Storage } from './r2-storage.js';
 
@@ -72,18 +73,14 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
     } catch (error) {
       logger.error('Error verificando el almacenamiento de pagos', error);
     }
-    const boldConfigured = Boolean(config.bold.identityKey && config.bold.secretKey);
-    response.json({
-      configured: boldConfigured && storageReady,
-      boldConfigured,
-      environment: config.bold.environment,
-      productionEnabled: config.bold.environment !== 'production' || config.bold.productionEnabled,
+    response.json(buildPaymentReadiness({
+      boldConfig: config.bold,
       storage: {
         mode: storage.mode,
         configured: storage.configured,
         ready: storageReady,
       },
-    });
+    }));
   });
 
   app.get('/api/storage/health', (request, response) => {

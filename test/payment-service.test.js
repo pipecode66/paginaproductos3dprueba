@@ -220,3 +220,34 @@ test('bloquea producción mientras no exista habilitación explícita', async ()
     return true;
   });
 });
+
+test('continúa recibiendo webhooks cuando las nuevas ventas de producción están bloqueadas', async () => {
+  const orderStore = new MemoryOrders();
+  const setupService = createService({ orderStore });
+  await setupService.createOrder(validPayload());
+  const service = createService({
+    orderStore,
+    boldConfig: {
+      environment: 'production',
+      publicBaseUrl: 'https://joyeriaquerubim.vercel.app',
+      secretKey: 'production-secret',
+      productionEnabled: false,
+    },
+  });
+  const event = {
+    id: 'event-production-lock-1',
+    type: 'SALE_APPROVED',
+    subject: 'BOLD-PRODUCTION-LOCK-1',
+    data: {
+      payment_id: 'BOLD-PRODUCTION-LOCK-1',
+      payment_method: 'CARD_WEB',
+      amount: { currency: 'COP', total: 1250000 },
+      metadata: { reference: 'QBM-ORDER-001' },
+    },
+  };
+  const rawBody = Buffer.from(JSON.stringify(event));
+  const result = await service.processWebhook(rawBody, createWebhookSignature(rawBody, 'production-secret'));
+
+  assert.equal(result.order.status, 'PAID');
+  assert.equal((await orderStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CONFIRMED');
+});
