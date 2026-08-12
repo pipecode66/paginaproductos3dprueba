@@ -129,7 +129,12 @@ try {
   await page.locator('#admin-login-form button[type="submit"]').click();
   await page.locator('#admin-panel-view:not([hidden])').waitFor();
   await page.locator('#admin-stats .admin-stat').first().waitFor();
-  await page.getByText('Arrastra imágenes o selecciónalas').waitFor();
+  await page.locator('#admin-overview-charts .admin-chart-panel').first().waitFor();
+  await page.waitForFunction(() => Number(document.querySelector('#admin-nav-orders-count')?.textContent || 0) > 0);
+  await page.screenshot({ path: 'test-results/admin-dashboard-desktop.png', fullPage: true });
+
+  await page.locator('[data-admin-view-target="content"]').click();
+  await page.locator('.admin-commercial-panel').waitFor();
   const commercialSlotCount = await page.locator('.admin-commercial-slot').count();
   await page.locator('[data-content-upload="hero"]').setInputFiles({
     name: 'portada-prueba.png',
@@ -139,12 +144,15 @@ try {
   await page.locator('[data-content-preview="hero"] img').waitFor();
   const commercialUploadVerified = (await page.locator('[data-content-field="hero.imageUrl"]').inputValue()) === uploadedImageUrl;
   await page.locator('[data-content-remove="hero"]').click();
+  await page.locator('[data-admin-view-target="international"]').click();
   await page.locator(`[data-admin-international="${internationalRequest.id}"]`).click();
   await page.locator('#admin-international-dialog[open]').waitFor();
   const internationalDialogVisible = await page.locator('#admin-international-dialog[open]').isVisible();
   await page.screenshot({ path: 'test-results/admin-international-desktop.png' });
   await page.locator('#admin-international-close').click();
 
+  await page.locator('[data-admin-view-target="products"]').click();
+  await page.getByText('Arrastra imágenes o selecciónalas').waitFor();
   await page.locator('#admin-image-files').setInputFiles({
     name: 'imagen-prueba.png',
     mimeType: 'image/png',
@@ -165,6 +173,7 @@ try {
   await page.locator('[data-admin-image-remove="0"]').click();
   await page.locator('#admin-images').waitFor();
 
+  await page.locator('[data-admin-view-target="orders"]').click();
   await page.locator(`[data-admin-order="${order.id}"]`).click();
   await page.locator('#admin-order-dialog[open]').waitFor();
   await page.locator('#admin-order-status').selectOption('PREPARING');
@@ -176,6 +185,7 @@ try {
   await page.screenshot({ path: 'test-results/admin-order-detail-desktop.png' });
   await page.locator('#admin-order-close').click();
 
+  await page.locator('[data-admin-view-target="products"]').click();
   const productName = `Producto UI ${Date.now()}`;
   await page.locator('#admin-name').fill(productName);
   await page.locator('#admin-category').selectOption('anillos');
@@ -198,6 +208,15 @@ try {
   await page.locator('#admin-product-search').fill('');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('#admin-panel-view:not([hidden])').waitFor();
+  await page.locator('#admin-sidebar-toggle').click();
+  await page.locator('#admin-app-sidebar.open [data-admin-view-target="overview"]').click();
+  await page.locator('[data-admin-view="overview"].active').waitFor();
+  await page.locator('[data-admin-view-target="overview"].active').waitFor();
+  await page.locator('#admin-app-sidebar:not(.open)').waitFor();
+  await page.waitForTimeout(280);
+  await page.screenshot({ path: 'test-results/admin-dashboard-mobile.png' });
+  await page.locator('#admin-sidebar-toggle').click();
+  await page.locator('#admin-app-sidebar.open [data-admin-view-target="orders"]').click();
   await page.locator(`[data-admin-order="${order.id}"]`).click();
   await page.locator('#admin-order-dialog[open]').waitFor();
   const dialogBox = await page.locator('#admin-order-dialog').boundingBox();
@@ -218,7 +237,7 @@ try {
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || result.statCount < 6 || result.productCount < 1 || !result.orderUpdated || !result.uploadVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.uploadVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {

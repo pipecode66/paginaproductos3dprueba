@@ -20,6 +20,7 @@ import {
   ImagePlus,
   KeyRound,
   Layers,
+  LayoutDashboard,
   LoaderCircle,
   LockKeyhole,
   LogOut,
@@ -301,6 +302,7 @@ const icons = {
   ImagePlus,
   KeyRound,
   Layers,
+  LayoutDashboard,
   LoaderCircle,
   LockKeyhole,
   LogOut,
@@ -349,6 +351,7 @@ const state = {
   query: '',
   premiumQuery: '',
   adminQuery: '',
+  activeAdminView: 'overview',
   editingProductId: null,
   adminTimeoutId: null,
   adminAuthenticated: false,
@@ -540,6 +543,107 @@ const selectors = {
   contactForm: document.querySelector('#contact-form'),
   formMessage: document.querySelector('#form-message'),
 };
+
+const adminViewMeta = {
+  overview: { title: 'Resumen general', description: 'Indicadores y actividad reciente del negocio' },
+  products: { title: 'Catálogo e inventario', description: 'Productos, precios, existencias y galerías' },
+  orders: { title: 'Pedidos', description: 'Pagos confirmados y seguimiento de entregas' },
+  international: { title: 'Solicitudes internacionales', description: 'Condiciones, coordinación y enlaces de pago' },
+  content: { title: 'Contenido comercial', description: 'Portadas, campañas y vitrinas de la tienda' },
+  diagnostics: { title: 'Diagnóstico', description: 'Estado técnico y mejoras operativas' },
+};
+
+function setupAdminApplicationShell() {
+  const panel = selectors.adminPanelView;
+  if (!panel || panel.querySelector('.admin-app-shell')) return;
+
+  const nodes = {
+    header: panel.querySelector('.admin-panel-header'),
+    commands: panel.querySelector('.admin-command-bar'),
+    stats: panel.querySelector('#admin-stats'),
+    commercial: panel.querySelector('.admin-commercial-panel'),
+    international: panel.querySelector('.admin-international-panel'),
+    diagnostics: panel.querySelector('.admin-diagnostics-panel'),
+    operations: panel.querySelector('#admin-operations'),
+    orders: panel.querySelector('.admin-orders-management'),
+    products: panel.querySelector('.admin-workspace'),
+  };
+  const logoutButton = selectors.adminLogout;
+
+  const shell = document.createElement('div');
+  shell.className = 'admin-app-shell';
+  shell.innerHTML = `
+    <aside class="admin-app-sidebar" id="admin-app-sidebar" aria-label="Navegación administrativa">
+      <a class="admin-app-brand" href="/" data-route-link="home" aria-label="Volver a la tienda Querubim">
+        <img src="/logo/querubim-logo-full.png" alt="Joyería Querubim" />
+      </a>
+      <div class="admin-sidebar-context">
+        <span>Administración</span>
+        <strong>Centro de gestión</strong>
+      </div>
+      <nav class="admin-app-nav">
+        <button class="active" type="button" data-admin-view-target="overview"><i data-lucide="layout-dashboard"></i><span>Resumen</span></button>
+        <button type="button" data-admin-view-target="products"><i data-lucide="package"></i><span>Catálogo</span><b id="admin-nav-products-count">0</b></button>
+        <button type="button" data-admin-view-target="orders"><i data-lucide="clipboard-list"></i><span>Pedidos</span><b id="admin-nav-orders-count">0</b></button>
+        <button type="button" data-admin-view-target="international"><i data-lucide="plane"></i><span>Internacional</span><b id="admin-nav-international-count">0</b></button>
+        <button type="button" data-admin-view-target="content"><i data-lucide="gallery-horizontal-end"></i><span>Contenido</span></button>
+        <button type="button" data-admin-view-target="diagnostics"><i data-lucide="shield-check"></i><span>Diagnóstico</span></button>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <div class="admin-sidebar-user">
+          <span>Q</span>
+          <div><strong>Administrador</strong><small id="admin-sidebar-user-email">Sesión protegida</small></div>
+        </div>
+      </div>
+    </aside>
+    <div class="admin-sidebar-scrim" data-admin-sidebar-close></div>
+    <div class="admin-app-main">
+      <header class="admin-app-topbar">
+        <div class="admin-topbar-heading">
+          <button class="icon-button admin-sidebar-toggle" id="admin-sidebar-toggle" type="button" aria-label="Abrir menú administrativo"><i data-lucide="menu"></i></button>
+          <div><span>Panel administrativo</span><h1 id="admin-view-title">Resumen general</h1><p id="admin-view-description">Indicadores y actividad reciente del negocio</p></div>
+        </div>
+        <div class="admin-topbar-actions">
+          <span class="admin-system-status"><i></i>Sistema operativo</span>
+          <a class="icon-button" href="/" data-route-link="home" aria-label="Ver tienda" title="Ver tienda"><i data-lucide="shopping-bag"></i></a>
+        </div>
+      </header>
+      <div class="admin-app-content">
+        <section class="admin-app-view active" data-admin-view="overview"></section>
+        <section class="admin-app-view" data-admin-view="products"></section>
+        <section class="admin-app-view" data-admin-view="orders"></section>
+        <section class="admin-app-view" data-admin-view="international"></section>
+        <section class="admin-app-view" data-admin-view="content"></section>
+        <section class="admin-app-view" data-admin-view="diagnostics"></section>
+      </div>
+    </div>`;
+
+  panel.appendChild(shell);
+  const view = (name) => shell.querySelector(`[data-admin-view="${name}"]`);
+  if (nodes.header) {
+    logoutButton?.remove();
+    view('overview').appendChild(nodes.header);
+  }
+  if (nodes.commands) view('overview').appendChild(nodes.commands);
+  if (nodes.stats) view('overview').appendChild(nodes.stats);
+  const charts = document.createElement('div');
+  charts.className = 'admin-overview-charts';
+  charts.id = 'admin-overview-charts';
+  view('overview').appendChild(charts);
+  if (nodes.operations) view('overview').appendChild(nodes.operations);
+  if (nodes.products) view('products').appendChild(nodes.products);
+  if (nodes.orders) view('orders').appendChild(nodes.orders);
+  if (nodes.international) view('international').appendChild(nodes.international);
+  if (nodes.commercial) view('content').appendChild(nodes.commercial);
+  if (nodes.diagnostics) view('diagnostics').appendChild(nodes.diagnostics);
+  if (logoutButton) {
+    logoutButton.className = 'admin-sidebar-logout';
+    logoutButton.innerHTML = '<i data-lucide="log-out"></i><span>Cerrar sesión</span>';
+    shell.querySelector('.admin-sidebar-footer').appendChild(logoutButton);
+  }
+}
+
+setupAdminApplicationShell();
 
 function refreshIcons() {
   createIcons({
@@ -1507,35 +1611,127 @@ function updateBackupState() {
 function renderAdminStats() {
   if (!selectors.adminStats) return;
 
-  const normalProducts = products.filter((product) => !product.premium).length;
-  const pendingOrders = state.adminOrders.filter((order) => order.status === 'CREATED').length;
-  const categoriesUsed = new Set(products.map((product) => product.category)).size;
   const paidRevenue = Number(state.adminSummary?.paidRevenue || 0);
   const lowStock = getLowStockProducts().length;
+  const paidOrders = state.adminOrders.filter((order) => order.status === 'PAID').length;
+  const pendingInternational = Number(state.adminSummary?.pendingInternationalRequests || 0);
 
   const stats = [
-    { icon: 'package', label: 'Productos', value: products.length },
-    { icon: 'image-plus', label: 'Fotos gestionadas', value: getCatalogImageCount() },
-    { icon: 'package-check', label: 'Stock bajo', value: lowStock },
-    { icon: 'clipboard-list', label: 'Pagos pendientes', value: pendingOrders },
-    { icon: 'plane', label: 'Solicitudes internacionales', value: Number(state.adminSummary?.pendingInternationalRequests || 0) },
-    { icon: 'user-round', label: 'Clientes reales', value: Number(state.adminSummary?.customers || 0) },
-    { icon: 'shield-check', label: 'Categorías activas', value: categoriesUsed },
-    { icon: 'shopping-bag', label: 'Ingresos aprobados', value: formatCurrency(paidRevenue) },
-    { icon: 'gem', label: 'En revisión', value: Number(state.adminSummary?.reviewOrders || 0) },
+    { icon: 'shopping-bag', label: 'Ingresos confirmados', value: formatCurrency(paidRevenue), detail: `${paidOrders} pagos aprobados`, tone: 'gold' },
+    { icon: 'clipboard-list', label: 'Pedidos registrados', value: state.adminOrders.length, detail: `${state.adminOrders.filter((order) => order.status === 'CREATED').length} esperan pago`, tone: 'burgundy' },
+    { icon: 'package', label: 'Catálogo activo', value: products.length, detail: `${lowStock} alertas de existencias`, tone: 'charcoal' },
+    { icon: 'plane', label: 'Solicitudes internacionales', value: pendingInternational, detail: `${state.adminInternationalRequests.length} solicitudes totales`, tone: 'green' },
   ];
 
   selectors.adminStats.innerHTML = stats
     .map(
       (stat) => `
         <article class="admin-stat">
-          <i data-lucide="${stat.icon}"></i>
-          <span>${escapeHtml(stat.label)}</span>
-          <strong>${escapeHtml(stat.value)}</strong>
+          <div class="admin-stat-icon ${stat.tone}"><i data-lucide="${stat.icon}"></i></div>
+          <div><span>${escapeHtml(stat.label)}</span><strong>${escapeHtml(stat.value)}</strong><small>${escapeHtml(stat.detail)}</small></div>
         </article>
       `,
     )
     .join('');
+
+  const productCount = document.querySelector('#admin-nav-products-count');
+  const orderCount = document.querySelector('#admin-nav-orders-count');
+  const internationalCount = document.querySelector('#admin-nav-international-count');
+  if (productCount) productCount.textContent = String(products.length);
+  if (orderCount) orderCount.textContent = String(state.adminOrders.length);
+  if (internationalCount) internationalCount.textContent = String(pendingInternational);
+  const userEmail = document.querySelector('#admin-sidebar-user-email');
+  if (userEmail) userEmail.textContent = state.adminUser?.email || 'Sesión protegida';
+}
+
+function getRecentAdminMonths(count = 6) {
+  const now = new Date();
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (count - 1 - index), 1);
+    return {
+      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+      label: new Intl.DateTimeFormat('es-CO', { month: 'short' }).format(date).replace('.', ''),
+      revenue: 0,
+      orders: 0,
+    };
+  });
+}
+
+function renderAdminOverviewCharts() {
+  const target = document.querySelector('#admin-overview-charts');
+  if (!target) return;
+  const months = getRecentAdminMonths();
+  const monthByKey = new Map(months.map((month) => [month.key, month]));
+  state.adminOrders.forEach((order) => {
+    const date = new Date(order.createdAt);
+    if (Number.isNaN(date.getTime())) return;
+    const month = monthByKey.get(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    if (!month) return;
+    if (order.status === 'PAID') {
+      month.orders += 1;
+      month.revenue += Number(order.amount || 0);
+    }
+  });
+  const maxRevenue = Math.max(...months.map((month) => month.revenue), 1);
+  const periodRevenue = months.reduce((total, month) => total + month.revenue, 0);
+  const paymentCounts = {
+    paid: state.adminOrders.filter((order) => order.status === 'PAID').length,
+    pending: state.adminOrders.filter((order) => order.status === 'CREATED').length,
+    attention: state.adminOrders.filter((order) => ['REJECTED', 'VOIDED', 'EXPIRED', 'REVIEW_REQUIRED'].includes(order.status)).length,
+  };
+  const paymentTotal = Math.max(paymentCounts.paid + paymentCounts.pending + paymentCounts.attention, 1);
+  const paidEnd = (paymentCounts.paid / paymentTotal) * 100;
+  const pendingEnd = paidEnd + (paymentCounts.pending / paymentTotal) * 100;
+
+  target.innerHTML = `
+    <section class="admin-chart-panel admin-sales-chart">
+      <div class="admin-chart-heading">
+        <div><span>Rendimiento</span><h2>Ingresos por mes</h2></div>
+        <small>Últimos 6 meses · pagos confirmados</small>
+      </div>
+      <div class="admin-bar-chart" aria-label="Ingresos confirmados durante los últimos seis meses">
+        ${periodRevenue === 0 ? '<p class="admin-chart-empty">Todavía no hay pagos confirmados en este periodo.</p>' : ''}
+        ${months.map((month) => `
+          <div class="admin-bar-column" title="${escapeHtml(month.label)}: ${escapeHtml(formatCurrency(month.revenue))}">
+            <div><i style="height:${Math.max(month.revenue ? 10 : 2, (month.revenue / maxRevenue) * 100)}%"></i></div>
+            <strong>${escapeHtml(month.label)}</strong>
+            <small>${month.orders} ped.</small>
+          </div>`).join('')}
+      </div>
+    </section>
+    <section class="admin-chart-panel admin-payment-chart">
+      <div class="admin-chart-heading"><div><span>Pagos</span><h2>Distribución actual</h2></div></div>
+      <div class="admin-payment-visual">
+        <div class="admin-donut" style="--paid-end:${paidEnd}%;--pending-end:${pendingEnd}%">
+          <div><strong>${state.adminOrders.length}</strong><span>órdenes</span></div>
+        </div>
+        <div class="admin-chart-legend">
+          <span><i class="paid"></i><b>Aprobados</b><strong>${paymentCounts.paid}</strong></span>
+          <span><i class="pending"></i><b>Pendientes</b><strong>${paymentCounts.pending}</strong></span>
+          <span><i class="attention"></i><b>Requieren atención</b><strong>${paymentCounts.attention}</strong></span>
+        </div>
+      </div>
+    </section>`;
+}
+
+function setAdminView(viewName, { scroll = true } = {}) {
+  if (!adminViewMeta[viewName]) return;
+  state.activeAdminView = viewName;
+  document.querySelectorAll('[data-admin-view]').forEach((view) => {
+    view.classList.toggle('active', view.dataset.adminView === viewName);
+  });
+  document.querySelectorAll('[data-admin-view-target]').forEach((button) => {
+    const active = button.dataset.adminViewTarget === viewName;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+  const title = document.querySelector('#admin-view-title');
+  const description = document.querySelector('#admin-view-description');
+  if (title) title.textContent = adminViewMeta[viewName].title;
+  if (description) description.textContent = adminViewMeta[viewName].description;
+  document.querySelector('#admin-app-sidebar')?.classList.remove('open');
+  document.body.classList.remove('admin-sidebar-open');
+  if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function renderAdminDiagnostics() {
@@ -2247,6 +2443,7 @@ function renderAdminPanel() {
 
   populateAdminCategoryOptions();
   renderAdminStats();
+  renderAdminOverviewCharts();
   renderAdminDiagnostics();
   renderAdminOperations();
   renderAdminCommercialContent();
@@ -2254,6 +2451,7 @@ function renderAdminPanel() {
   renderAdminOrderManagement();
   renderAdminProducts();
   updateBackupState();
+  setAdminView(state.activeAdminView, { scroll: false });
   refreshIcons();
 }
 
@@ -2263,6 +2461,7 @@ function updateAdminViews() {
   const loggedIn = isAdminLoggedIn();
   selectors.adminLoginView.hidden = loggedIn;
   selectors.adminPanelView.hidden = !loggedIn;
+  document.body.classList.toggle('admin-panel-active', loggedIn && state.currentRoute === 'admin');
 
   if (loggedIn) {
     scheduleAdminTimeout();
@@ -2709,6 +2908,7 @@ async function handleAdminLogin(event) {
     selectors.adminLoginForm.reset();
     selectors.adminLoginMessage.textContent = '';
     selectors.adminLoginMessage.classList.remove('error');
+    state.activeAdminView = 'overview';
     resetAdminForm();
     scheduleAdminTimeout();
     updateAdminViews();
@@ -2738,6 +2938,7 @@ async function handleAdminLogout() {
   state.adminSummary = null;
   state.adminHeartbeatAt = 0;
   state.editingProductId = null;
+  state.activeAdminView = 'overview';
   closeAdminOrderDialog();
   closeAdminInternationalDialog();
   window.clearTimeout(state.adminTimeoutId);
@@ -2944,6 +3145,7 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
   document.body.classList.toggle('contact-route', route === 'contacto');
   document.body.classList.toggle('payment-route', route === 'payment');
   document.body.classList.toggle('international-payment-route', route === 'international-payment');
+  document.body.classList.toggle('admin-panel-active', route === 'admin' && isAdminLoggedIn());
   closePanels();
 
   if (route === 'payment') {
@@ -3024,6 +3226,14 @@ function setupEvents() {
   document.querySelector('#cart-close').addEventListener('click', () => closePanels());
   document.querySelector('#detail-close').addEventListener('click', () => closePanels());
   selectors.overlay.addEventListener('click', () => closePanels());
+  document.querySelector('#admin-sidebar-toggle')?.addEventListener('click', () => {
+    document.querySelector('#admin-app-sidebar')?.classList.add('open');
+    document.body.classList.add('admin-sidebar-open');
+  });
+  document.querySelector('[data-admin-sidebar-close]')?.addEventListener('click', () => {
+    document.querySelector('#admin-app-sidebar')?.classList.remove('open');
+    document.body.classList.remove('admin-sidebar-open');
+  });
 
   selectors.navLinks.forEach((link) => {
     link.addEventListener('click', (event) => {
@@ -3148,12 +3358,18 @@ function setupEvents() {
     const adminOrderPageButton = event.target.closest('[data-admin-order-page]');
     const adminInternationalButton = event.target.closest('[data-admin-international]');
     const contentRemoveButton = event.target.closest('[data-content-remove]');
+    const adminViewButton = event.target.closest('[data-admin-view-target]');
 
     if (routeLink) {
       event.preventDefault();
       if (standaloneRoutes.has(routeLink.dataset.routeLink)) {
         setRoute(routeLink.dataset.routeLink);
       } else setRoute('home', { targetSection: routeLink.dataset.targetSection || 'home' });
+      return;
+    }
+
+    if (adminViewButton) {
+      setAdminView(adminViewButton.dataset.adminViewTarget);
       return;
     }
 
