@@ -1,4 +1,5 @@
 import './styles.css';
+import { inject } from '@vercel/analytics';
 import {
   ArrowRight,
   Bell,
@@ -46,6 +47,8 @@ import {
   createIcons,
 } from 'lucide';
 import { siFacebook, siInstagram, siTiktok } from 'simple-icons/icons';
+
+if (import.meta.env.PROD) inject();
 
 const WHATSAPP_NUMBER = '573225435618';
 const ADMIN_BACKUP_KEY = 'querubim-last-catalog-backup';

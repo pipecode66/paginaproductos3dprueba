@@ -2,6 +2,8 @@
 
 Tienda web de Joyería Querubim con catálogo, secciones institucionales, contacto, canasta, contenido comercial administrable y pagos en línea mediante Bold Embedded Checkout.
 
+Vercel Web Analytics se inyecta automáticamente en las compilaciones de producción. Para comenzar a recibir visitas y páginas vistas, habilita `Analytics` desde el panel del proyecto en Vercel y realiza un nuevo despliegue.
+
 ## Ejecución local
 
 1. Instala las dependencias con `npm install`.
