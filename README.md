@@ -1,6 +1,6 @@
 # Joyería Querubim
 
-Tienda web de Joyería Querubim con catálogo, secciones institucionales, contacto, canasta y pagos en línea mediante Bold Embedded Checkout.
+Tienda web de Joyería Querubim con catálogo, secciones institucionales, contacto, canasta, contenido comercial administrable y pagos en línea mediante Bold Embedded Checkout.
 
 ## Ejecución local
 
@@ -30,7 +30,7 @@ Consulta el procedimiento completo en [Integración Bold](docs/BOLD.md).
 
 ## Panel administrativo
 
-La configuración del acceso privado y del catálogo editable está en [Panel administrativo](docs/ADMIN.md).
+La configuración del acceso privado, catálogo editable, portadas comerciales y solicitudes internacionales está en [Panel administrativo](docs/ADMIN.md).
 
 ## Despliegue
 

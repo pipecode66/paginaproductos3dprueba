@@ -3,8 +3,8 @@
 ## Flujo implementado
 
 1. El cliente añade joyas y medidas a la canasta.
-2. El cliente selecciona recogida en tienda o envío a domicilio; para domicilio registra los datos de entrega.
-3. `POST /api/payments/orders` valida cada referencia contra el catálogo del servidor.
+2. El cliente selecciona recogida en tienda, domicilio nacional o entrega internacional.
+3. Las compras nacionales usan `POST /api/payments/orders`; las internacionales crean primero una solicitud de coordinación sin cobro ni reserva.
 4. El servidor reserva el inventario de la orden y aplica el ajuste comercial del 5 % para Colombia o del 6 % para entregas internacionales.
 5. El total conserva el IVA del 19 % incluido, se crea una referencia única y se genera el hash SHA-256 con la llave secreta.
 6. El navegador abre `BoldCheckout` con `renderMode: embedded`.
@@ -14,7 +14,7 @@
 
 La reserva de inventario se confirma al aprobarse el pago. Se libera de manera idempotente cuando la venta es rechazada, anulada o cuando la orden vence tras 24 horas sin confirmación.
 
-El costo del domicilio no forma parte del monto enviado a Bold. Para órdenes con envío se registra como pago separado al recibir y Querubim debe confirmar su valor con el cliente antes del despacho.
+El costo del domicilio nacional no forma parte del monto enviado a Bold y se paga por separado al recibir. Para exportaciones, el administrador registra en la bandeja internacional las condiciones, transporte y costo estimado; el enlace Bold se genera solo después de que el cliente las acepte. El pago Bold cubre las joyas y el transporte internacional se gestiona según el acuerdo consignado.
 
 En el ambiente de pruebas, Bold firma la notificación del botón `Probar el webhook` usando una clave vacía. En producción se utiliza la llave secreta del Botón de pagos.
 

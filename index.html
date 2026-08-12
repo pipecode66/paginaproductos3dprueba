@@ -120,11 +120,11 @@
 
     <main>
       <section class="page-section hero-section" id="home" data-page>
-        <div class="hero-bg" aria-hidden="true"></div>
+        <div class="hero-bg" id="commercial-hero-image" aria-hidden="true"></div>
         <div class="hero-content">
-          <span class="eyebrow">Oro 18 quilates · Colombia</span>
-          <h1>Elegancia que trasciende generaciones.</h1>
-          <p>
+          <span class="eyebrow" id="commercial-hero-eyebrow">Oro 18 quilates · Colombia</span>
+          <h1 id="commercial-hero-title">Elegancia que trasciende generaciones.</h1>
+          <p id="commercial-hero-description">
             Joyas creadas para celebrar identidad, amor y memorias duraderas con autenticidad, garantía y una
             atención familiar profundamente cercana.
           </p>
@@ -135,6 +135,19 @@
             </a>
             <a class="button button-secondary" href="/contacto" data-route-link="contacto">Solicitar asesoría</a>
           </div>
+        </div>
+      </section>
+
+      <section class="commercial-campaign" id="commercial-campaign" hidden aria-label="Campaña especial Querubim">
+        <div class="commercial-campaign-image" id="commercial-campaign-image" aria-hidden="true"></div>
+        <div class="commercial-campaign-copy">
+          <span class="eyebrow" id="commercial-campaign-eyebrow">Edición especial</span>
+          <h2 id="commercial-campaign-title">Una campaña para celebrar momentos inolvidables.</h2>
+          <p id="commercial-campaign-description">Presenta aquí lanzamientos, temporadas, descuentos o colecciones especiales.</p>
+          <a class="button button-primary" id="commercial-campaign-cta" href="#coleccion">
+            <span id="commercial-campaign-cta-label">Explorar colección</span>
+            <i data-lucide="arrow-right"></i>
+          </a>
         </div>
       </section>
 
@@ -167,14 +180,15 @@
 
         <a
           class="premium-showcase"
+          id="commercial-premium-showcase"
           href="/premium"
           data-route-link="premium"
           aria-label="Ir al catálogo premium Querubim"
         >
           <div class="premium-copy">
-            <span class="eyebrow">Querubim Premium</span>
-            <h3>Catálogo reservado para piezas de mayor presencia.</h3>
-            <p>
+            <span class="eyebrow" id="commercial-premium-eyebrow">Querubim Premium</span>
+            <h3 id="commercial-premium-title">Catálogo reservado para piezas de mayor presencia.</h3>
+            <p id="commercial-premium-description">
               Ingresa a una selección independiente con joyas de acabado superior, brillo dorado y una experiencia de
               compra más refinada.
             </p>
@@ -329,11 +343,11 @@
       </section>
 
       <section class="page-section premium-catalog-section" id="premium-catalog" aria-label="Catálogo premium Querubim">
-        <div class="premium-page-hero">
+        <div class="premium-page-hero" id="commercial-premium-hero">
           <div>
-            <span class="eyebrow">Querubim Premium</span>
-            <h1>Joyas con brillo reservado y presencia superior.</h1>
-            <p>
+            <span class="eyebrow" id="commercial-premium-hero-eyebrow">Querubim Premium</span>
+            <h1 id="commercial-premium-hero-title">Joyas con brillo reservado y presencia superior.</h1>
+            <p id="commercial-premium-hero-description">
               Una selección independiente para piezas con acabados especiales, materiales destacados y asesoría
               prioritaria.
             </p>
@@ -497,6 +511,120 @@
           </div>
 
           <div class="admin-stats" id="admin-stats" aria-live="polite"></div>
+
+          <section class="admin-commercial-panel" aria-labelledby="admin-commercial-title">
+            <div class="admin-panel-title">
+              <div>
+                <span class="eyebrow">Contenido comercial</span>
+                <h2 id="admin-commercial-title">Portadas, campañas y vitrinas</h2>
+                <p>Cambia imágenes y mensajes visibles sin editar el código de la tienda.</p>
+              </div>
+              <i data-lucide="gallery-horizontal-end"></i>
+            </div>
+
+            <form class="admin-commercial-form" id="admin-commercial-form" novalidate>
+              <fieldset class="admin-commercial-slot" data-content-slot="hero">
+                <legend>Banner principal del inicio</legend>
+                <div class="admin-commercial-image-control">
+                  <div class="admin-commercial-preview" data-content-preview="hero">
+                    <i data-lucide="image"></i>
+                    <span>Sin imagen cargada</span>
+                  </div>
+                  <label class="button button-secondary">
+                    Cambiar imagen
+                    <i data-lucide="upload"></i>
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" data-content-upload="hero" />
+                  </label>
+                  <button class="button button-secondary" type="button" data-content-remove="hero">Retirar imagen</button>
+                  <input type="hidden" data-content-field="hero.imageUrl" />
+                </div>
+                <div class="admin-commercial-fields">
+                  <label>Texto superior<input type="text" maxlength="80" data-content-field="hero.eyebrow" required /></label>
+                  <label>Título<input type="text" maxlength="180" data-content-field="hero.title" required /></label>
+                  <label class="wide">Descripción<textarea rows="3" maxlength="500" data-content-field="hero.description" required></textarea></label>
+                  <label class="wide">Descripción de la imagen<input type="text" maxlength="180" data-content-field="hero.imageAlt" /></label>
+                </div>
+              </fieldset>
+
+              <fieldset class="admin-commercial-slot" data-content-slot="campaign">
+                <legend>Banner de campaña</legend>
+                <label class="admin-check admin-commercial-toggle">
+                  <input type="checkbox" data-content-field="campaign.enabled" />
+                  <span>Mostrar esta campaña en el inicio</span>
+                </label>
+                <div class="admin-commercial-image-control">
+                  <div class="admin-commercial-preview" data-content-preview="campaign">
+                    <i data-lucide="image"></i>
+                    <span>Sin imagen cargada</span>
+                  </div>
+                  <label class="button button-secondary">
+                    Cambiar imagen
+                    <i data-lucide="upload"></i>
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" data-content-upload="campaign" />
+                  </label>
+                  <button class="button button-secondary" type="button" data-content-remove="campaign">Retirar imagen</button>
+                  <input type="hidden" data-content-field="campaign.imageUrl" />
+                </div>
+                <div class="admin-commercial-fields">
+                  <label>Texto superior<input type="text" maxlength="80" data-content-field="campaign.eyebrow" required /></label>
+                  <label>Título<input type="text" maxlength="180" data-content-field="campaign.title" required /></label>
+                  <label class="wide">Descripción<textarea rows="3" maxlength="500" data-content-field="campaign.description" required></textarea></label>
+                  <label>Texto del botón<input type="text" maxlength="60" data-content-field="campaign.ctaLabel" required /></label>
+                  <label>Enlace del botón<input type="text" maxlength="500" data-content-field="campaign.ctaUrl" required /></label>
+                  <label class="wide">Descripción de la imagen<input type="text" maxlength="180" data-content-field="campaign.imageAlt" /></label>
+                </div>
+              </fieldset>
+
+              <fieldset class="admin-commercial-slot" data-content-slot="premiumShowcase">
+                <legend>Invitación Premium del inicio</legend>
+                <div class="admin-commercial-image-control">
+                  <div class="admin-commercial-preview" data-content-preview="premiumShowcase"><i data-lucide="image"></i><span>Sin imagen cargada</span></div>
+                  <label class="button button-secondary">Cambiar imagen<i data-lucide="upload"></i><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" data-content-upload="premiumShowcase" /></label>
+                  <button class="button button-secondary" type="button" data-content-remove="premiumShowcase">Retirar imagen</button>
+                  <input type="hidden" data-content-field="premiumShowcase.imageUrl" />
+                </div>
+                <div class="admin-commercial-fields">
+                  <label>Texto superior<input type="text" maxlength="80" data-content-field="premiumShowcase.eyebrow" required /></label>
+                  <label>Título<input type="text" maxlength="180" data-content-field="premiumShowcase.title" required /></label>
+                  <label class="wide">Descripción<textarea rows="3" maxlength="500" data-content-field="premiumShowcase.description" required></textarea></label>
+                  <label class="wide">Descripción de la imagen<input type="text" maxlength="180" data-content-field="premiumShowcase.imageAlt" /></label>
+                </div>
+              </fieldset>
+
+              <fieldset class="admin-commercial-slot" data-content-slot="premiumHero">
+                <legend>Portada del catálogo Premium</legend>
+                <div class="admin-commercial-image-control">
+                  <div class="admin-commercial-preview" data-content-preview="premiumHero"><i data-lucide="image"></i><span>Sin imagen cargada</span></div>
+                  <label class="button button-secondary">Cambiar imagen<i data-lucide="upload"></i><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" data-content-upload="premiumHero" /></label>
+                  <button class="button button-secondary" type="button" data-content-remove="premiumHero">Retirar imagen</button>
+                  <input type="hidden" data-content-field="premiumHero.imageUrl" />
+                </div>
+                <div class="admin-commercial-fields">
+                  <label>Texto superior<input type="text" maxlength="80" data-content-field="premiumHero.eyebrow" required /></label>
+                  <label>Título<input type="text" maxlength="180" data-content-field="premiumHero.title" required /></label>
+                  <label class="wide">Descripción<textarea rows="3" maxlength="500" data-content-field="premiumHero.description" required></textarea></label>
+                  <label class="wide">Descripción de la imagen<input type="text" maxlength="180" data-content-field="premiumHero.imageAlt" /></label>
+                </div>
+              </fieldset>
+
+              <p class="form-message" id="admin-commercial-message" role="status" aria-live="polite"></p>
+              <div class="admin-form-actions">
+                <button class="button button-primary" type="submit">Publicar cambios<i data-lucide="save"></i></button>
+              </div>
+            </form>
+          </section>
+
+          <section class="admin-international-panel" aria-labelledby="admin-international-title">
+            <div class="admin-panel-title">
+              <div>
+                <span class="eyebrow">Ventas internacionales</span>
+                <h2 id="admin-international-title">Solicitudes por coordinar</h2>
+                <p>Revisa el destino, acuerda el envío y genera el pago solo cuando el cliente confirme.</p>
+              </div>
+              <i data-lucide="plane"></i>
+            </div>
+            <div class="admin-international-list" id="admin-international-list" aria-live="polite"></div>
+          </section>
 
           <section class="admin-diagnostics-panel" aria-labelledby="admin-diagnostics-title">
             <div class="admin-panel-title">
@@ -753,6 +881,35 @@
         </form>
       </dialog>
 
+      <dialog class="admin-order-dialog admin-international-dialog" id="admin-international-dialog" aria-labelledby="admin-international-dialog-title">
+        <div class="admin-order-dialog-header">
+          <div>
+            <span class="eyebrow">Solicitud internacional</span>
+            <h2 id="admin-international-dialog-title">Cotización internacional</h2>
+          </div>
+          <button class="icon-button" id="admin-international-close" type="button" aria-label="Cerrar solicitud internacional"><i data-lucide="x"></i></button>
+        </div>
+        <div class="admin-order-detail-content" id="admin-international-detail"></div>
+        <form class="admin-order-form" id="admin-international-form" novalidate>
+          <div class="admin-form-row">
+            <label for="admin-international-carrier">Transportadora o modalidad<input id="admin-international-carrier" name="carrier" type="text" maxlength="120" /></label>
+            <label for="admin-international-shipping-cost">Valor estimado del envío en COP<input id="admin-international-shipping-cost" name="shippingCost" type="number" min="0" step="1000" /></label>
+          </div>
+          <label for="admin-international-delivery-time">Tiempo estimado de entrega<input id="admin-international-delivery-time" name="estimatedDelivery" type="text" maxlength="120" placeholder="Ejemplo: 8 a 12 días hábiles" /></label>
+          <label for="admin-international-terms">Condiciones acordadas<textarea id="admin-international-terms" name="paymentTerms" rows="4" maxlength="500" required placeholder="Forma de envío, seguro, aduanas y forma de pago del transporte"></textarea></label>
+          <label for="admin-international-notes">Notas internas<textarea id="admin-international-notes" name="internalNotes" rows="3" maxlength="1000"></textarea></label>
+          <label class="admin-check" for="admin-international-agreed"><input id="admin-international-agreed" name="agreed" type="checkbox" /><span>El cliente aceptó estas condiciones</span></label>
+          <p class="admin-order-warning">El botón de generar pago reserva el inventario y crea un enlace Bold válido por 24 horas.</p>
+          <p class="form-message" id="admin-international-message" role="status" aria-live="polite"></p>
+          <div class="admin-form-actions">
+            <button class="button button-secondary" type="submit">Guardar condiciones<i data-lucide="save"></i></button>
+            <button class="button button-primary" id="admin-international-generate" type="button">Generar orden y pago<i data-lucide="credit-card"></i></button>
+            <a class="button button-secondary-dark" id="admin-international-whatsapp" href="#" target="_blank" rel="noopener" hidden>Enviar por WhatsApp<i data-lucide="message-circle"></i></a>
+            <button class="button button-secondary" id="admin-international-cancel" type="button">Cancelar solicitud</button>
+          </div>
+        </form>
+      </dialog>
+
       <section class="page-section payment-result-section" id="payment-result" aria-label="Resultado del pago">
         <div class="payment-result-shell">
           <div class="payment-result-icon" id="payment-result-icon" aria-hidden="true">
@@ -773,6 +930,20 @@
               Volver al catálogo
               <i data-lucide="arrow-right"></i>
             </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-section international-payment-section" id="international-payment" aria-label="Pago de solicitud internacional">
+        <div class="payment-result-shell">
+          <div class="payment-result-icon pending" id="international-payment-icon" aria-hidden="true"><i data-lucide="plane"></i></div>
+          <span class="eyebrow">Solicitud internacional</span>
+          <h1 id="international-payment-title">Preparando tu enlace de pago.</h1>
+          <p id="international-payment-message">Estamos verificando la orden y la reserva de tus joyas.</p>
+          <dl class="payment-result-summary" id="international-payment-summary"></dl>
+          <div class="payment-result-actions">
+            <button class="button button-primary" id="international-payment-open" type="button" disabled>Abrir pago seguro<i data-lucide="credit-card"></i></button>
+            <a class="button button-secondary" href="/contacto" data-route-link="contacto">Solicitar ayuda<i data-lucide="message-circle"></i></a>
           </div>
         </div>
       </section>
@@ -907,7 +1078,7 @@
           <div class="checkout-address-fields" id="checkout-address-fields" hidden>
             <div class="checkout-shipping-note">
               <i data-lucide="truck"></i>
-              <span>El domicilio no está incluido en este pago. Querubim confirmará su valor y se pagará por separado al recibir.</span>
+              <span id="checkout-shipping-note-text">El domicilio no está incluido en este pago. Querubim confirmará su valor y se pagará por separado al recibir.</span>
             </div>
             <label for="checkout-destination">
               Destino de entrega
@@ -972,9 +1143,10 @@
         <p class="checkout-message" id="checkout-message" role="status" aria-live="polite"></p>
         <button class="button button-primary checkout-pay-button" id="checkout-pay-button" type="submit">
           <span id="checkout-pay-label">Pagar con Bold</span>
-          <i data-lucide="credit-card"></i>
+          <i id="checkout-pay-card-icon" data-lucide="credit-card"></i>
+          <i id="checkout-pay-message-icon" data-lucide="message-circle" hidden></i>
         </button>
-        <p class="checkout-security"><i data-lucide="shield-check"></i> Pago protegido por Bold</p>
+        <p class="checkout-security" id="checkout-security"><i data-lucide="shield-check"></i> Pago protegido por Bold</p>
       </form>
     </aside>
 

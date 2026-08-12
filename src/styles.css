@@ -4256,3 +4256,332 @@ body.admin-route .whatsapp-button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Contenido comercial administrable */
+.hero-bg.has-commercial-image {
+  background:
+    linear-gradient(135deg, rgba(33, 23, 17, 0.68), rgba(38, 20, 20, 0.76)),
+    var(--commercial-image) center / cover no-repeat;
+}
+
+.commercial-campaign {
+  min-height: clamp(420px, 68vh, 680px);
+  margin: 0;
+  padding: clamp(54px, 8vw, 110px) clamp(20px, 8vw, 110px);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-items: center;
+  color: #fff8e9;
+  background: #321f19;
+}
+
+.commercial-campaign[hidden] {
+  display: none;
+}
+
+.commercial-campaign-image {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 30%, rgba(214, 182, 107, 0.28), transparent 38%),
+    linear-gradient(125deg, #281812, #5d2638 58%, #8b672e);
+}
+
+.commercial-campaign-image.has-commercial-image {
+  background:
+    linear-gradient(90deg, rgba(28, 17, 12, 0.92) 0%, rgba(34, 19, 15, 0.64) 52%, rgba(34, 19, 15, 0.28) 100%),
+    var(--commercial-image) center / cover no-repeat;
+}
+
+.commercial-campaign-copy {
+  width: min(690px, 100%);
+  position: relative;
+  z-index: 1;
+}
+
+.commercial-campaign-copy .eyebrow {
+  color: var(--color-gold-shine);
+}
+
+.commercial-campaign-copy h2 {
+  margin: 14px 0 20px;
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 6vw, 5.5rem);
+  line-height: 0.94;
+}
+
+.commercial-campaign-copy p {
+  max-width: 40rem;
+  margin: 0 0 28px;
+  color: rgba(255, 248, 233, 0.82);
+  font-size: var(--text-lg);
+  line-height: 1.7;
+}
+
+.premium-showcase.has-commercial-image {
+  background:
+    linear-gradient(90deg, rgba(23, 15, 11, 0.94), rgba(58, 26, 34, 0.68)),
+    var(--commercial-image) center / cover no-repeat;
+}
+
+.premium-page-hero.has-commercial-image {
+  min-height: clamp(420px, 58vh, 620px);
+  padding: clamp(32px, 6vw, 76px);
+  border: 1px solid rgba(221, 174, 79, 0.4);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(13, 12, 10, 0.94), rgba(19, 17, 14, 0.48)),
+    var(--commercial-image) center / cover no-repeat;
+}
+
+.premium-page-hero.has-commercial-image > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ruta de pago internacional */
+body.international-payment-route main > :not(.international-payment-section) {
+  display: none;
+}
+
+body:not(.international-payment-route) .international-payment-section {
+  display: none;
+}
+
+body.international-payment-route .site-footer,
+body.international-payment-route .whatsapp-button,
+body.international-payment-route .scroll-top-button {
+  display: none;
+}
+
+.international-payment-section {
+  min-height: calc(100dvh - var(--header-height));
+  padding: clamp(64px, 10vw, 120px) clamp(20px, 7vw, 96px);
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(rgba(250, 247, 240, 0.94), rgba(250, 247, 240, 0.98)),
+    url('/logo/querubim-symbol.png') center / min(48vw, 520px) auto no-repeat;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Módulos administrativos nuevos */
+.admin-commercial-panel,
+.admin-international-panel {
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid rgba(214, 182, 107, 0.26);
+  border-radius: var(--radius-xl);
+  display: grid;
+  gap: 20px;
+  color: var(--color-text-primary);
+  background: linear-gradient(145deg, rgba(255, 249, 237, 0.96), rgba(245, 230, 200, 0.84));
+  box-shadow: 0 24px 80px rgba(24, 14, 9, 0.16);
+}
+
+.admin-commercial-panel .admin-panel-title p,
+.admin-international-panel .admin-panel-title p {
+  max-width: 54rem;
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.admin-commercial-form {
+  display: grid;
+}
+
+.admin-commercial-slot {
+  min-width: 0;
+  margin: 0;
+  padding: 24px 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: minmax(240px, 0.48fr) minmax(320px, 1fr);
+  gap: 24px;
+}
+
+.admin-commercial-slot legend {
+  width: 100%;
+  padding: 20px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.admin-commercial-image-control {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.admin-commercial-image-control > .button {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-commercial-image-control input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.admin-commercial-preview {
+  min-height: 180px;
+  border: 1px dashed rgba(129, 95, 42, 0.36);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  background: rgba(250, 247, 240, 0.72);
+}
+
+.admin-commercial-preview img {
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+}
+
+.admin-commercial-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-commercial-fields label,
+.admin-commercial-toggle {
+  display: grid;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 900;
+}
+
+.admin-commercial-fields label.wide,
+.admin-commercial-toggle {
+  grid-column: 1 / -1;
+}
+
+.admin-commercial-fields input,
+.admin-commercial-fields textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  resize: vertical;
+}
+
+.admin-commercial-toggle {
+  margin: 8px 0 16px;
+}
+
+.admin-international-list {
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-international-row {
+  width: 100%;
+  min-height: 86px;
+  padding: 14px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(220px, 1fr) minmax(200px, 0.9fr) minmax(150px, 0.5fr) 30px;
+  align-items: center;
+  gap: 14px;
+  color: var(--color-text-primary);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-international-row:hover,
+.admin-international-row:focus-visible {
+  background: rgba(179, 132, 52, 0.08);
+}
+
+.admin-international-row strong,
+.admin-international-row span,
+.admin-international-row small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.admin-international-row span,
+.admin-international-row small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.admin-international-row > svg {
+  color: var(--color-primary-dark);
+}
+
+.admin-order-badge.status-pending-review,
+.admin-order-badge.status-conditions-set,
+.admin-order-badge.status-ready-for-payment {
+  border-color: rgba(143, 102, 33, 0.3);
+  color: #76511c;
+  background: rgba(250, 237, 204, 0.82);
+}
+
+.admin-order-badge.status-payment-confirmed {
+  border-color: rgba(34, 116, 76, 0.3);
+  color: #1d6845;
+  background: rgba(222, 244, 232, 0.78);
+}
+
+@media (max-width: 900px) {
+  .admin-commercial-slot,
+  .admin-commercial-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-international-row {
+    grid-template-columns: 1fr auto;
+    padding: 16px 4px;
+  }
+
+  .admin-international-row > div,
+  .admin-international-row > .admin-order-badge {
+    grid-column: 1;
+  }
+
+  .admin-international-row > svg {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+}
+
+@media (max-width: 560px) {
+  .commercial-campaign {
+    min-height: 540px;
+    text-align: center;
+  }
+
+  .commercial-campaign-copy {
+    display: grid;
+    justify-items: center;
+  }
+
+  .admin-commercial-slot {
+    padding-block: 18px;
+  }
+}

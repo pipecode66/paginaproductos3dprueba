@@ -88,8 +88,10 @@ function sanitizeDelivery(delivery = {}, requestedDestination = {}) {
       method,
       label: 'Envío a domicilio',
       address,
-      shippingPayment: 'PAY_ON_DELIVERY',
-      shippingPaymentLabel: 'El domicilio se paga por separado al recibir',
+      shippingPayment: destination.scope === 'international' ? 'TO_BE_AGREED' : 'PAY_ON_DELIVERY',
+      shippingPaymentLabel: destination.scope === 'international'
+        ? 'El envío internacional se coordina y paga según las condiciones acordadas'
+        : 'El domicilio se paga por separado al recibir',
     },
   };
 }
@@ -167,11 +169,7 @@ export class PaymentService {
     }
   }
 
-  async createOrder(payload = {}) {
-    this.assertConfigured();
-    if (typeof this.orderStore.releaseExpiredReservations === 'function') {
-      await this.orderStore.releaseExpiredReservations(new Date(this.clock()).toISOString());
-    }
+  async prepareOrderPayload(payload = {}) {
     if (!Array.isArray(payload.items) || payload.items.length === 0 || payload.items.length > MAX_ITEMS) {
       throw new PaymentError('La canasta debe contener entre 1 y 20 productos.');
     }
@@ -227,11 +225,62 @@ export class PaymentService {
       throw new PaymentError('El total de la orden no es válido.');
     }
 
+    return {
+      items: orderItems,
+      subtotal,
+      commercialAdjustment,
+      adjustmentRate,
+      amount,
+      destination,
+      delivery,
+      customer: sanitizeCustomer(payload.customer),
+    };
+  }
+
+  buildPaymentPayload(order) {
+    const redirectionUrl = new URL('/pago/resultado', this.boldConfig.publicBaseUrl);
+    redirectionUrl.searchParams.set('orden', order.id);
+    const payment = {
+      orderId: order.id,
+      currency: order.currency,
+      amount: String(order.amount),
+      apiKey: this.boldConfig.identityKey,
+      integritySignature: createIntegritySignature({
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        secretKey: this.boldConfig.secretKey,
+      }),
+      description: buildDescription(order.items),
+      renderMode: 'embedded',
+    };
+    if (redirectionUrl.protocol === 'https:') payment.redirectionUrl = redirectionUrl.toString();
+    if (this.boldConfig.tax) payment.tax = this.boldConfig.tax;
+    return payment;
+  }
+
+  async createOrder(payload = {}) {
+    this.assertConfigured();
+    if (typeof this.orderStore.releaseExpiredReservations === 'function') {
+      await this.orderStore.releaseExpiredReservations(new Date(this.clock()).toISOString());
+    }
+
+    const prepared = await this.prepareOrderPayload(payload);
+    const {
+      items: orderItems,
+      subtotal,
+      commercialAdjustment,
+      adjustmentRate,
+      amount,
+      destination,
+      delivery,
+      customer,
+    } = prepared;
+
     const now = this.clock();
     const orderId = this.orderIdFactory(now);
     const expiresAt = now + ORDER_LIFETIME_MS;
     const currency = 'COP';
-    const customer = sanitizeCustomer(payload.customer);
     const order = {
       id: orderId,
       status: 'CREATED',
@@ -258,26 +307,23 @@ export class PaymentService {
       await this.orderStore.create(order);
     }
 
-    const redirectionUrl = new URL('/pago/resultado', this.boldConfig.publicBaseUrl);
-    redirectionUrl.searchParams.set('orden', orderId);
-    const payment = {
-      orderId,
-      currency,
-      amount: String(amount),
-      apiKey: this.boldConfig.identityKey,
-      integritySignature: createIntegritySignature({
-        orderId,
-        amount,
-        currency,
-        secretKey: this.boldConfig.secretKey,
-      }),
-      description: buildDescription(orderItems),
-      renderMode: 'embedded',
-    };
-    if (redirectionUrl.protocol === 'https:') payment.redirectionUrl = redirectionUrl.toString();
-    if (this.boldConfig.tax) payment.tax = this.boldConfig.tax;
+    const payment = this.buildPaymentPayload(order);
 
     return { order: publicOrder(order), payment, environment: this.boldConfig.environment };
+  }
+
+  async getCheckout(orderId) {
+    this.assertConfigured();
+    const order = await this.orderStore.get(orderId);
+    if (!order) throw new PaymentError('No encontramos la orden solicitada.', 404, 'ORDER_NOT_FOUND');
+    if (order.status !== 'CREATED' || order.inventoryStatus !== 'RESERVED') {
+      throw new PaymentError('Esta orden ya no está disponible para pago.', 409, 'ORDER_NOT_PAYABLE');
+    }
+    return {
+      order: publicOrder(order),
+      payment: this.buildPaymentPayload(order),
+      environment: this.boldConfig.environment,
+    };
   }
 
   async getOrder(orderId) {

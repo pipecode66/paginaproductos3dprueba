@@ -142,8 +142,8 @@ test('aplica el 6 % a entregas internacionales y rechaza destinos desconocidos',
   assert.equal(international.order.adjustmentRate, 6);
   assert.equal(international.order.amount, 1325000);
   assert.equal(international.order.destination.label, 'Fuera de Colombia');
-  assert.equal(international.order.delivery.shippingPayment, 'PAY_ON_DELIVERY');
-  assert.match(international.order.delivery.shippingPaymentLabel, /paga por separado al recibir/i);
+  assert.equal(international.order.delivery.shippingPayment, 'TO_BE_AGREED');
+  assert.match(international.order.delivery.shippingPaymentLabel, /coordina y paga según las condiciones/i);
 
   await assert.rejects(
     () => service.createOrder({

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import express from 'express';
 import {
   clearAdminSessionCookie,
@@ -8,11 +9,15 @@ import {
   verifyAdminCredentials,
 } from './admin-auth.js';
 import { validateCatalogProduct } from './catalog-validation.js';
+import { InternationalRequestService } from './international-request-service.js';
+import { InternationalRequestStore } from './international-request-store.js';
 import { normalizeManagedOrder, updateManagedOrder } from './order-management.js';
 import { PaymentError, PaymentService } from './payment-service.js';
 import { buildPaymentReadiness } from './payment-readiness.js';
 import { createPersistence } from './persistence.js';
 import { R2Storage } from './r2-storage.js';
+import { validateSiteContent } from './site-content.js';
+import { SiteContentRepository } from './site-content-repository.js';
 
 function createRateLimiter({ windowMs, limit }) {
   const clients = new Map();
@@ -46,11 +51,25 @@ function serializeError(error) {
   return { statusCode: 500, body: { error: 'No fue posible procesar la solicitud.', code: 'INTERNAL_ERROR' } };
 }
 
-export function createApp({ config, catalogRepository, orderStore, r2Storage, logger = console } = {}) {
+export function createApp({
+  config,
+  catalogRepository,
+  orderStore,
+  siteContentRepository,
+  internationalRequestStore,
+  r2Storage,
+  logger = console,
+} = {}) {
   if (!config) throw new Error('La configuración del servidor es obligatoria.');
   const persistence = !catalogRepository || !orderStore ? createPersistence(config) : null;
   const resolvedCatalog = catalogRepository ?? persistence.catalogRepository;
   const resolvedOrders = orderStore ?? persistence.orderStore;
+  const resolvedSiteContent = siteContentRepository
+    ?? persistence?.siteContentRepository
+    ?? new SiteContentRepository(path.join(config.runtimeDir, 'site-content.json'));
+  const resolvedInternationalRequests = internationalRequestStore
+    ?? persistence?.internationalRequestStore
+    ?? new InternationalRequestStore(path.join(config.runtimeDir, 'international-requests.json'));
   const storage = catalogRepository && orderStore
     ? { mode: 'injected', configured: true, ready: () => Promise.resolve(true) }
     : persistence.storage;
@@ -58,6 +77,11 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
     catalogRepository: resolvedCatalog,
     orderStore: resolvedOrders,
     boldConfig: config.bold,
+  });
+  const internationalRequestService = new InternationalRequestService({
+    store: resolvedInternationalRequests,
+    paymentService,
+    publicBaseUrl: config.bold.publicBaseUrl,
   });
   const adminConfig = config.admin ?? {};
   const imageStorage = r2Storage ?? new R2Storage(config.r2);
@@ -87,6 +111,16 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
     response.json(imageStorage.status());
   });
 
+  app.get('/api/site-content', async (request, response) => {
+    try {
+      response.json({ content: await resolvedSiteContent.get() });
+    } catch (error) {
+      const serialized = serializeError(error);
+      logger.error('Error consultando el contenido comercial', error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
   app.post(
     '/api/payments/bold/webhook',
     express.raw({ type: 'application/json', limit: '128kb' }),
@@ -103,6 +137,33 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
   );
 
   app.use(express.json({ limit: '64kb' }));
+
+  app.post(
+    '/api/international-requests',
+    createRateLimiter({ windowMs: 60_000, limit: 10 }),
+    async (request, response) => {
+      try {
+        response.status(201).json(await internationalRequestService.create(request.body));
+      } catch (error) {
+        const serialized = serializeError(error);
+        if (serialized.statusCode >= 500) logger.error('Error creando solicitud internacional', error);
+        response.status(serialized.statusCode).json(serialized.body);
+      }
+    },
+  );
+
+  app.get('/api/international-requests/:requestId/checkout', async (request, response) => {
+    try {
+      response.json(await internationalRequestService.getCheckout(
+        String(request.params.requestId || ''),
+        String(request.query.token || ''),
+      ));
+    } catch (error) {
+      const serialized = serializeError(error);
+      if (serialized.statusCode >= 500) logger.error('Error abriendo pago internacional', error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
 
   app.post(
     '/api/admin/login',
@@ -166,10 +227,66 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
     }
   });
 
+  app.put('/api/admin/site-content', async (request, response) => {
+    try {
+      const content = validateSiteContent(request.body);
+      response.json({ content: await resolvedSiteContent.save(content) });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.patch('/api/admin/international-requests/:requestId', async (request, response) => {
+    try {
+      response.json({
+        request: await internationalRequestService.saveConditions(
+          String(request.params.requestId || ''),
+          request.body,
+          request.admin.sub,
+        ),
+      });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.post('/api/admin/international-requests/:requestId/payment', async (request, response) => {
+    try {
+      response.status(201).json(await internationalRequestService.generatePayment(
+        String(request.params.requestId || ''),
+        request.admin.sub,
+      ));
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.post('/api/admin/international-requests/:requestId/cancel', async (request, response) => {
+    try {
+      response.json({
+        request: await internationalRequestService.cancel(
+          String(request.params.requestId || ''),
+          request.admin.sub,
+        ),
+      });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
   app.get('/api/admin/dashboard', async (request, response) => {
     try {
-      const [products, storedOrders] = await Promise.all([resolvedCatalog.listAll(), resolvedOrders.list(100)]);
+      const [products, storedOrders, content] = await Promise.all([
+        resolvedCatalog.listAll(),
+        resolvedOrders.list(100),
+        resolvedSiteContent.get(),
+      ]);
       const orders = storedOrders.map(normalizeManagedOrder);
+      const internationalRequests = await internationalRequestService.listForAdmin(orders);
       const activeProducts = products.filter((product) => product.active !== false);
       const customers = new Set(
         orders.map((order) => order.customer?.email || order.customer?.phone).filter(Boolean),
@@ -177,6 +294,8 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
       response.json({
         products,
         orders,
+        internationalRequests,
+        siteContent: content,
         summary: {
           activeProducts: activeProducts.length,
           inactiveProducts: products.length - activeProducts.length,
@@ -184,6 +303,9 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
           orders: orders.length,
           paidOrders: orders.filter((order) => order.status === 'PAID').length,
           reviewOrders: orders.filter((order) => order.status === 'REVIEW_REQUIRED').length,
+          pendingInternationalRequests: internationalRequests.filter((item) =>
+            ['PENDING_REVIEW', 'CONDITIONS_SET'].includes(item.status),
+          ).length,
           customers: customers.size,
           paidRevenue: orders
             .filter((order) => order.status === 'PAID')
@@ -322,5 +444,13 @@ export function createApp({ config, catalogRepository, orderStore, r2Storage, lo
     }
   });
 
-  return { app, paymentService, catalogRepository: resolvedCatalog, orderStore: resolvedOrders };
+  return {
+    app,
+    paymentService,
+    internationalRequestService,
+    catalogRepository: resolvedCatalog,
+    orderStore: resolvedOrders,
+    siteContentRepository: resolvedSiteContent,
+    internationalRequestStore: resolvedInternationalRequests,
+  };
 }

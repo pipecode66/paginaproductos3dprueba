@@ -11,6 +11,10 @@ const browser = await chromium.launch({ headless: true, executablePath });
 const adminEmail = process.env.ADMIN_EMAIL;
 const adminPassword = process.env.ADMIN_PASSWORD;
 if (!adminEmail || !adminPassword) throw new Error('Configura ADMIN_EMAIL y ADMIN_PASSWORD en .env.local.');
+const catalogResponse = await fetch(`${baseUrl}/api/catalog/payment-products`);
+const catalog = await catalogResponse.json();
+const availableProduct = catalog.products?.find((product) => product.stock > 0 && product.measurements?.length);
+if (!availableProduct) throw new Error('No hay un producto con inventario disponible para verificar el panel.');
 const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -18,7 +22,7 @@ const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
     customer: { fullName: 'Cliente Gestión', email: 'gestion@example.com', phone: '3001234567' },
     delivery: { method: 'pickup' },
     destination: { scope: 'national' },
-    items: [{ productId: 'dije-mano-sagrada', measure: 'Mini', quantity: 1 }],
+    items: [{ productId: availableProduct.id, measure: availableProduct.measurements[0], quantity: 1 }],
   }),
 });
 if (!orderResponse.ok) throw new Error(`No fue posible crear la orden administrativa: ${orderResponse.status}`);
@@ -52,6 +56,18 @@ const tinyPng = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
   'base64',
 );
+const internationalRequest = {
+  id: 'QBI-UI-001',
+  status: 'PENDING_REVIEW',
+  customer: { fullName: 'Cliente Exterior', email: 'exterior@example.com', phone: '+1 305 555 0199' },
+  delivery: {
+    method: 'delivery',
+    address: { country: 'Estados Unidos', city: 'Miami', addressLine: '100 Biscayne Boulevard', postalCode: '33132' },
+  },
+  items: [{ name: 'Joya internacional', measure: 'Medida única', subtotal: 840000 }],
+  amount: 890400,
+  createdAt: '2026-08-12T15:00:00.000Z',
+};
 
 page.on('console', (message) => {
   if (message.type() === 'error') browserErrors.push(message.text().slice(0, 300));
@@ -68,6 +84,8 @@ await page.route('**/api/admin/dashboard', async (route) => {
     headers: { ...headers, 'content-type': 'application/json' },
     body: JSON.stringify({
       ...dashboard,
+      internationalRequests: [internationalRequest, ...(dashboard.internationalRequests || [])],
+      summary: { ...dashboard.summary, pendingInternationalRequests: 1 },
       storage: {
         configured: true,
         publicUrl: 'https://media.example',
@@ -112,6 +130,20 @@ try {
   await page.locator('#admin-panel-view:not([hidden])').waitFor();
   await page.locator('#admin-stats .admin-stat').first().waitFor();
   await page.getByText('Arrastra imágenes o selecciónalas').waitFor();
+  const commercialSlotCount = await page.locator('.admin-commercial-slot').count();
+  await page.locator('[data-content-upload="hero"]').setInputFiles({
+    name: 'portada-prueba.png',
+    mimeType: 'image/png',
+    buffer: tinyPng,
+  });
+  await page.locator('[data-content-preview="hero"] img').waitFor();
+  const commercialUploadVerified = (await page.locator('[data-content-field="hero.imageUrl"]').inputValue()) === uploadedImageUrl;
+  await page.locator('[data-content-remove="hero"]').click();
+  await page.locator(`[data-admin-international="${internationalRequest.id}"]`).click();
+  await page.locator('#admin-international-dialog[open]').waitFor();
+  const internationalDialogVisible = await page.locator('#admin-international-dialog[open]').isVisible();
+  await page.screenshot({ path: 'test-results/admin-international-desktop.png' });
+  await page.locator('#admin-international-close').click();
 
   await page.locator('#admin-image-files').setInputFiles({
     name: 'imagen-prueba.png',
@@ -178,12 +210,15 @@ try {
     productCount: await page.locator('#admin-product-list .admin-product-item').count(),
     orderUpdated: (await page.locator('#admin-order-status').inputValue()) === 'PREPARING',
     uploadVerified,
+    commercialSlotCount,
+    commercialUploadVerified,
+    internationalDialogVisible,
     dialogInsideViewport: Boolean(dialogBox && dialogBox.x >= 0 && dialogBox.x + dialogBox.width <= 390),
     hasHorizontalOverflow,
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || result.statCount < 6 || result.productCount < 1 || !result.orderUpdated || !result.uploadVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || result.statCount < 6 || result.productCount < 1 || !result.orderUpdated || !result.uploadVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {

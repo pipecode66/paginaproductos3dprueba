@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { newDb } from 'pg-mem';
 import { PostgresCatalogRepository } from '../server/postgres-catalog-repository.js';
+import { PostgresInternationalRequestStore } from '../server/postgres-international-request-store.js';
 import { PostgresOrderStore } from '../server/postgres-order-store.js';
+import { PostgresSiteContentRepository } from '../server/postgres-site-content-repository.js';
 
 function createPool() {
   const database = newDb();
@@ -117,4 +119,31 @@ test('reserva inventario y lo libera una sola vez al anular o vencer la orden', 
   assert.equal(await orders.releaseExpiredReservations('2026-08-12T12:00:00.000Z'), 1);
   assert.equal((await catalog.findById(product.id)).stock, product.stock);
   assert.equal((await orders.get(expiringOrder.id)).status, 'EXPIRED');
+});
+
+test('persiste portadas comerciales y solicitudes internacionales en PostgreSQL', async (context) => {
+  const pool = createPool();
+  context.after(() => pool.end());
+  const contentRepository = new PostgresSiteContentRepository(pool);
+  const requestStore = new PostgresInternationalRequestStore(pool);
+
+  const defaults = await contentRepository.get();
+  assert.match(defaults.hero.title, /Elegancia/);
+  const savedContent = await contentRepository.save({
+    ...defaults,
+    hero: { ...defaults.hero, title: 'Portada persistente' },
+  });
+  assert.equal(savedContent.hero.title, 'Portada persistente');
+  assert.equal((await contentRepository.get()).hero.title, 'Portada persistente');
+
+  const request = {
+    id: 'QBI-DB-001',
+    status: 'PENDING_REVIEW',
+    customer: { fullName: 'Cliente exterior' },
+    createdAt: '2026-08-12T15:00:00.000Z',
+  };
+  await requestStore.create(request);
+  assert.equal((await requestStore.get(request.id)).status, 'PENDING_REVIEW');
+  await requestStore.update(request.id, (current) => ({ ...current, status: 'CONDITIONS_SET' }));
+  assert.equal((await requestStore.list())[0].status, 'CONDITIONS_SET');
 });

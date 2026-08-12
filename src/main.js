@@ -14,6 +14,8 @@ import {
   Download,
   Edit3,
   Gem,
+  GalleryHorizontalEnd,
+  Image,
   ImagePlus,
   KeyRound,
   Layers,
@@ -27,6 +29,7 @@ import {
   Package,
   PackageCheck,
   PenTool,
+  Plane,
   Plus,
   RotateCw,
   Save,
@@ -36,6 +39,7 @@ import {
   Tags,
   Trash2,
   Truck,
+  Upload,
   UploadCloud,
   UserRound,
   X,
@@ -289,6 +293,8 @@ const icons = {
   Download,
   Edit3,
   Gem,
+  GalleryHorizontalEnd,
+  Image,
   ImagePlus,
   KeyRound,
   Layers,
@@ -302,6 +308,7 @@ const icons = {
   Package,
   PackageCheck,
   PenTool,
+  Plane,
   Plus,
   RotateCw,
   Save,
@@ -311,6 +318,7 @@ const icons = {
   Tags,
   Trash2,
   Truck,
+  Upload,
   UploadCloud,
   UserRound,
   X,
@@ -344,6 +352,9 @@ const state = {
   adminSessionChecked: false,
   adminUser: null,
   adminOrders: [],
+  adminInternationalRequests: [],
+  siteContent: null,
+  originalSiteContent: null,
   adminSummary: null,
   adminLoading: false,
   adminHeartbeatAt: 0,
@@ -351,20 +362,23 @@ const state = {
   adminOrderFilter: 'todos',
   adminOrderPage: 1,
   activeAdminOrderId: null,
+  activeInternationalRequestId: null,
   adminStorage: { ...DEFAULT_ADMIN_STORAGE },
   adminImageUploading: false,
   adminUploadProgress: 0,
   originalAdminImages: [],
   pendingR2Uploads: new Set(),
+  pendingContentUploads: new Set(),
   cartItems: [],
   checkoutBusy: false,
   paymentPollAttempts: 0,
   paymentPollTimer: null,
+  internationalCheckout: null,
   currentRoute: 'home',
   ticking: false,
 };
 
-const standaloneRoutes = new Set(['premium', 'admin', 'historia', 'contacto', 'payment']);
+const standaloneRoutes = new Set(['premium', 'admin', 'historia', 'contacto', 'payment', 'international-payment']);
 
 const selectors = {
   pageSections: document.querySelectorAll('[data-page]'),
@@ -377,6 +391,25 @@ const selectors = {
   premiumCategoryFilters: document.querySelector('#premium-category-filters'),
   premiumProductGrid: document.querySelector('#premium-product-grid'),
   premiumSearchInput: document.querySelector('#premium-catalog-search'),
+  commercialHeroImage: document.querySelector('#commercial-hero-image'),
+  commercialHeroEyebrow: document.querySelector('#commercial-hero-eyebrow'),
+  commercialHeroTitle: document.querySelector('#commercial-hero-title'),
+  commercialHeroDescription: document.querySelector('#commercial-hero-description'),
+  commercialCampaign: document.querySelector('#commercial-campaign'),
+  commercialCampaignImage: document.querySelector('#commercial-campaign-image'),
+  commercialCampaignEyebrow: document.querySelector('#commercial-campaign-eyebrow'),
+  commercialCampaignTitle: document.querySelector('#commercial-campaign-title'),
+  commercialCampaignDescription: document.querySelector('#commercial-campaign-description'),
+  commercialCampaignCta: document.querySelector('#commercial-campaign-cta'),
+  commercialCampaignCtaLabel: document.querySelector('#commercial-campaign-cta-label'),
+  commercialPremiumShowcase: document.querySelector('#commercial-premium-showcase'),
+  commercialPremiumEyebrow: document.querySelector('#commercial-premium-eyebrow'),
+  commercialPremiumTitle: document.querySelector('#commercial-premium-title'),
+  commercialPremiumDescription: document.querySelector('#commercial-premium-description'),
+  commercialPremiumHero: document.querySelector('#commercial-premium-hero'),
+  commercialPremiumHeroEyebrow: document.querySelector('#commercial-premium-hero-eyebrow'),
+  commercialPremiumHeroTitle: document.querySelector('#commercial-premium-hero-title'),
+  commercialPremiumHeroDescription: document.querySelector('#commercial-premium-hero-description'),
   adminLoginView: document.querySelector('#admin-login-view'),
   adminPanelView: document.querySelector('#admin-panel-view'),
   adminLoginForm: document.querySelector('#admin-login-form'),
@@ -399,6 +432,24 @@ const selectors = {
   adminOrderMessage: document.querySelector('#admin-order-message'),
   adminOrderClose: document.querySelector('#admin-order-close'),
   adminOrderCancel: document.querySelector('#admin-order-cancel'),
+  adminCommercialForm: document.querySelector('#admin-commercial-form'),
+  adminCommercialMessage: document.querySelector('#admin-commercial-message'),
+  adminInternationalList: document.querySelector('#admin-international-list'),
+  adminInternationalDialog: document.querySelector('#admin-international-dialog'),
+  adminInternationalDialogTitle: document.querySelector('#admin-international-dialog-title'),
+  adminInternationalDetail: document.querySelector('#admin-international-detail'),
+  adminInternationalForm: document.querySelector('#admin-international-form'),
+  adminInternationalCarrier: document.querySelector('#admin-international-carrier'),
+  adminInternationalShippingCost: document.querySelector('#admin-international-shipping-cost'),
+  adminInternationalDeliveryTime: document.querySelector('#admin-international-delivery-time'),
+  adminInternationalTerms: document.querySelector('#admin-international-terms'),
+  adminInternationalNotes: document.querySelector('#admin-international-notes'),
+  adminInternationalAgreed: document.querySelector('#admin-international-agreed'),
+  adminInternationalMessage: document.querySelector('#admin-international-message'),
+  adminInternationalGenerate: document.querySelector('#admin-international-generate'),
+  adminInternationalWhatsapp: document.querySelector('#admin-international-whatsapp'),
+  adminInternationalCancel: document.querySelector('#admin-international-cancel'),
+  adminInternationalClose: document.querySelector('#admin-international-close'),
   adminExportCatalog: document.querySelector('#admin-export-catalog'),
   adminBackupStatus: document.querySelector('#admin-backup-status'),
   adminSecurityAction: document.querySelector('#admin-security-action'),
@@ -451,6 +502,7 @@ const selectors = {
   checkoutDeliveryMethod: document.querySelector('#checkout-delivery-method'),
   checkoutPickupNote: document.querySelector('#checkout-pickup-note'),
   checkoutAddressFields: document.querySelector('#checkout-address-fields'),
+  checkoutShippingNoteText: document.querySelector('#checkout-shipping-note-text'),
   checkoutDestination: document.querySelector('#checkout-destination'),
   checkoutCountryField: document.querySelector('#checkout-country-field'),
   checkoutCountry: document.querySelector('#checkout-country'),
@@ -468,12 +520,19 @@ const selectors = {
   checkoutMessage: document.querySelector('#checkout-message'),
   checkoutPayButton: document.querySelector('#checkout-pay-button'),
   checkoutPayLabel: document.querySelector('#checkout-pay-label'),
+  checkoutPayCardIcon: document.querySelector('#checkout-pay-card-icon'),
+  checkoutPayMessageIcon: document.querySelector('#checkout-pay-message-icon'),
+  checkoutSecurity: document.querySelector('#checkout-security'),
   cartCount: document.querySelector('#cart-count'),
   paymentResultIcon: document.querySelector('#payment-result-icon'),
   paymentResultTitle: document.querySelector('#payment-result-title'),
   paymentResultMessage: document.querySelector('#payment-result-message'),
   paymentResultSummary: document.querySelector('#payment-result-summary'),
   paymentResultRefresh: document.querySelector('#payment-result-refresh'),
+  internationalPaymentTitle: document.querySelector('#international-payment-title'),
+  internationalPaymentMessage: document.querySelector('#international-payment-message'),
+  internationalPaymentSummary: document.querySelector('#international-payment-summary'),
+  internationalPaymentOpen: document.querySelector('#international-payment-open'),
   scrollTopButton: document.querySelector('#scroll-top-button'),
   contactForm: document.querySelector('#contact-form'),
   formMessage: document.querySelector('#form-message'),
@@ -657,6 +716,61 @@ async function loadPublicCatalog() {
     if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
   } catch {
     // El catálogo incluido en la aplicación permanece disponible si la API está temporalmente fuera de línea.
+  }
+}
+
+function cloneData(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function setCommercialBackground(element, imageUrl) {
+  if (!element) return;
+  const url = String(imageUrl || '').trim();
+  if (!url) {
+    element.classList.remove('has-commercial-image');
+    element.style.removeProperty('--commercial-image');
+    return;
+  }
+  const safeUrl = url.replace(/["\\\n\r]/g, (character) => encodeURIComponent(character));
+  element.style.setProperty('--commercial-image', `url("${safeUrl}")`);
+  element.classList.add('has-commercial-image');
+}
+
+function applySiteContent(content) {
+  if (!content) return;
+  state.siteContent = cloneData(content);
+  const { hero, campaign, premiumShowcase, premiumHero } = content;
+
+  setCommercialBackground(selectors.commercialHeroImage, hero?.imageUrl);
+  selectors.commercialHeroEyebrow.textContent = hero?.eyebrow || '';
+  selectors.commercialHeroTitle.textContent = hero?.title || '';
+  selectors.commercialHeroDescription.textContent = hero?.description || '';
+
+  selectors.commercialCampaign.hidden = !campaign?.enabled;
+  setCommercialBackground(selectors.commercialCampaignImage, campaign?.imageUrl);
+  selectors.commercialCampaignEyebrow.textContent = campaign?.eyebrow || '';
+  selectors.commercialCampaignTitle.textContent = campaign?.title || '';
+  selectors.commercialCampaignDescription.textContent = campaign?.description || '';
+  selectors.commercialCampaignCtaLabel.textContent = campaign?.ctaLabel || 'Explorar colección';
+  selectors.commercialCampaignCta.href = campaign?.ctaUrl || '#coleccion';
+
+  setCommercialBackground(selectors.commercialPremiumShowcase, premiumShowcase?.imageUrl);
+  selectors.commercialPremiumEyebrow.textContent = premiumShowcase?.eyebrow || '';
+  selectors.commercialPremiumTitle.textContent = premiumShowcase?.title || '';
+  selectors.commercialPremiumDescription.textContent = premiumShowcase?.description || '';
+
+  setCommercialBackground(selectors.commercialPremiumHero, premiumHero?.imageUrl);
+  selectors.commercialPremiumHeroEyebrow.textContent = premiumHero?.eyebrow || '';
+  selectors.commercialPremiumHeroTitle.textContent = premiumHero?.title || '';
+  selectors.commercialPremiumHeroDescription.textContent = premiumHero?.description || '';
+}
+
+async function loadSiteContent() {
+  try {
+    const result = await apiRequest('/api/site-content');
+    if (result.content) applySiteContent(result.content);
+  } catch {
+    // El contenido incluido en el HTML funciona como respaldo cuando la API no responde.
   }
 }
 
@@ -915,10 +1029,22 @@ function syncCheckoutDeliveryForm() {
   selectors.checkoutPostalCode.disabled = !isDelivery;
   selectors.checkoutDestination.disabled = !isDelivery;
   selectors.checkoutDepartmentLabel.textContent = isInternational ? 'Estado o provincia (opcional)' : 'Departamento';
-  selectors.checkoutTotalNote.textContent = isDelivery
-    ? 'IVA del 19 % incluido. El domicilio se paga por separado al recibir.'
-    : 'IVA del 19 % incluido en el total.';
+  selectors.checkoutShippingNoteText.textContent = isInternational
+    ? 'Querubim revisará el destino, acordará contigo el transporte internacional y después enviará el enlace de pago de las joyas.'
+    : 'El domicilio no está incluido en este pago. Querubim confirmará su valor y se pagará por separado al recibir.';
+  selectors.checkoutTotalNote.textContent = isInternational
+    ? 'IVA del 19 % incluido. El envío internacional se cotiza y acuerda por separado.'
+    : isDelivery
+      ? 'IVA del 19 % incluido. El domicilio se paga por separado al recibir.'
+      : 'IVA del 19 % incluido en el total.';
+  selectors.checkoutPayLabel.textContent = isInternational ? 'Coordinar envío internacional' : 'Pagar con Bold';
+  selectors.checkoutPayCardIcon.hidden = isInternational;
+  selectors.checkoutPayMessageIcon.hidden = !isInternational;
+  selectors.checkoutSecurity.innerHTML = isInternational
+    ? '<i data-lucide="shield-check"></i> La orden de pago se generará después de acordar el envío'
+    : '<i data-lucide="shield-check"></i> Pago protegido por Bold';
   renderCart();
+  refreshIcons();
 }
 
 function renderCart() {
@@ -981,7 +1107,11 @@ function setCheckoutBusy(isBusy) {
   state.checkoutBusy = isBusy;
   selectors.checkoutPayButton.disabled = isBusy;
   selectors.checkoutPayButton.classList.toggle('loading', isBusy);
-  selectors.checkoutPayLabel.textContent = isBusy ? 'Preparando pago' : 'Pagar con Bold';
+  const isInternational = selectors.checkoutDeliveryMethod.value === 'delivery'
+    && selectors.checkoutDestination.value === 'international';
+  selectors.checkoutPayLabel.textContent = isBusy
+    ? isInternational ? 'Registrando solicitud' : 'Preparando pago'
+    : isInternational ? 'Coordinar envío internacional' : 'Pagar con Bold';
 }
 
 async function handleCheckoutSubmit(event) {
@@ -1014,18 +1144,30 @@ async function handleCheckoutSubmit(event) {
       reference: String(formData.get('reference') || '').trim(),
       postalCode: String(formData.get('postalCode') || '').trim(),
     };
-    const response = await fetch('/api/payments/orders', {
+    const destination = { scope: String(formData.get('destinationType') || '') };
+    const isInternational = delivery.method === 'delivery' && destination.scope === 'international';
+    const endpoint = isInternational ? '/api/international-requests' : '/api/payments/orders';
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customer,
         delivery,
-        destination: { scope: String(formData.get('destinationType') || '') },
+        destination,
         items: state.cartItems.map(({ product, measure }) => ({ productId: product.id, measure, quantity: 1 })),
       }),
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || 'No fue posible crear la orden de pago.');
+    if (!response.ok) throw new Error(result.error || (isInternational
+      ? 'No fue posible registrar la solicitud internacional.'
+      : 'No fue posible crear la orden de pago.'));
+
+    if (isInternational) {
+      selectors.checkoutMessage.textContent = `Solicitud ${result.request.id} registrada. Abrimos WhatsApp para coordinar el envío.`;
+      selectors.checkoutMessage.classList.add('success');
+      window.open(result.whatsappUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
 
     const BoldCheckout = await loadBoldCheckoutScript();
     const checkoutConfig = {
@@ -1153,6 +1295,69 @@ async function consultPaymentOrder({ scheduleNext = true } = {}) {
   }
 }
 
+function buildBoldCheckoutConfig(result) {
+  const config = {
+    orderId: result.payment.orderId,
+    currency: result.payment.currency,
+    amount: result.payment.amount,
+    apiKey: result.payment.apiKey,
+    integritySignature: result.payment.integritySignature,
+    description: result.payment.description,
+    renderMode: 'embedded',
+  };
+  if (result.payment.redirectionUrl) config.redirectionUrl = result.payment.redirectionUrl;
+  if (result.payment.tax) config.tax = result.payment.tax;
+  return config;
+}
+
+async function loadInternationalPayment() {
+  const params = new URLSearchParams(window.location.search);
+  const requestId = params.get('solicitud');
+  const token = params.get('token');
+  selectors.internationalPaymentOpen.disabled = true;
+  state.internationalCheckout = null;
+
+  if (!requestId || !token) {
+    selectors.internationalPaymentTitle.textContent = 'El enlace está incompleto.';
+    selectors.internationalPaymentMessage.textContent = 'Solicita un nuevo enlace al equipo de Querubim.';
+    return;
+  }
+
+  try {
+    const result = await apiRequest(
+      `/api/international-requests/${encodeURIComponent(requestId)}/checkout?token=${encodeURIComponent(token)}`,
+    );
+    state.internationalCheckout = buildBoldCheckoutConfig(result);
+    selectors.internationalPaymentTitle.textContent = 'Tu orden internacional está lista.';
+    selectors.internationalPaymentMessage.textContent = 'La joya quedó reservada. Completa el pago con Bold dentro del plazo indicado.';
+    selectors.internationalPaymentSummary.innerHTML = `
+      <div><dt>Solicitud</dt><dd>${escapeHtml(requestId)}</dd></div>
+      <div><dt>Orden</dt><dd>${escapeHtml(result.order.id)}</dd></div>
+      <div><dt>Total joyas</dt><dd>${escapeHtml(formatCurrency(result.order.amount))}</dd></div>
+      <div><dt>Vigencia</dt><dd>${escapeHtml(formatAdminDate(result.order.expiresAt))}</dd></div>
+    `;
+    selectors.internationalPaymentOpen.disabled = false;
+    sessionStorage.setItem('querubim-last-order', result.order.id);
+  } catch (error) {
+    selectors.internationalPaymentTitle.textContent = 'Este pago no está disponible.';
+    selectors.internationalPaymentMessage.textContent = error.message || 'Solicita un nuevo enlace al equipo de Querubim.';
+    selectors.internationalPaymentSummary.innerHTML = '';
+  }
+}
+
+async function openInternationalPayment() {
+  if (!state.internationalCheckout) return;
+  selectors.internationalPaymentOpen.disabled = true;
+  try {
+    const BoldCheckout = await loadBoldCheckoutScript();
+    new BoldCheckout(state.internationalCheckout).open();
+  } catch (error) {
+    selectors.internationalPaymentMessage.textContent = error.message || 'No fue posible abrir Bold.';
+  } finally {
+    selectors.internationalPaymentOpen.disabled = false;
+  }
+}
+
 function isAdminLoggedIn() {
   return state.adminAuthenticated;
 }
@@ -1163,8 +1368,14 @@ async function loadAdminDashboard() {
   try {
     const result = await apiRequest('/api/admin/dashboard');
     state.adminOrders = Array.isArray(result.orders) ? result.orders : [];
+    state.adminInternationalRequests = Array.isArray(result.internationalRequests) ? result.internationalRequests : [];
     state.adminSummary = result.summary || null;
     state.adminStorage = { ...DEFAULT_ADMIN_STORAGE, ...(result.storage || {}) };
+    if (result.siteContent) {
+      state.originalSiteContent = cloneData(result.siteContent);
+      applySiteContent(result.siteContent);
+      renderAdminCommercialContent();
+    }
     updateAdminImageUploadState();
     if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
     renderAdminPanel();
@@ -1304,6 +1515,7 @@ function renderAdminStats() {
     { icon: 'image-plus', label: 'Fotos gestionadas', value: getCatalogImageCount() },
     { icon: 'package-check', label: 'Stock bajo', value: lowStock },
     { icon: 'clipboard-list', label: 'Pagos pendientes', value: pendingOrders },
+    { icon: 'plane', label: 'Solicitudes internacionales', value: Number(state.adminSummary?.pendingInternationalRequests || 0) },
     { icon: 'user-round', label: 'Clientes reales', value: Number(state.adminSummary?.customers || 0) },
     { icon: 'shield-check', label: 'Categorías activas', value: categoriesUsed },
     { icon: 'shopping-bag', label: 'Ingresos aprobados', value: formatCurrency(paidRevenue) },
@@ -1338,6 +1550,20 @@ function renderAdminDiagnostics() {
         ? 'Ahora: carga múltiple directa y segura mediante Cloudflare R2.'
         : 'Siguiente mejora: completar las variables de Cloudflare R2 en el servidor.',
       status: storageReady ? 'Corregido' : 'En integración',
+    },
+    {
+      icon: 'gallery-horizontal-end',
+      title: 'Portadas dependientes del código',
+      before: 'Antes: cambiar un banner requería modificar y desplegar la aplicación.',
+      improvement: 'Ahora: el administrador publica portadas, campañas y vitrinas Premium desde el panel.',
+      status: 'Corregido',
+    },
+    {
+      icon: 'plane',
+      title: 'Exportaciones sin proceso',
+      before: 'Antes: una venta internacional se confundía con un domicilio nacional.',
+      improvement: 'Ahora: existe una bandeja para acordar el envío, confirmar condiciones y generar el pago después.',
+      status: 'Corregido',
     },
     {
       icon: 'package-check',
@@ -1753,6 +1979,266 @@ function renderAdminProducts() {
     : '<p class="empty-results">No hay productos que coincidan con la búsqueda.</p>';
 }
 
+function getNestedContentValue(content, path) {
+  return String(path || '').split('.').reduce((value, key) => value?.[key], content);
+}
+
+function setNestedContentValue(content, path, value) {
+  const keys = String(path || '').split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((current, key) => current[key], content);
+  target[lastKey] = value;
+}
+
+function renderCommercialPreview(slot, imageUrl) {
+  const preview = selectors.adminCommercialForm?.querySelector(`[data-content-preview="${slot}"]`);
+  if (!preview) return;
+  preview.innerHTML = imageUrl
+    ? `<img src="${escapeHtml(imageUrl)}" alt="Vista previa de ${escapeHtml(slot)}" />`
+    : '<i data-lucide="image"></i><span>Sin imagen cargada</span>';
+}
+
+function renderAdminCommercialContent() {
+  if (!selectors.adminCommercialForm || !state.siteContent) return;
+  selectors.adminCommercialForm.querySelectorAll('[data-content-field]').forEach((field) => {
+    const value = getNestedContentValue(state.siteContent, field.dataset.contentField);
+    if (field.type === 'checkbox') field.checked = Boolean(value);
+    else field.value = value ?? '';
+  });
+  ['hero', 'campaign', 'premiumShowcase', 'premiumHero'].forEach((slot) =>
+    renderCommercialPreview(slot, state.siteContent?.[slot]?.imageUrl),
+  );
+  selectors.adminCommercialForm.querySelectorAll('[data-content-upload]').forEach((input) => {
+    input.disabled = !state.adminStorage.configured || state.adminImageUploading;
+  });
+  refreshIcons();
+}
+
+async function uploadCommercialImage(slot, file) {
+  if (!file || state.adminImageUploading) return;
+  const acceptedTypes = new Set(state.adminStorage.acceptedTypes);
+  if (!acceptedTypes.has(file.type) || file.size < 1 || file.size > state.adminStorage.maxImageSize) {
+    selectors.adminCommercialMessage.textContent = 'La imagen debe ser JPEG, PNG, WebP o AVIF y pesar máximo 8 MB.';
+    selectors.adminCommercialMessage.className = 'form-message error';
+    return;
+  }
+  state.adminImageUploading = true;
+  selectors.adminCommercialMessage.textContent = 'Cargando imagen comercial...';
+  selectors.adminCommercialMessage.className = 'form-message';
+  selectors.adminCommercialForm.querySelectorAll('[data-content-upload]').forEach((input) => { input.disabled = true; });
+  try {
+    const result = await apiRequest('/api/admin/uploads/presign', {
+      method: 'POST',
+      body: JSON.stringify({
+        productId: `contenido-${slot}`,
+        fileName: file.name,
+        contentType: file.type,
+        size: file.size,
+      }),
+    });
+    await uploadFileToSignedUrl(file, result.upload, () => undefined);
+    const previousDraftUrl = state.siteContent[slot].imageUrl;
+    if (state.pendingContentUploads.has(previousDraftUrl)) {
+      await deleteR2Images([previousDraftUrl]);
+      state.pendingContentUploads.delete(previousDraftUrl);
+    }
+    state.pendingContentUploads.add(result.upload.publicUrl);
+    state.siteContent[slot].imageUrl = result.upload.publicUrl;
+    const field = selectors.adminCommercialForm.querySelector(`[data-content-field="${slot}.imageUrl"]`);
+    field.value = result.upload.publicUrl;
+    renderCommercialPreview(slot, result.upload.publicUrl);
+    selectors.adminCommercialMessage.textContent = 'Imagen cargada. Publica los cambios para mostrarla en la tienda.';
+    selectors.adminCommercialMessage.className = 'form-message success';
+  } catch (error) {
+    selectors.adminCommercialMessage.textContent = error.message;
+    selectors.adminCommercialMessage.className = 'form-message error';
+  } finally {
+    state.adminImageUploading = false;
+    selectors.adminCommercialForm.querySelectorAll('[data-content-upload]').forEach((input) => {
+      input.disabled = !state.adminStorage.configured;
+    });
+  }
+}
+
+async function saveAdminCommercialContent(event) {
+  event.preventDefault();
+  if (!selectors.adminCommercialForm.checkValidity()) {
+    selectors.adminCommercialMessage.textContent = 'Completa los títulos y descripciones comerciales.';
+    selectors.adminCommercialMessage.className = 'form-message error';
+    selectors.adminCommercialForm.reportValidity();
+    return;
+  }
+  const content = cloneData(state.siteContent);
+  selectors.adminCommercialForm.querySelectorAll('[data-content-field]').forEach((field) => {
+    setNestedContentValue(content, field.dataset.contentField, field.type === 'checkbox' ? field.checked : field.value.trim());
+  });
+  const submitButton = selectors.adminCommercialForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  selectors.adminCommercialMessage.textContent = 'Publicando contenido comercial...';
+  selectors.adminCommercialMessage.className = 'form-message';
+  try {
+    const result = await apiRequest('/api/admin/site-content', {
+      method: 'PUT',
+      body: JSON.stringify(content),
+    });
+    const previousImages = ['hero', 'campaign', 'premiumShowcase', 'premiumHero']
+      .map((slot) => state.originalSiteContent?.[slot]?.imageUrl)
+      .filter((url) => url && !Object.values(result.content).some((slot) => slot.imageUrl === url));
+    const cleanup = await deleteR2Images(previousImages);
+    Object.values(result.content).forEach((slot) => state.pendingContentUploads.delete(slot.imageUrl));
+    state.originalSiteContent = cloneData(result.content);
+    applySiteContent(result.content);
+    renderAdminCommercialContent();
+    selectors.adminCommercialMessage.textContent = cleanup.some((item) => item.status === 'rejected')
+      ? 'Contenido publicado. Una imagen anterior quedó pendiente de limpieza.'
+      : 'Contenido comercial publicado correctamente.';
+    selectors.adminCommercialMessage.className = 'form-message success';
+    recordAdminActivity('Actualización de portadas y contenido comercial.');
+  } catch (error) {
+    selectors.adminCommercialMessage.textContent = error.message;
+    selectors.adminCommercialMessage.className = 'form-message error';
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+const internationalStatusLabels = {
+  PENDING_REVIEW: 'Pendiente de revisión',
+  CONDITIONS_SET: 'Condiciones registradas',
+  READY_FOR_PAYMENT: 'Lista para pagar',
+  PAYMENT_CONFIRMED: 'Pago confirmado',
+  PAYMENT_REVIEW: 'Pago en revisión',
+  PAYMENT_REJECTED: 'Pago rechazado',
+  PAYMENT_VOIDED: 'Pago anulado',
+  PAYMENT_EXPIRED: 'Pago vencido',
+  CANCELLED: 'Cancelada',
+};
+
+function renderAdminInternationalRequests() {
+  if (!selectors.adminInternationalList) return;
+  selectors.adminInternationalList.innerHTML = state.adminInternationalRequests.length
+    ? state.adminInternationalRequests.map((request) => `
+        <button class="admin-international-row" type="button" data-admin-international="${escapeHtml(request.id)}">
+          <div><strong>${escapeHtml(request.id)}</strong><small>${escapeHtml(formatAdminDate(request.createdAt))}</small></div>
+          <div><strong>${escapeHtml(request.customer?.fullName || 'Cliente')}</strong><span>${escapeHtml(request.delivery?.address?.country || 'Destino internacional')} · ${escapeHtml(request.delivery?.address?.city || '')}</span></div>
+          <div><strong>${escapeHtml(formatCurrency(request.amount))}</strong><small>${escapeHtml(request.items?.map((item) => item.name).join(', ') || 'Sin productos')}</small></div>
+          <span class="admin-order-badge ${getOrderStatusClass(request.status)}">${escapeHtml(internationalStatusLabels[request.status] || request.status)}</span>
+          <i data-lucide="arrow-right"></i>
+        </button>
+      `).join('')
+    : '<p class="empty-results">No hay solicitudes internacionales registradas.</p>';
+}
+
+function closeAdminInternationalDialog() {
+  state.activeInternationalRequestId = null;
+  if (selectors.adminInternationalDialog?.open) selectors.adminInternationalDialog.close();
+}
+
+function openAdminInternationalRequest(requestId) {
+  const request = state.adminInternationalRequests.find((item) => item.id === requestId);
+  if (!request || !selectors.adminInternationalDialog) return;
+  state.activeInternationalRequestId = request.id;
+  const address = request.delivery?.address || {};
+  selectors.adminInternationalDialogTitle.textContent = request.id;
+  selectors.adminInternationalDetail.innerHTML = `
+    <div class="admin-order-detail-block"><h3>Cliente</h3><p>${escapeHtml(request.customer?.fullName || '')}<br />${escapeHtml(request.customer?.email || '')}<br />${escapeHtml(request.customer?.phone || '')}</p></div>
+    <div class="admin-order-detail-block"><h3>Destino</h3><p>${escapeHtml(address.country || '')}, ${escapeHtml(address.city || '')}<br />${escapeHtml(address.addressLine || '')}<br />${escapeHtml(address.postalCode || '')}</p></div>
+    <div class="admin-order-detail-block wide"><h3>Joyas solicitadas</h3><ul>${request.items.map((item) => `<li>${escapeHtml(item.name)} · ${escapeHtml(item.measure)} · ${escapeHtml(formatCurrency(item.subtotal))}</li>`).join('')}</ul><p>Total de joyas con ajuste internacional: <strong>${escapeHtml(formatCurrency(request.amount))}</strong></p></div>
+  `;
+  selectors.adminInternationalCarrier.value = request.conditions?.carrier || '';
+  selectors.adminInternationalShippingCost.value = request.conditions?.shippingCost || '';
+  selectors.adminInternationalDeliveryTime.value = request.conditions?.estimatedDelivery || '';
+  selectors.adminInternationalTerms.value = request.conditions?.paymentTerms || '';
+  selectors.adminInternationalNotes.value = request.conditions?.internalNotes || '';
+  selectors.adminInternationalAgreed.checked = Boolean(request.conditions?.agreed);
+  selectors.adminInternationalMessage.textContent = request.paymentOrderId
+    ? `Orden Bold ${request.paymentOrderId}: ${getOrderStatusLabel(request.paymentStatus)}`
+    : '';
+  selectors.adminInternationalMessage.className = 'form-message';
+  const locked = Boolean(request.paymentOrderId) || request.status === 'CANCELLED';
+  selectors.adminInternationalForm.querySelectorAll('input, textarea').forEach((field) => { field.disabled = locked; });
+  selectors.adminInternationalForm.querySelector('button[type="submit"]').disabled = locked;
+  selectors.adminInternationalGenerate.disabled = locked || !request.conditions?.agreed;
+  selectors.adminInternationalCancel.disabled = locked;
+  selectors.adminInternationalWhatsapp.hidden = !request.whatsappUrl;
+  selectors.adminInternationalWhatsapp.href = request.whatsappUrl || '#';
+  if (!selectors.adminInternationalDialog.open) selectors.adminInternationalDialog.showModal();
+  refreshIcons();
+}
+
+async function saveInternationalConditions(event) {
+  event.preventDefault();
+  const requestId = state.activeInternationalRequestId;
+  if (!requestId || !selectors.adminInternationalForm.checkValidity()) {
+    selectors.adminInternationalForm.reportValidity();
+    return;
+  }
+  const submitButton = selectors.adminInternationalForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  selectors.adminInternationalMessage.textContent = 'Guardando condiciones...';
+  try {
+    const result = await apiRequest(`/api/admin/international-requests/${encodeURIComponent(requestId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        carrier: selectors.adminInternationalCarrier.value,
+        shippingCost: selectors.adminInternationalShippingCost.value,
+        estimatedDelivery: selectors.adminInternationalDeliveryTime.value,
+        paymentTerms: selectors.adminInternationalTerms.value,
+        internalNotes: selectors.adminInternationalNotes.value,
+        agreed: selectors.adminInternationalAgreed.checked,
+      }),
+    });
+    const index = state.adminInternationalRequests.findIndex((item) => item.id === requestId);
+    state.adminInternationalRequests[index] = result.request;
+    selectors.adminInternationalMessage.textContent = result.request.conditions?.agreed
+      ? 'Condiciones guardadas y confirmadas. Ya puedes generar el pago.'
+      : 'Condiciones guardadas. Confirma la aceptación del cliente antes de generar el pago.';
+    selectors.adminInternationalMessage.className = 'form-message success';
+    selectors.adminInternationalGenerate.disabled = !result.request.conditions?.agreed;
+    renderAdminInternationalRequests();
+    refreshIcons();
+  } catch (error) {
+    selectors.adminInternationalMessage.textContent = error.message;
+    selectors.adminInternationalMessage.className = 'form-message error';
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function generateInternationalPayment() {
+  const requestId = state.activeInternationalRequestId;
+  if (!requestId) return;
+  selectors.adminInternationalGenerate.disabled = true;
+  selectors.adminInternationalMessage.textContent = 'Reservando inventario y generando el enlace seguro...';
+  try {
+    const result = await apiRequest(`/api/admin/international-requests/${encodeURIComponent(requestId)}/payment`, { method: 'POST' });
+    const index = state.adminInternationalRequests.findIndex((item) => item.id === requestId);
+    state.adminInternationalRequests[index] = result.request;
+    openAdminInternationalRequest(requestId);
+    selectors.adminInternationalMessage.textContent = 'Orden creada. El enlace está listo para enviarse por WhatsApp.';
+    selectors.adminInternationalMessage.className = 'form-message success';
+    renderAdminInternationalRequests();
+    recordAdminActivity(`Orden internacional generada: ${requestId}.`);
+  } catch (error) {
+    selectors.adminInternationalMessage.textContent = error.message;
+    selectors.adminInternationalMessage.className = 'form-message error';
+    selectors.adminInternationalGenerate.disabled = false;
+  }
+}
+
+async function cancelInternationalRequest() {
+  const requestId = state.activeInternationalRequestId;
+  if (!requestId || !window.confirm(`¿Cancelar la solicitud ${requestId}?`)) return;
+  try {
+    await apiRequest(`/api/admin/international-requests/${encodeURIComponent(requestId)}/cancel`, { method: 'POST' });
+    closeAdminInternationalDialog();
+    await loadAdminDashboard();
+  } catch (error) {
+    selectors.adminInternationalMessage.textContent = error.message;
+    selectors.adminInternationalMessage.className = 'form-message error';
+  }
+}
+
 function renderAdminPanel() {
   if (!selectors.adminStats || !isAdminLoggedIn()) return;
 
@@ -1760,6 +2246,8 @@ function renderAdminPanel() {
   renderAdminStats();
   renderAdminDiagnostics();
   renderAdminOperations();
+  renderAdminCommercialContent();
+  renderAdminInternationalRequests();
   renderAdminOrderManagement();
   renderAdminProducts();
   updateBackupState();
@@ -2232,6 +2720,8 @@ async function handleAdminLogin(event) {
 }
 
 async function handleAdminLogout() {
+  await deleteR2Images([...state.pendingContentUploads]);
+  state.pendingContentUploads.clear();
   try {
     await apiRequest('/api/admin/logout', { method: 'POST' });
   } catch {
@@ -2241,10 +2731,12 @@ async function handleAdminLogout() {
   state.adminSessionChecked = true;
   state.adminUser = null;
   state.adminOrders = [];
+  state.adminInternationalRequests = [];
   state.adminSummary = null;
   state.adminHeartbeatAt = 0;
   state.editingProductId = null;
   closeAdminOrderDialog();
+  closeAdminInternationalDialog();
   window.clearTimeout(state.adminTimeoutId);
   updateAdminViews();
 }
@@ -2432,6 +2924,7 @@ function requestScrollUpdate() {
 function getInitialRoute() {
   const pathname = window.location.pathname.replace(/\/$/, '');
   if (pathname === '/pago/resultado') return 'payment';
+  if (pathname === '/pago/internacional') return 'international-payment';
   if (pathname === '/premium') return 'premium';
   if (pathname === '/admin') return 'admin';
   if (pathname === '/historia') return 'historia';
@@ -2447,6 +2940,7 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
   document.body.classList.toggle('history-route', route === 'historia');
   document.body.classList.toggle('contact-route', route === 'contacto');
   document.body.classList.toggle('payment-route', route === 'payment');
+  document.body.classList.toggle('international-payment-route', route === 'international-payment');
   closePanels();
 
   if (route === 'payment') {
@@ -2456,6 +2950,15 @@ function setRoute(route, { push = true, targetSection = null } = {}) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     renderPaymentResult(null);
     consultPaymentOrder();
+    requestScrollUpdate();
+    return;
+  }
+
+  if (route === 'international-payment') {
+    document.title = 'Pago internacional | Joyería Querubim';
+    if (push) window.history.pushState({ route }, '', `/pago/internacional${window.location.search}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    loadInternationalPayment();
     requestScrollUpdate();
     return;
   }
@@ -2568,7 +3071,12 @@ function setupEvents() {
   selectors.adminExportCatalog?.addEventListener('click', exportCatalogCsv);
   selectors.adminSecurityAction?.addEventListener('click', handlePasswordRecovery);
   selectors.adminProductForm?.addEventListener('submit', saveAdminProduct);
+  selectors.adminCommercialForm?.addEventListener('submit', saveAdminCommercialContent);
   selectors.adminOrderForm?.addEventListener('submit', saveAdminOrder);
+  selectors.adminInternationalForm?.addEventListener('submit', saveInternationalConditions);
+  selectors.adminInternationalGenerate?.addEventListener('click', generateInternationalPayment);
+  selectors.adminInternationalCancel?.addEventListener('click', cancelInternationalRequest);
+  selectors.adminInternationalClose?.addEventListener('click', closeAdminInternationalDialog);
   selectors.adminOrderClose?.addEventListener('click', closeAdminOrderDialog);
   selectors.adminOrderCancel?.addEventListener('click', closeAdminOrderDialog);
   selectors.adminOrderSearch?.addEventListener('input', (event) => {
@@ -2591,6 +3099,12 @@ function setupEvents() {
   selectors.adminImageFiles?.addEventListener('change', (event) => {
     handleAdminImageFiles(event.target.files);
     event.target.value = '';
+  });
+  selectors.adminCommercialForm?.addEventListener('change', (event) => {
+    const upload = event.target.closest('[data-content-upload]');
+    if (!upload) return;
+    uploadCommercialImage(upload.dataset.contentUpload, upload.files?.[0]);
+    upload.value = '';
   });
   selectors.adminImageDrop?.addEventListener('dragover', (event) => {
     event.preventDefault();
@@ -2629,6 +3143,8 @@ function setupEvents() {
     const adminImageRemoveButton = event.target.closest('[data-admin-image-remove]');
     const adminOrderButton = event.target.closest('[data-admin-order]');
     const adminOrderPageButton = event.target.closest('[data-admin-order-page]');
+    const adminInternationalButton = event.target.closest('[data-admin-international]');
+    const contentRemoveButton = event.target.closest('[data-content-remove]');
 
     if (routeLink) {
       event.preventDefault();
@@ -2662,6 +3178,22 @@ function setupEvents() {
     }
     if (adminDeleteButton) deleteAdminProduct(adminDeleteButton.dataset.adminDelete);
     if (adminOrderButton) openAdminOrder(adminOrderButton.dataset.adminOrder);
+    if (adminInternationalButton) openAdminInternationalRequest(adminInternationalButton.dataset.adminInternational);
+    if (contentRemoveButton) {
+      const slot = contentRemoveButton.dataset.contentRemove;
+      const field = selectors.adminCommercialForm.querySelector(`[data-content-field="${slot}.imageUrl"]`);
+      const currentUrl = field.value;
+      if (state.pendingContentUploads.has(currentUrl)) {
+        await deleteR2Images([currentUrl]);
+        state.pendingContentUploads.delete(currentUrl);
+      }
+      field.value = '';
+      state.siteContent[slot].imageUrl = '';
+      renderCommercialPreview(slot, '');
+      selectors.adminCommercialMessage.textContent = 'Imagen retirada. Publica los cambios para confirmar.';
+      selectors.adminCommercialMessage.className = 'form-message';
+      refreshIcons();
+    }
     if (adminOrderPageButton && !adminOrderPageButton.disabled) {
       state.adminOrderPage = Number(adminOrderPageButton.dataset.adminOrderPage) || 1;
       renderAdminOrderManagement();
@@ -2680,6 +3212,7 @@ function setupEvents() {
   selectors.checkoutDestination.addEventListener('change', syncCheckoutDeliveryForm);
   selectors.checkoutForm.addEventListener('submit', handleCheckoutSubmit);
   selectors.paymentResultRefresh.addEventListener('click', () => consultPaymentOrder({ scheduleNext: true }));
+  selectors.internationalPaymentOpen.addEventListener('click', openInternationalPayment);
 
   selectors.scrollTopButton.addEventListener('click', () => {
     if (standaloneRoutes.has(state.currentRoute)) {
@@ -2736,6 +3269,7 @@ renderProducts({ premium: true });
 renderCart();
 updateAdminImageUploadState();
 loadPublicCatalog();
+loadSiteContent();
 setupEvents();
 setupSectionObservers();
 refreshIcons();

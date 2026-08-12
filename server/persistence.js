@@ -1,9 +1,13 @@
 import path from 'node:path';
 import { CatalogRepository } from './catalog-repository.js';
+import { InternationalRequestStore } from './international-request-store.js';
 import { OrderStore } from './order-store.js';
 import { PostgresCatalogRepository } from './postgres-catalog-repository.js';
+import { PostgresInternationalRequestStore } from './postgres-international-request-store.js';
 import { PostgresOrderStore } from './postgres-order-store.js';
+import { PostgresSiteContentRepository } from './postgres-site-content-repository.js';
 import { getPostgresPool } from './postgres.js';
+import { SiteContentRepository } from './site-content-repository.js';
 
 export class StorageConfigurationError extends Error {
   constructor() {
@@ -33,6 +37,10 @@ class UnavailableRepository {
   }
 
   async upsert() {
+    throw new StorageConfigurationError();
+  }
+
+  async save() {
     throw new StorageConfigurationError();
   }
 
@@ -68,6 +76,8 @@ export function createPersistence(config) {
     return {
       catalogRepository,
       orderStore: new PostgresOrderStore(pool),
+      siteContentRepository: new PostgresSiteContentRepository(pool),
+      internationalRequestStore: new PostgresInternationalRequestStore(pool),
       storage: {
         mode: 'postgresql',
         configured: true,
@@ -81,6 +91,8 @@ export function createPersistence(config) {
     return {
       catalogRepository: unavailable,
       orderStore: unavailable,
+      siteContentRepository: unavailable,
+      internationalRequestStore: unavailable,
       storage: { mode: 'unconfigured', configured: false, ready: () => Promise.resolve(false) },
     };
   }
@@ -89,6 +101,8 @@ export function createPersistence(config) {
   return {
     catalogRepository,
     orderStore: new OrderStore(path.join(config.runtimeDir, 'orders.json'), catalogRepository),
+    siteContentRepository: new SiteContentRepository(path.join(config.runtimeDir, 'site-content.json')),
+    internationalRequestStore: new InternationalRequestStore(path.join(config.runtimeDir, 'international-requests.json')),
     storage: { mode: 'json', configured: true, ready: () => Promise.resolve(true) },
   };
 }

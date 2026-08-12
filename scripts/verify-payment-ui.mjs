@@ -3,6 +3,10 @@ import { chromium } from 'playwright-core';
 
 const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:4173';
 const executablePath = process.env.BROWSER_PATH || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const catalogResponse = await fetch(`${baseUrl}/api/catalog/products`);
+const catalog = await catalogResponse.json();
+const availableProduct = catalog.products?.find((product) => !product.premium && product.stock > 0 && product.measurements?.length);
+if (!availableProduct) throw new Error('No hay un producto con inventario disponible para verificar el pago.');
 const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -10,11 +14,12 @@ const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
     customer: { fullName: 'Prueba Visual', email: 'visual@example.com', phone: '3001234567' },
     delivery: { method: 'pickup' },
     destination: { scope: 'national' },
-    items: [{ productId: 'dije-mano-sagrada', measure: 'Mini', quantity: 1 }],
+    items: [{ productId: availableProduct.id, measure: availableProduct.measurements[0], quantity: 1 }],
   }),
 });
 if (!orderResponse.ok) throw new Error(`No fue posible crear la orden visual: ${orderResponse.status}`);
-const { order } = await orderResponse.json();
+const orderResult = await orderResponse.json();
+const { order } = orderResult;
 const browser = await chromium.launch({ headless: true, executablePath });
 
 try {
@@ -26,8 +31,8 @@ try {
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   await mobile.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
-  await mobile.locator('[data-open-product="dije-mano-sagrada"]').click();
-  await mobile.locator('#detail-measure').selectOption('Mini');
+  await mobile.locator(`[data-open-product="${availableProduct.id}"]`).click();
+  await mobile.locator('#detail-measure').selectOption(availableProduct.measurements[0]);
   await mobile.locator('#detail-add-cart').click();
   await mobile.locator('#detail-close').click();
   await mobile.locator('#cart-button').click();
@@ -43,9 +48,22 @@ try {
   const shippingNotice = await mobile.locator('#checkout-total-note').textContent();
   const internationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
   const internationalTotal = await mobile.locator('#checkout-total').textContent();
+  const internationalAction = await mobile.locator('#checkout-pay-label').textContent();
   const drawerBox = await mobile.locator('#selection-drawer').boundingBox();
   const hasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   await mobile.screenshot({ path: 'test-results/checkout-cart-mobile.png', fullPage: true });
+
+  const internationalPayment = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await internationalPayment.route('**/api/international-requests/QBI-UI-PAY/checkout?*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(orderResult),
+    });
+  });
+  await internationalPayment.goto(`${baseUrl}/pago/internacional?solicitud=QBI-UI-PAY&token=token-seguro`, { waitUntil: 'domcontentloaded' });
+  await internationalPayment.locator('#international-payment-open:not([disabled])').waitFor();
+  await internationalPayment.screenshot({ path: 'test-results/international-payment-desktop.png', fullPage: true });
 
   const result = {
     paymentResultVisible: await desktop.locator('#payment-result-title').isVisible(),
@@ -55,8 +73,10 @@ try {
     nationalAdjustmentApplied: /5\s*%/.test(nationalAdjustment || ''),
     internationalAdjustmentApplied:
       /6\s*%/.test(internationalAdjustment || '') && internationalTotal !== nationalTotal,
-    shippingPayOnDeliveryVisible:
-      shippingNoticeVisible && /domicilio se paga por separado al recibir/i.test(shippingNotice || ''),
+    internationalCoordinationVisible:
+      shippingNoticeVisible && /envío internacional se cotiza y acuerda por separado/i.test(shippingNotice || '')
+      && /coordinar envío internacional/i.test(internationalAction || ''),
+    internationalPaymentVisible: await internationalPayment.locator('#international-payment-open').isVisible(),
   };
   console.log(JSON.stringify(result));
   if (
@@ -66,7 +86,8 @@ try {
     result.hasHorizontalOverflow ||
     !result.nationalAdjustmentApplied ||
     !result.internationalAdjustmentApplied ||
-    !result.shippingPayOnDeliveryVisible
+    !result.internationalCoordinationVisible
+    || !result.internationalPaymentVisible
   ) {
     throw new Error('La verificación visual del flujo de pago no fue satisfactoria.');
   }
