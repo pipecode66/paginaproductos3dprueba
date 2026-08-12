@@ -2024,6 +2024,10 @@ body:not(.admin-route) .admin-section {
   display: none;
 }
 
+body.admin-route .admin-section {
+  transform: none;
+}
+
 body.payment-route main > :not(.payment-result-section) {
   display: none;
 }
