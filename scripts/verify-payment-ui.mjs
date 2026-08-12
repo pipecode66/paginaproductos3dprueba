@@ -39,6 +39,8 @@ try {
   await mobile.locator('#checkout-country').fill('Estados Unidos');
   await mobile.locator('#checkout-city').fill('Miami');
   await mobile.locator('#checkout-address').fill('1000 Brickell Avenue');
+  const shippingNoticeVisible = await mobile.locator('.checkout-shipping-note').isVisible();
+  const shippingNotice = await mobile.locator('#checkout-total-note').textContent();
   const internationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
   const internationalTotal = await mobile.locator('#checkout-total').textContent();
   const drawerBox = await mobile.locator('#selection-drawer').boundingBox();
@@ -53,6 +55,8 @@ try {
     nationalAdjustmentApplied: /5\s*%/.test(nationalAdjustment || ''),
     internationalAdjustmentApplied:
       /6\s*%/.test(internationalAdjustment || '') && internationalTotal !== nationalTotal,
+    shippingPayOnDeliveryVisible:
+      shippingNoticeVisible && /domicilio se paga por separado al recibir/i.test(shippingNotice || ''),
   };
   console.log(JSON.stringify(result));
   if (
@@ -61,7 +65,8 @@ try {
     !result.drawerInsideViewport ||
     result.hasHorizontalOverflow ||
     !result.nationalAdjustmentApplied ||
-    !result.internationalAdjustmentApplied
+    !result.internationalAdjustmentApplied ||
+    !result.shippingPayOnDeliveryVisible
   ) {
     throw new Error('La verificación visual del flujo de pago no fue satisfactoria.');
   }

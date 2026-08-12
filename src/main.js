@@ -7,6 +7,7 @@ import {
   CircleCheck,
   CircleX,
   Clock3,
+  ClockAlert,
   ClipboardList,
   CreditCard,
   Database,
@@ -34,6 +35,7 @@ import {
   ShoppingBag,
   Tags,
   Trash2,
+  Truck,
   UploadCloud,
   UserRound,
   X,
@@ -280,6 +282,7 @@ const icons = {
   CircleCheck,
   CircleX,
   Clock3,
+  ClockAlert,
   ClipboardList,
   CreditCard,
   Database,
@@ -307,6 +310,7 @@ const icons = {
   ShoppingBag,
   Tags,
   Trash2,
+  Truck,
   UploadCloud,
   UserRound,
   X,
@@ -460,6 +464,7 @@ const selectors = {
   checkoutAdjustmentLabel: document.querySelector('#checkout-adjustment-label'),
   checkoutAdjustment: document.querySelector('#checkout-adjustment'),
   checkoutTotal: document.querySelector('#checkout-total'),
+  checkoutTotalNote: document.querySelector('#checkout-total-note'),
   checkoutMessage: document.querySelector('#checkout-message'),
   checkoutPayButton: document.querySelector('#checkout-pay-button'),
   checkoutPayLabel: document.querySelector('#checkout-pay-label'),
@@ -910,6 +915,9 @@ function syncCheckoutDeliveryForm() {
   selectors.checkoutPostalCode.disabled = !isDelivery;
   selectors.checkoutDestination.disabled = !isDelivery;
   selectors.checkoutDepartmentLabel.textContent = isInternational ? 'Estado o provincia (opcional)' : 'Departamento';
+  selectors.checkoutTotalNote.textContent = isDelivery
+    ? 'IVA del 19 % incluido. El domicilio se paga por separado al recibir.'
+    : 'IVA del 19 % incluido en el total.';
   renderCart();
 }
 
@@ -1106,7 +1114,7 @@ function renderPaymentResult(order, errorMessage = '') {
     ? `
         <div><dt>Orden</dt><dd>${escapeHtml(order.id)}</dd></div>
         <div><dt>Total</dt><dd>${formatCurrency(order.amount)}</dd></div>
-        <div><dt>Entrega</dt><dd>${escapeHtml(order.delivery?.label || 'Por confirmar')}<br />${escapeHtml(order.destination?.label || '')}</dd></div>
+        <div><dt>Entrega</dt><dd>${escapeHtml(order.delivery?.label || 'Por confirmar')}<br />${escapeHtml(order.destination?.label || '')}${order.delivery?.shippingPaymentLabel ? `<br />${escapeHtml(order.delivery.shippingPaymentLabel)}` : ''}</dd></div>
         <div><dt>Estado</dt><dd>${escapeHtml(paymentStatusLabels[order.status] || order.status)}</dd></div>
       `
     : '';
@@ -1558,7 +1566,7 @@ function openAdminOrder(orderId) {
     </section>
     <section class="admin-order-detail-block">
       <h3>Destino de entrega</h3>
-      <p>${escapeHtml(order.delivery?.label || 'Pendiente de confirmar')}<br />${escapeHtml(order.destination?.label || '')}${order.delivery?.pickupAddress ? `<br />${escapeHtml(order.delivery.pickupAddress)}` : ''}${order.delivery?.address ? `<br />${escapeHtml([order.delivery.address.addressLine, order.delivery.address.city, order.delivery.address.department, order.delivery.address.country, order.delivery.address.postalCode].filter(Boolean).join(', '))}${order.delivery.address.reference ? `<br />Referencia: ${escapeHtml(order.delivery.address.reference)}` : ''}` : ''}</p>
+      <p>${escapeHtml(order.delivery?.label || 'Pendiente de confirmar')}<br />${escapeHtml(order.destination?.label || '')}${order.delivery?.pickupAddress ? `<br />${escapeHtml(order.delivery.pickupAddress)}` : ''}${order.delivery?.address ? `<br />${escapeHtml([order.delivery.address.addressLine, order.delivery.address.city, order.delivery.address.department, order.delivery.address.country, order.delivery.address.postalCode].filter(Boolean).join(', '))}${order.delivery.address.reference ? `<br />Referencia: ${escapeHtml(order.delivery.address.reference)}` : ''}` : ''}${order.delivery?.shippingPaymentLabel ? `<br /><strong>${escapeHtml(order.delivery.shippingPaymentLabel)}.</strong>` : ''}</p>
     </section>
     <section class="admin-order-detail-block wide">
       <h3>Piezas solicitadas</h3>

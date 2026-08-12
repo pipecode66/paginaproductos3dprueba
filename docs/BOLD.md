@@ -14,6 +14,8 @@
 
 La reserva de inventario se confirma al aprobarse el pago. Se libera de manera idempotente cuando la venta es rechazada, anulada o cuando la orden vence tras 24 horas sin confirmación.
 
+El costo del domicilio no forma parte del monto enviado a Bold. Para órdenes con envío se registra como pago separado al recibir y Querubim debe confirmar su valor con el cliente antes del despacho.
+
 En el ambiente de pruebas, Bold firma la notificación del botón `Probar el webhook` usando una clave vacía. En producción se utiliza la llave secreta del Botón de pagos.
 
 La notificación manual del sandbox puede anonimizar el pago como `XXXX` y enviar montos de ejemplo. Esa excepción se reconoce solamente en `BOLD_ENVIRONMENT=test`; los webhooks de producción siempre deben coincidir con el monto y la moneda de la orden.

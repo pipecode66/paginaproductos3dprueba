@@ -1461,7 +1461,8 @@ body.premium-route .site-footer {
   display: none;
 }
 
-.checkout-pickup-note {
+.checkout-pickup-note,
+.checkout-shipping-note {
   padding: 10px 12px;
   display: grid;
   grid-template-columns: 18px 1fr;
@@ -1474,7 +1475,8 @@ body.premium-route .site-footer {
   line-height: 1.5;
 }
 
-.checkout-pickup-note svg {
+.checkout-pickup-note svg,
+.checkout-shipping-note svg {
   width: 18px;
   height: 18px;
   color: var(--color-primary-dark);

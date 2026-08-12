@@ -84,7 +84,13 @@ function sanitizeDelivery(delivery = {}, requestedDestination = {}) {
 
   return {
     destination,
-    delivery: { method, label: 'Envío a domicilio', address },
+    delivery: {
+      method,
+      label: 'Envío a domicilio',
+      address,
+      shippingPayment: 'PAY_ON_DELIVERY',
+      shippingPaymentLabel: 'El domicilio se paga por separado al recibir',
+    },
   };
 }
 

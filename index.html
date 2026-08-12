@@ -905,6 +905,10 @@
             <span>Centro Comercial Alejandría, Av. 6 entre calles 8 y 9, Entrada 5, Local 1-161, Cúcuta.</span>
           </div>
           <div class="checkout-address-fields" id="checkout-address-fields" hidden>
+            <div class="checkout-shipping-note">
+              <i data-lucide="truck"></i>
+              <span>El domicilio no está incluido en este pago. Querubim confirmará su valor y se pagará por separado al recibir.</span>
+            </div>
             <label for="checkout-destination">
               Destino de entrega
               <select id="checkout-destination" name="destinationType">
@@ -963,7 +967,7 @@
             <span>Total a pagar</span>
             <strong id="checkout-total">$0</strong>
           </div>
-          <small>IVA del 19 % incluido en el total.</small>
+          <small id="checkout-total-note">IVA del 19 % incluido en el total.</small>
         </div>
         <p class="checkout-message" id="checkout-message" role="status" aria-live="polite"></p>
         <button class="button button-primary checkout-pay-button" id="checkout-pay-button" type="submit">

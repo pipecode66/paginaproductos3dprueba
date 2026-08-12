@@ -109,6 +109,19 @@ test('valida la dirección de domicilio y fuerza la recogida como venta nacional
     }),
     /departamento/i,
   );
+
+  const nationalDelivery = await service.createOrder({
+    ...validPayload(),
+    delivery: {
+      method: 'delivery',
+      department: 'Norte de Santander',
+      city: 'Cúcuta',
+      addressLine: 'Avenida 6 # 8-10',
+    },
+    destination: { scope: 'national' },
+  });
+  assert.equal(nationalDelivery.order.amount, 1312500);
+  assert.equal(nationalDelivery.order.delivery.shippingPayment, 'PAY_ON_DELIVERY');
 });
 
 test('aplica el 6 % a entregas internacionales y rechaza destinos desconocidos', async () => {
@@ -129,6 +142,8 @@ test('aplica el 6 % a entregas internacionales y rechaza destinos desconocidos',
   assert.equal(international.order.adjustmentRate, 6);
   assert.equal(international.order.amount, 1325000);
   assert.equal(international.order.destination.label, 'Fuera de Colombia');
+  assert.equal(international.order.delivery.shippingPayment, 'PAY_ON_DELIVERY');
+  assert.match(international.order.delivery.shippingPaymentLabel, /paga por separado al recibir/i);
 
   await assert.rejects(
     () => service.createOrder({

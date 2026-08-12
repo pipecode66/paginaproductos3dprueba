@@ -9,6 +9,7 @@ Este procedimiento evita activar cobros reales antes de comprobar las credencial
 - Confirmar que la cuenta Bold del comercio esté activa y que sus límites permitan los precios del catálogo.
 - Confirmar que una orden permita elegir recogida en tienda o domicilio y que el panel muestre sus datos de entrega.
 - Verificar que el inventario se reserve al crear la orden y se libere al rechazar, anular o vencer el pago.
+- Confirmar que el checkout informe que el domicilio se paga por separado al recibir y no se incluye en Bold.
 - Conservar las llaves de prueba únicamente en Preview y Development. No mezclar llaves de prueba y producción.
 
 ## 2. Preparar Vercel con ventas bloqueadas
