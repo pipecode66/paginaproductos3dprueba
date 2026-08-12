@@ -1451,6 +1451,35 @@ body.premium-route .site-footer {
   gap: 10px;
 }
 
+.checkout-address-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.checkout-address-fields[hidden],
+.checkout-pickup-note[hidden] {
+  display: none;
+}
+
+.checkout-pickup-note {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: start;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.checkout-pickup-note svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary-dark);
+}
+
 .checkout-customer-fields label {
   display: grid;
   gap: 6px;
@@ -2075,7 +2104,7 @@ body.payment-route .scroll-top-button {
   width: min(620px, 100%);
   margin: 34px 0 28px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
   border-block: 1px solid var(--color-border);
 }
 
@@ -3292,7 +3321,8 @@ body.admin-route .whatsapp-button {
 .admin-order-badge.status-review-required,
 .admin-order-badge.status-cancelled,
 .admin-order-badge.status-rejected,
-.admin-order-badge.status-voided {
+.admin-order-badge.status-voided,
+.admin-order-badge.status-expired {
   border-color: rgba(130, 40, 55, 0.28);
   color: #7e2637;
   background: rgba(250, 226, 230, 0.78);

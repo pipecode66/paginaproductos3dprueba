@@ -7,6 +7,8 @@ Este procedimiento evita activar cobros reales antes de comprobar las credencial
 - Revocar y generar nuevamente las llaves de producción de Bold que hayan sido compartidas fuera de un canal seguro.
 - Confirmar que los precios y los ajustes comerciales incluyen IVA del 19 %.
 - Confirmar que la cuenta Bold del comercio esté activa y que sus límites permitan los precios del catálogo.
+- Confirmar que una orden permita elegir recogida en tienda o domicilio y que el panel muestre sus datos de entrega.
+- Verificar que el inventario se reserve al crear la orden y se libere al rechazar, anular o vencer el pago.
 - Conservar las llaves de prueba únicamente en Preview y Development. No mezclar llaves de prueba y producción.
 
 ## 2. Preparar Vercel con ventas bloqueadas

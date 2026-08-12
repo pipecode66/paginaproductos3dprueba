@@ -3,14 +3,16 @@
 ## Flujo implementado
 
 1. El cliente añade joyas y medidas a la canasta.
-2. El cliente selecciona si la entrega será en Colombia o fuera de Colombia.
+2. El cliente selecciona recogida en tienda o envío a domicilio; para domicilio registra los datos de entrega.
 3. `POST /api/payments/orders` valida cada referencia contra el catálogo del servidor.
-4. El servidor aplica el ajuste comercial del 5 % para Colombia o del 6 % para entregas internacionales.
+4. El servidor reserva el inventario de la orden y aplica el ajuste comercial del 5 % para Colombia o del 6 % para entregas internacionales.
 5. El total conserva el IVA del 19 % incluido, se crea una referencia única y se genera el hash SHA-256 con la llave secreta.
 6. El navegador abre `BoldCheckout` con `renderMode: embedded`.
 7. Bold envía el resultado a `POST /api/payments/bold/webhook`.
 8. El servidor valida `x-bold-signature` sobre el cuerpo crudo, evita eventos duplicados y actualiza la orden.
 9. `/pago/resultado` consulta el estado registrado por el servidor.
+
+La reserva de inventario se confirma al aprobarse el pago. Se libera de manera idempotente cuando la venta es rechazada, anulada o cuando la orden vence tras 24 horas sin confirmación.
 
 En el ambiente de pruebas, Bold firma la notificación del botón `Probar el webhook` usando una clave vacía. En producción se utiliza la llave secreta del Botón de pagos.
 

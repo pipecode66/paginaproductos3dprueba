@@ -36,6 +36,7 @@ test('crea y consulta una orden por HTTP sin exponer la llave secreta', async (c
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customer: { fullName: 'Cliente API', email: 'api@example.com', phone: '3001234567' },
+      delivery: { method: 'pickup' },
       destination: { scope: 'national' },
       items: [{ productId: 'anillo-rubi-aurora', measure: 'Talla 6', quantity: 1, price: 1000 }],
     }),

@@ -60,3 +60,61 @@ test('persiste órdenes y procesa cada evento Bold una sola vez', async (context
   assert.equal(duplicate.duplicate, true);
   assert.equal(duplicate.order.status, 'PAID');
 });
+
+test('reserva inventario y lo libera una sola vez al anular o vencer la orden', async (context) => {
+  const pool = createPool();
+  context.after(() => pool.end());
+  const catalog = new PostgresCatalogRepository(pool);
+  const orders = new PostgresOrderStore(pool);
+  await catalog.ready();
+  const product = await catalog.findById('anillo-rubi-aurora');
+  const item = {
+    productId: product.id,
+    name: product.name,
+    measure: product.measurements[0],
+    quantity: 1,
+    unitPrice: product.price,
+    subtotal: product.price,
+  };
+  const order = {
+    id: 'QBM-RESERVE-001',
+    status: 'CREATED',
+    amount: product.price,
+    currency: 'COP',
+    items: [item],
+    inventoryStatus: 'RESERVED',
+    createdAt: '2026-08-12T12:00:00.000Z',
+    expiresAt: '2026-08-13T12:00:00.000Z',
+  };
+
+  await orders.createWithReservation(order);
+  assert.equal((await catalog.findById(product.id)).stock, product.stock - 1);
+
+  const approvedEvent = { id: 'reserve-approved', orderId: order.id, type: 'SALE_APPROVED' };
+  await orders.recordEvent(approvedEvent.id, approvedEvent, (current) => ({
+    ...current,
+    status: 'PAID',
+    inventoryStatus: 'COMMITTED',
+  }));
+  assert.equal((await catalog.findById(product.id)).stock, product.stock - 1);
+
+  const voidEvent = { id: 'reserve-voided', orderId: order.id, type: 'VOID_APPROVED' };
+  await orders.recordEvent(voidEvent.id, voidEvent, (current) => ({
+    ...current,
+    status: 'VOIDED',
+    inventoryStatus: 'RELEASED',
+  }));
+  await orders.recordEvent(voidEvent.id, voidEvent, (current) => current);
+  assert.equal((await catalog.findById(product.id)).stock, product.stock);
+
+  const expiringOrder = {
+    ...order,
+    id: 'QBM-RESERVE-EXPIRED',
+    expiresAt: '2026-08-11T12:00:00.000Z',
+  };
+  await orders.createWithReservation(expiringOrder);
+  assert.equal((await catalog.findById(product.id)).stock, product.stock - 1);
+  assert.equal(await orders.releaseExpiredReservations('2026-08-12T12:00:00.000Z'), 1);
+  assert.equal((await catalog.findById(product.id)).stock, product.stock);
+  assert.equal((await orders.get(expiringOrder.id)).status, 'EXPIRED');
+});

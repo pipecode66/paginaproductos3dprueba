@@ -9,6 +9,7 @@ const DESTINATION_POLICIES = {
   national: { label: 'Colombia', adjustmentRate: 5 },
   international: { label: 'Fuera de Colombia', adjustmentRate: 6 },
 };
+const PICKUP_ADDRESS = 'Centro Comercial Alejandría, Av. 6 entre calles 8 y 9, Entrada 5, Local 1-161, Cúcuta, Norte de Santander';
 
 export class PaymentError extends Error {
   constructor(message, statusCode = 400, code = 'INVALID_PAYMENT_REQUEST') {
@@ -49,6 +50,44 @@ function sanitizeDestination(destination = {}) {
   return { scope, label: policy.label };
 }
 
+function sanitizeDelivery(delivery = {}, requestedDestination = {}) {
+  const method = cleanText(delivery.method, 20).toLowerCase();
+  if (method === 'pickup') {
+    return {
+      destination: { scope: 'national', label: DESTINATION_POLICIES.national.label },
+      delivery: { method, label: 'Recoger en tienda', pickupAddress: PICKUP_ADDRESS },
+    };
+  }
+  if (method !== 'delivery') {
+    throw new PaymentError('Selecciona si deseas recoger la compra o recibirla a domicilio.');
+  }
+
+  const destination = sanitizeDestination(requestedDestination);
+  const address = {
+    country: destination.scope === 'national' ? 'Colombia' : cleanText(delivery.country, 80),
+    department: cleanText(delivery.department, 100),
+    city: cleanText(delivery.city, 100),
+    addressLine: cleanText(delivery.addressLine, 180),
+    reference: cleanText(delivery.reference, 200),
+    postalCode: cleanText(delivery.postalCode, 20).replace(/[^A-Za-z0-9 -]/g, ''),
+  };
+
+  if (!address.country || !address.city || !address.addressLine) {
+    throw new PaymentError('Completa el país, la ciudad y la dirección de entrega.');
+  }
+  if (destination.scope === 'national' && !address.department) {
+    throw new PaymentError('Completa el departamento de entrega.');
+  }
+  if (destination.scope === 'international' && address.country.toLowerCase() === 'colombia') {
+    throw new PaymentError('Para entregas en Colombia selecciona el destino nacional.');
+  }
+
+  return {
+    destination,
+    delivery: { method, label: 'Envío a domicilio', address },
+  };
+}
+
 function createOrderId(now = Date.now()) {
   const time = now.toString(36).toUpperCase();
   const random = randomBytes(5).toString('hex').toUpperCase();
@@ -71,6 +110,8 @@ function publicOrder(order) {
     commercialAdjustment: order.commercialAdjustment,
     adjustmentRate: order.adjustmentRate,
     destination: order.destination,
+    delivery: order.delivery,
+    inventoryStatus: order.inventoryStatus,
     taxRate: order.taxRate,
     currency: order.currency,
     items: order.items,
@@ -122,6 +163,9 @@ export class PaymentService {
 
   async createOrder(payload = {}) {
     this.assertConfigured();
+    if (typeof this.orderStore.releaseExpiredReservations === 'function') {
+      await this.orderStore.releaseExpiredReservations(new Date(this.clock()).toISOString());
+    }
     if (!Array.isArray(payload.items) || payload.items.length === 0 || payload.items.length > MAX_ITEMS) {
       throw new PaymentError('La canasta debe contener entre 1 y 20 productos.');
     }
@@ -168,7 +212,8 @@ export class PaymentService {
     }
 
     const subtotal = orderItems.reduce((total, item) => total + item.subtotal, 0);
-    const destination = sanitizeDestination(payload.destination);
+    const checkoutDelivery = sanitizeDelivery(payload.delivery, payload.destination);
+    const { destination, delivery } = checkoutDelivery;
     const adjustmentRate = DESTINATION_POLICIES[destination.scope].adjustmentRate;
     const commercialAdjustment = Math.round((subtotal * adjustmentRate) / 100);
     const amount = subtotal + commercialAdjustment;
@@ -189,6 +234,7 @@ export class PaymentService {
       commercialAdjustment,
       adjustmentRate,
       destination,
+      delivery,
       taxRate: 19,
       currency,
       items: orderItems,
@@ -197,9 +243,14 @@ export class PaymentService {
       expiresAt: new Date(expiresAt).toISOString(),
       environment: this.boldConfig.environment,
       fulfillmentStatus: 'PENDING',
+      inventoryStatus: 'RESERVED',
     };
 
-    await this.orderStore.create(order);
+    if (typeof this.orderStore.createWithReservation === 'function') {
+      await this.orderStore.createWithReservation(order);
+    } else {
+      await this.orderStore.create(order);
+    }
 
     const redirectionUrl = new URL('/pago/resultado', this.boldConfig.publicBaseUrl);
     redirectionUrl.searchParams.set('orden', orderId);
@@ -279,7 +330,15 @@ export class PaymentService {
         delete next.reviewReason;
         next.status = mapBoldEventType(eventType, order.status);
         if (eventType === 'SALE_APPROVED') {
+          const reservationExpired = order.inventoryStatus === 'RELEASED' || Date.parse(order.expiresAt) <= this.clock();
+          if (reservationExpired && order.status !== 'PAID') {
+            next.status = 'REVIEW_REQUIRED';
+            next.inventoryStatus = 'RELEASED';
+            next.reviewReason = 'Bold aprobó el pago después de vencer la reserva de inventario.';
+            return next;
+          }
           next.paidAt = receivedAt;
+          next.inventoryStatus = 'COMMITTED';
           if (getDefaultFulfillmentStatus(order) === 'PENDING') {
             next.fulfillmentStatus = 'CONFIRMED';
             next.fulfillmentHistory = [
@@ -288,8 +347,9 @@ export class PaymentService {
             ];
           }
         }
-        if (eventType === 'SALE_REJECTED' && getDefaultFulfillmentStatus(order) === 'PENDING') {
-          next.fulfillmentStatus = 'CANCELLED';
+        if (eventType === 'SALE_REJECTED') {
+          if (getDefaultFulfillmentStatus(order) === 'PENDING') next.fulfillmentStatus = 'CANCELLED';
+          if (order.inventoryStatus === 'RESERVED') next.inventoryStatus = 'RELEASED';
         }
         if (eventType === 'VOID_APPROVED') {
           const previousFulfillment = getDefaultFulfillmentStatus(order);
@@ -298,6 +358,7 @@ export class PaymentService {
             ...(Array.isArray(order.fulfillmentHistory) ? order.fulfillmentHistory.slice(-24) : []),
             { from: previousFulfillment, to: 'CANCELLED', at: receivedAt, by: 'Bold' },
           ];
+          next.inventoryStatus = 'RELEASED';
         }
         if (eventType === 'VOID_REJECTED') next.voidStatus = 'REJECTED';
         return next;

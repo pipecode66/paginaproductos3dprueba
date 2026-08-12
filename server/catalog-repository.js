@@ -37,4 +37,35 @@ export class CatalogRepository {
       return data.products[index];
     });
   }
+
+  async reserveStock(items = []) {
+    return this.store.transaction((data) => {
+      for (const item of items) {
+        const product = data.products.find((candidate) => candidate.id === item.productId && candidate.active !== false);
+        const quantity = Number(item.quantity);
+        if (!product || !Number.isInteger(quantity) || quantity < 1 || product.stock < quantity) {
+          const error = new Error(`No hay existencias suficientes de ${item.name || 'una de las joyas'}.`);
+          error.statusCode = 409;
+          error.code = 'INSUFFICIENT_STOCK';
+          error.expose = true;
+          throw error;
+        }
+      }
+      for (const item of items) {
+        const product = data.products.find((candidate) => candidate.id === item.productId);
+        product.stock -= Number(item.quantity);
+      }
+      return true;
+    });
+  }
+
+  async releaseStock(items = []) {
+    return this.store.transaction((data) => {
+      for (const item of items) {
+        const product = data.products.find((candidate) => candidate.id === item.productId);
+        if (product) product.stock += Number(item.quantity) || 0;
+      }
+      return true;
+    });
+  }
 }

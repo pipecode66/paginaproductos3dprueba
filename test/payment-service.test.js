@@ -63,6 +63,7 @@ function createService(overrides = {}) {
 function validPayload(extraItemFields = {}) {
   return {
     customer: { fullName: 'Cliente Prueba', email: 'cliente@example.com', phone: '3001234567' },
+    delivery: { method: 'pickup' },
     destination: { scope: 'national' },
     items: [{ productId: product.id, measure: 'Talla 6', quantity: 1, ...extraItemFields }],
   };
@@ -81,6 +82,9 @@ test('recalcula el total desde el catálogo e ignora precios enviados por el nav
   assert.equal(result.order.commercialAdjustment, 62500);
   assert.equal(result.order.adjustmentRate, 5);
   assert.equal(result.order.amount, 1312500);
+  assert.equal(result.order.delivery.label, 'Recoger en tienda');
+  assert.equal(result.order.destination.scope, 'national');
+  assert.equal(result.order.inventoryStatus, 'RESERVED');
   assert.equal(result.payment.amount, '1312500');
   assert.equal(result.payment.tax, 'vat-19');
   assert.equal(result.payment.renderMode, 'embedded');
@@ -88,10 +92,36 @@ test('recalcula el total desde el catálogo e ignora precios enviados por el nav
   assert.equal(Object.hasOwn(result.payment, 'secretKey'), false);
 });
 
+test('valida la dirección de domicilio y fuerza la recogida como venta nacional', async () => {
+  const service = createService();
+  const pickup = await service.createOrder({
+    ...validPayload(),
+    destination: { scope: 'international' },
+  });
+  assert.equal(pickup.order.adjustmentRate, 5);
+  assert.equal(pickup.order.destination.scope, 'national');
+
+  await assert.rejects(
+    () => service.createOrder({
+      ...validPayload(),
+      delivery: { method: 'delivery', city: 'Bogotá', addressLine: 'Calle 1 # 2-3' },
+      destination: { scope: 'national' },
+    }),
+    /departamento/i,
+  );
+});
+
 test('aplica el 6 % a entregas internacionales y rechaza destinos desconocidos', async () => {
   const service = createService();
   const international = await service.createOrder({
     ...validPayload(),
+    delivery: {
+      method: 'delivery',
+      country: 'Estados Unidos',
+      city: 'Miami',
+      addressLine: '1000 Brickell Avenue',
+      postalCode: '33131',
+    },
     destination: { scope: 'international' },
   });
 
@@ -101,7 +131,11 @@ test('aplica el 6 % a entregas internacionales y rechaza destinos desconocidos',
   assert.equal(international.order.destination.label, 'Fuera de Colombia');
 
   await assert.rejects(
-    () => service.createOrder({ ...validPayload(), destination: { scope: 'desconocido' } }),
+    () => service.createOrder({
+      ...validPayload(),
+      delivery: { method: 'delivery', country: 'España', city: 'Madrid', addressLine: 'Calle de Alcalá 1' },
+      destination: { scope: 'desconocido' },
+    }),
     (error) => {
       assert.equal(error.code, 'INVALID_PAYMENT_REQUEST');
       return true;
@@ -152,6 +186,7 @@ test('procesa un pago aprobado una sola vez', async () => {
   const second = await service.processWebhook(rawBody, signature);
   assert.equal(first.duplicate, false);
   assert.equal(first.order.status, 'PAID');
+  assert.equal(first.order.inventoryStatus, 'COMMITTED');
   assert.equal(first.order.paymentId, 'BOLD-PAYMENT-1');
   assert.equal(second.duplicate, true);
   assert.equal((await orderStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CONFIRMED');
@@ -175,6 +210,7 @@ test('cancela operativamente las ventas rechazadas y anuladas', async () => {
   const rawRejected = Buffer.from(JSON.stringify(rejectedEvent));
   const rejected = await rejectedService.processWebhook(rawRejected, createWebhookSignature(rawRejected, ''));
   assert.equal(rejected.order.status, 'REJECTED');
+  assert.equal(rejected.order.inventoryStatus, 'RELEASED');
   assert.equal((await rejectedStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CANCELLED');
 
   const voidedStore = new MemoryOrders();
@@ -197,6 +233,7 @@ test('cancela operativamente las ventas rechazadas y anuladas', async () => {
   const rawVoid = Buffer.from(JSON.stringify(voidEvent));
   const voided = await voidedService.processWebhook(rawVoid, createWebhookSignature(rawVoid, ''));
   assert.equal(voided.order.status, 'VOIDED');
+  assert.equal(voided.order.inventoryStatus, 'RELEASED');
   assert.equal((await voidedStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CANCELLED');
 });
 

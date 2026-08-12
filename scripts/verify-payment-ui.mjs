@@ -8,6 +8,7 @@ const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     customer: { fullName: 'Prueba Visual', email: 'visual@example.com', phone: '3001234567' },
+    delivery: { method: 'pickup' },
     destination: { scope: 'national' },
     items: [{ productId: 'dije-mano-sagrada', measure: 'Mini', quantity: 1 }],
   }),
@@ -31,9 +32,13 @@ try {
   await mobile.locator('#detail-close').click();
   await mobile.locator('#cart-button').click();
   await mobile.locator('#checkout-form').waitFor();
+  await mobile.locator('#checkout-delivery-method').selectOption('delivery');
   const nationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
   const nationalTotal = await mobile.locator('#checkout-total').textContent();
   await mobile.locator('#checkout-destination').selectOption('international');
+  await mobile.locator('#checkout-country').fill('Estados Unidos');
+  await mobile.locator('#checkout-city').fill('Miami');
+  await mobile.locator('#checkout-address').fill('1000 Brickell Avenue');
   const internationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
   const internationalTotal = await mobile.locator('#checkout-total').textContent();
   const drawerBox = await mobile.locator('#selection-drawer').boundingBox();

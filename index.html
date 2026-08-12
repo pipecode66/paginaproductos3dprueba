@@ -531,6 +531,7 @@
                   <option value="todos">Todos los pedidos</option>
                   <option value="payment:PAID">Pago aprobado</option>
                   <option value="payment:CREATED">Pago pendiente</option>
+                  <option value="payment:EXPIRED">Reserva vencida</option>
                   <option value="payment:REJECTED">Pago rechazado</option>
                   <option value="payment:VOIDED">Pago anulado</option>
                   <option value="payment:REVIEW_REQUIRED">Revisión de pago</option>
@@ -891,13 +892,51 @@
       <p class="selection-empty" id="selection-empty">Aún no has añadido joyas a la canasta.</p>
       <form class="checkout-form" id="checkout-form" novalidate hidden>
         <div class="checkout-customer-fields">
-          <label for="checkout-destination">
-            Destino de entrega
-            <select id="checkout-destination" name="destinationType" required>
-              <option value="national">Colombia</option>
-              <option value="international">Fuera de Colombia</option>
+          <label for="checkout-delivery-method">
+            ¿Cómo deseas recibir tu compra?
+            <select id="checkout-delivery-method" name="deliveryMethod" required>
+              <option value="">Selecciona una modalidad</option>
+              <option value="pickup">Recoger en tienda</option>
+              <option value="delivery">Envío a domicilio</option>
             </select>
           </label>
+          <div class="checkout-pickup-note" id="checkout-pickup-note" hidden>
+            <i data-lucide="map-pin"></i>
+            <span>Centro Comercial Alejandría, Av. 6 entre calles 8 y 9, Entrada 5, Local 1-161, Cúcuta.</span>
+          </div>
+          <div class="checkout-address-fields" id="checkout-address-fields" hidden>
+            <label for="checkout-destination">
+              Destino de entrega
+              <select id="checkout-destination" name="destinationType">
+                <option value="national">Colombia</option>
+                <option value="international">Fuera de Colombia</option>
+              </select>
+            </label>
+            <label for="checkout-country" id="checkout-country-field" hidden>
+              País
+              <input id="checkout-country" name="country" type="text" maxlength="80" autocomplete="country-name" />
+            </label>
+            <label for="checkout-department">
+              <span id="checkout-department-label">Departamento</span>
+              <input id="checkout-department" name="department" type="text" maxlength="100" autocomplete="address-level1" />
+            </label>
+            <label for="checkout-city">
+              Ciudad
+              <input id="checkout-city" name="city" type="text" maxlength="100" autocomplete="address-level2" />
+            </label>
+            <label for="checkout-address">
+              Dirección completa
+              <input id="checkout-address" name="addressLine" type="text" maxlength="180" autocomplete="street-address" />
+            </label>
+            <label for="checkout-reference">
+              Referencia para la entrega
+              <input id="checkout-reference" name="reference" type="text" maxlength="200" />
+            </label>
+            <label for="checkout-postal-code">
+              Código postal (opcional)
+              <input id="checkout-postal-code" name="postalCode" type="text" maxlength="20" autocomplete="postal-code" />
+            </label>
+          </div>
           <label for="checkout-name">
             Nombre completo
             <input id="checkout-name" name="fullName" type="text" maxlength="100" autocomplete="name" required />

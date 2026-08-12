@@ -1,5 +1,38 @@
 import { ensurePostgresSchema } from './postgres.js';
 
+function inventoryError(productName = 'una de las joyas') {
+  const error = new Error(`No hay existencias suficientes de ${productName}.`);
+  error.statusCode = 409;
+  error.code = 'INSUFFICIENT_STOCK';
+  error.expose = true;
+  return error;
+}
+
+async function changeInventory(client, items = [], direction) {
+  for (const item of items) {
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1) throw inventoryError(item.name);
+    if (direction === 'reserve') {
+      const result = await client.query(
+        `UPDATE querubim_catalog_products
+         SET stock = stock - $2::integer, updated_at = NOW()
+         WHERE id = $1 AND active = TRUE AND stock >= $2::integer
+         RETURNING id`,
+        [item.productId, quantity],
+      );
+      if (!result.rows[0]) throw inventoryError(item.name);
+    } else {
+      await client.query(
+        `UPDATE querubim_catalog_products
+         SET stock = stock + $2::integer, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id`,
+        [item.productId, quantity],
+      );
+    }
+  }
+}
+
 export class PostgresOrderStore {
   constructor(pool) {
     this.pool = pool;
@@ -20,8 +53,71 @@ export class PostgresOrderStore {
     }
   }
 
+  async createWithReservation(order) {
+    await ensurePostgresSchema(this.pool);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await changeInventory(client, order.items, 'reserve');
+      await client.query(
+        `INSERT INTO querubim_payment_orders (id, data)
+         VALUES ($1, $2::jsonb)`,
+        [order.id, JSON.stringify(order)],
+      );
+      await client.query('COMMIT');
+      return order;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      if (error.code === '23505') throw new Error('La referencia de la orden ya existe.');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async releaseExpiredReservations(nowIso = new Date().toISOString()) {
+    await ensurePostgresSchema(this.pool);
+    const client = await this.pool.connect();
+    let released = 0;
+    try {
+      await client.query('BEGIN');
+      const result = await client.query('SELECT id, data FROM querubim_payment_orders FOR UPDATE');
+      for (const row of result.rows) {
+        const order = row.data;
+        if (
+          order?.inventoryStatus !== 'RESERVED' ||
+          order?.status !== 'CREATED' ||
+          !order?.expiresAt ||
+          Date.parse(order.expiresAt) > Date.parse(nowIso)
+        ) continue;
+
+        await changeInventory(client, order.items, 'release');
+        const expired = {
+          ...order,
+          status: 'EXPIRED',
+          inventoryStatus: 'RELEASED',
+          fulfillmentStatus: 'CANCELLED',
+          expiredAt: nowIso,
+        };
+        await client.query(
+          `UPDATE querubim_payment_orders SET data = $2::jsonb, updated_at = NOW() WHERE id = $1`,
+          [row.id, JSON.stringify(expired)],
+        );
+        released += 1;
+      }
+      await client.query('COMMIT');
+      return released;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async get(orderId) {
     await ensurePostgresSchema(this.pool);
+    await this.releaseExpiredReservations();
     const result = await this.pool.query(
       'SELECT data FROM querubim_payment_orders WHERE id = $1',
       [orderId],
@@ -31,6 +127,7 @@ export class PostgresOrderStore {
 
   async list(limit = 100) {
     await ensurePostgresSchema(this.pool);
+    await this.releaseExpiredReservations();
     const result = await this.pool.query(
       `SELECT data FROM querubim_payment_orders
        ORDER BY created_at DESC
@@ -100,7 +197,12 @@ export class PostgresOrderStore {
       );
       let order = selected.rows[0]?.data ?? null;
       if (order && updateOrder) {
-        order = updateOrder(order);
+        const currentOrder = order;
+        order = updateOrder(currentOrder);
+        const releasesInventory =
+          ['RESERVED', 'COMMITTED'].includes(currentOrder.inventoryStatus) &&
+          order.inventoryStatus === 'RELEASED';
+        if (releasesInventory) await changeInventory(client, currentOrder.items, 'release');
         await client.query(
           `UPDATE querubim_payment_orders
            SET data = $2::jsonb, updated_at = NOW()

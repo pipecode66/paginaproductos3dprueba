@@ -51,6 +51,7 @@ test('Vercel informa que falta la base sin guardar órdenes temporalmente', asyn
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customer: { fullName: 'Cliente', email: 'cliente@example.com', phone: '3000000000' },
+      delivery: { method: 'pickup' },
       destination: { scope: 'national' },
       items: [{ productId: 'anillo-rubi-aurora', measure: 'Talla 6', quantity: 1 }],
     }),

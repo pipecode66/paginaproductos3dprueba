@@ -88,7 +88,7 @@ export function createPersistence(config) {
   const catalogRepository = new CatalogRepository(path.join(config.runtimeDir, 'catalog.json'));
   return {
     catalogRepository,
-    orderStore: new OrderStore(path.join(config.runtimeDir, 'orders.json')),
+    orderStore: new OrderStore(path.join(config.runtimeDir, 'orders.json'), catalogRepository),
     storage: { mode: 'json', configured: true, ready: () => Promise.resolve(true) },
   };
 }

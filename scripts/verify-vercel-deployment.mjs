@@ -32,6 +32,7 @@ const createResponse = await fetch(new URL('/api/payments/orders', baseUrl), {
       email: 'verificacion@example.com',
       phone: '3000000000',
     },
+    delivery: { method: 'pickup' },
     destination: { scope: 'national' },
     items: [{ productId: product.id, measure: product.measurements[0], quantity: 1 }],
   }),

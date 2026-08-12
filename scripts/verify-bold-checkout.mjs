@@ -49,6 +49,7 @@ try {
   await page.locator('#detail-add-cart').click();
   await page.locator('#detail-close').click();
   await page.locator('#cart-button').click();
+  await page.locator('#checkout-delivery-method').selectOption('pickup');
   await page.locator('#checkout-name').fill('Prueba Integración');
   await page.locator('#checkout-email').fill('prueba@example.com');
   await page.locator('#checkout-phone').fill('3001234567');

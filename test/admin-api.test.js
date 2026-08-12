@@ -170,6 +170,7 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customer: { fullName: 'Compra desde panel', email: 'compra@example.com', phone: '3007654321' },
+      delivery: { method: 'pickup' },
       destination: { scope: 'national' },
       items: [{ productId: adminProduct.id, measure: 'Talla 6', quantity: 1 }],
     }),

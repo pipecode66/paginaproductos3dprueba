@@ -444,7 +444,18 @@ const selectors = {
   selectionItems: document.querySelector('#selection-items'),
   selectionEmpty: document.querySelector('#selection-empty'),
   checkoutForm: document.querySelector('#checkout-form'),
+  checkoutDeliveryMethod: document.querySelector('#checkout-delivery-method'),
+  checkoutPickupNote: document.querySelector('#checkout-pickup-note'),
+  checkoutAddressFields: document.querySelector('#checkout-address-fields'),
   checkoutDestination: document.querySelector('#checkout-destination'),
+  checkoutCountryField: document.querySelector('#checkout-country-field'),
+  checkoutCountry: document.querySelector('#checkout-country'),
+  checkoutDepartmentLabel: document.querySelector('#checkout-department-label'),
+  checkoutDepartment: document.querySelector('#checkout-department'),
+  checkoutCity: document.querySelector('#checkout-city'),
+  checkoutAddress: document.querySelector('#checkout-address'),
+  checkoutReference: document.querySelector('#checkout-reference'),
+  checkoutPostalCode: document.querySelector('#checkout-postal-code'),
   checkoutSubtotal: document.querySelector('#checkout-subtotal'),
   checkoutAdjustmentLabel: document.querySelector('#checkout-adjustment-label'),
   checkoutAdjustment: document.querySelector('#checkout-adjustment'),
@@ -864,7 +875,9 @@ function removeCartItem(key) {
 
 function getCartPricing() {
   const subtotal = state.cartItems.reduce((total, item) => total + getProductPrice(item.product), 0);
-  const international = selectors.checkoutDestination?.value === 'international';
+  const international =
+    selectors.checkoutDeliveryMethod?.value === 'delivery' &&
+    selectors.checkoutDestination?.value === 'international';
   const adjustmentRate = international ? 6 : 5;
   const commercialAdjustment = Math.round((subtotal * adjustmentRate) / 100);
   return {
@@ -874,6 +887,30 @@ function getCartPricing() {
     amount: subtotal + commercialAdjustment,
     destinationScope: international ? 'international' : 'national',
   };
+}
+
+function syncCheckoutDeliveryForm() {
+  const method = selectors.checkoutDeliveryMethod.value;
+  const isDelivery = method === 'delivery';
+  const isPickup = method === 'pickup';
+  const isInternational = isDelivery && selectors.checkoutDestination.value === 'international';
+
+  selectors.checkoutPickupNote.hidden = !isPickup;
+  selectors.checkoutAddressFields.hidden = !isDelivery;
+  selectors.checkoutCountryField.hidden = !isInternational;
+  selectors.checkoutCountry.required = isInternational;
+  selectors.checkoutCountry.disabled = !isInternational;
+  selectors.checkoutDepartment.required = isDelivery && !isInternational;
+  selectors.checkoutDepartment.disabled = !isDelivery;
+  selectors.checkoutCity.required = isDelivery;
+  selectors.checkoutCity.disabled = !isDelivery;
+  selectors.checkoutAddress.required = isDelivery;
+  selectors.checkoutAddress.disabled = !isDelivery;
+  selectors.checkoutReference.disabled = !isDelivery;
+  selectors.checkoutPostalCode.disabled = !isDelivery;
+  selectors.checkoutDestination.disabled = !isDelivery;
+  selectors.checkoutDepartmentLabel.textContent = isInternational ? 'Estado o provincia (opcional)' : 'Departamento';
+  renderCart();
 }
 
 function renderCart() {
@@ -960,11 +997,21 @@ async function handleCheckoutSubmit(event) {
       email: String(formData.get('email') || '').trim(),
       phone: String(formData.get('phone') || '').trim(),
     };
+    const delivery = {
+      method: String(formData.get('deliveryMethod') || ''),
+      country: String(formData.get('country') || '').trim(),
+      department: String(formData.get('department') || '').trim(),
+      city: String(formData.get('city') || '').trim(),
+      addressLine: String(formData.get('addressLine') || '').trim(),
+      reference: String(formData.get('reference') || '').trim(),
+      postalCode: String(formData.get('postalCode') || '').trim(),
+    };
     const response = await fetch('/api/payments/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customer,
+        delivery,
         destination: { scope: String(formData.get('destinationType') || '') },
         items: state.cartItems.map(({ product, measure }) => ({ productId: product.id, measure, quantity: 1 })),
       }),
@@ -1018,6 +1065,12 @@ const paymentStatusContent = {
     title: 'El pago fue anulado.',
     message: 'La transacción figura como anulada. Comunícate con Querubim si necesitas ayuda con tu pedido.',
   },
+  EXPIRED: {
+    icon: 'clock-alert',
+    tone: 'neutral',
+    title: 'La reserva de la joya venció.',
+    message: 'La orden no recibió un pago confirmado dentro del plazo. Vuelve al catálogo para comprobar la disponibilidad actual.',
+  },
   REVIEW_REQUIRED: {
     icon: 'shield-check',
     tone: 'warning',
@@ -1037,6 +1090,7 @@ const paymentStatusLabels = {
   PAID: 'Pago aprobado',
   REJECTED: 'Pago rechazado',
   VOIDED: 'Pago anulado',
+  EXPIRED: 'Reserva vencida',
   REVIEW_REQUIRED: 'Revisión requerida',
 };
 
@@ -1052,7 +1106,7 @@ function renderPaymentResult(order, errorMessage = '') {
     ? `
         <div><dt>Orden</dt><dd>${escapeHtml(order.id)}</dd></div>
         <div><dt>Total</dt><dd>${formatCurrency(order.amount)}</dd></div>
-        <div><dt>Destino</dt><dd>${escapeHtml(order.destination?.label || 'Por confirmar')}</dd></div>
+        <div><dt>Entrega</dt><dd>${escapeHtml(order.delivery?.label || 'Por confirmar')}<br />${escapeHtml(order.destination?.label || '')}</dd></div>
         <div><dt>Estado</dt><dd>${escapeHtml(paymentStatusLabels[order.status] || order.status)}</dd></div>
       `
     : '';
@@ -1281,7 +1335,7 @@ function renderAdminDiagnostics() {
       icon: 'package-check',
       title: 'Inventario invisible',
       before: 'Antes: no existía stock.',
-      improvement: 'Ahora: cada producto registra existencias y el panel marca stock bajo o agotado.',
+      improvement: 'Ahora: cada orden reserva existencias y las libera automáticamente si el pago se rechaza, se anula o vence.',
       status: 'Corregido',
     },
     {
@@ -1383,6 +1437,7 @@ function getOrderStatusLabel(status) {
     PAID: 'Pago aprobado',
     REJECTED: 'Pago rechazado',
     VOIDED: 'Pago anulado',
+    EXPIRED: 'Reserva vencida',
     REVIEW_REQUIRED: 'Revisión requerida',
   }[status] || status || 'Sin estado';
 }
@@ -1411,6 +1466,14 @@ function getFulfillmentStatusLabel(status) {
 
 function getOrderStatusClass(status) {
   return `status-${String(status || 'pending').toLowerCase().replace(/_/g, '-')}`;
+}
+
+function getInventoryStatusLabel(status) {
+  return {
+    RESERVED: 'Existencias reservadas',
+    COMMITTED: 'Inventario confirmado',
+    RELEASED: 'Existencias liberadas',
+  }[status] || 'Sin movimiento automático';
 }
 
 function formatAdminDate(value) {
@@ -1491,11 +1554,11 @@ function openAdminOrder(orderId) {
     <section class="admin-order-detail-block">
       <h3>Pago verificado por Bold</h3>
       <p><span class="admin-order-badge ${getOrderStatusClass(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span><br />${escapeHtml(formatCurrency(order.amount))} · ${escapeHtml(order.paymentMethod || 'Método pendiente')}</p>
-      <p>Subtotal: ${escapeHtml(formatCurrency(order.subtotal ?? order.amount))}<br />Ajuste ${order.adjustmentRate || 0} %: ${escapeHtml(formatCurrency(order.commercialAdjustment || 0))}<br />IVA incluido: ${order.taxRate || 19} %</p>
+      <p>Subtotal: ${escapeHtml(formatCurrency(order.subtotal ?? order.amount))}<br />Ajuste ${order.adjustmentRate || 0} %: ${escapeHtml(formatCurrency(order.commercialAdjustment || 0))}<br />IVA incluido: ${order.taxRate || 19} %<br />Inventario: ${escapeHtml(getInventoryStatusLabel(order.inventoryStatus))}</p>
     </section>
     <section class="admin-order-detail-block">
       <h3>Destino de entrega</h3>
-      <p>${escapeHtml(order.destination?.label || 'Pendiente de confirmar')}</p>
+      <p>${escapeHtml(order.delivery?.label || 'Pendiente de confirmar')}<br />${escapeHtml(order.destination?.label || '')}${order.delivery?.pickupAddress ? `<br />${escapeHtml(order.delivery.pickupAddress)}` : ''}${order.delivery?.address ? `<br />${escapeHtml([order.delivery.address.addressLine, order.delivery.address.city, order.delivery.address.department, order.delivery.address.country, order.delivery.address.postalCode].filter(Boolean).join(', '))}${order.delivery.address.reference ? `<br />Referencia: ${escapeHtml(order.delivery.address.reference)}` : ''}` : ''}</p>
     </section>
     <section class="admin-order-detail-block wide">
       <h3>Piezas solicitadas</h3>
@@ -2605,7 +2668,8 @@ function setupEvents() {
   });
 
   selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
-  selectors.checkoutDestination.addEventListener('change', renderCart);
+  selectors.checkoutDeliveryMethod.addEventListener('change', syncCheckoutDeliveryForm);
+  selectors.checkoutDestination.addEventListener('change', syncCheckoutDeliveryForm);
   selectors.checkoutForm.addEventListener('submit', handleCheckoutSubmit);
   selectors.paymentResultRefresh.addEventListener('click', () => consultPaymentOrder({ scheduleNext: true }));
 
