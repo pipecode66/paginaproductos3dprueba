@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getDefaultFulfillmentStatus, updateManagedOrder } from '../server/order-management.js';
+import { archiveManagedOrder, getDefaultFulfillmentStatus, updateManagedOrder } from '../server/order-management.js';
 
 test('deriva el estado operativo sin modificar el estado financiero', () => {
   const paidOrder = { id: 'QBM-001', status: 'PAID' };
@@ -47,4 +47,32 @@ test('exige una razón para cancelar y permite reabrir únicamente órdenes paga
     'admin@querubim.co',
   );
   assert.equal(reopened.fulfillmentStatus, 'CONFIRMED');
+});
+
+test('solo retira del panel pedidos con un flujo terminado', () => {
+  assert.throws(
+    () => archiveManagedOrder(
+      { id: 'QBM-ACTIVA', status: 'PAID', fulfillmentStatus: 'PREPARING' },
+      'admin@querubim.co',
+    ),
+    (error) => error.code === 'ORDER_NOT_ARCHIVABLE',
+  );
+
+  const archived = archiveManagedOrder(
+    { id: 'QBM-FINAL', status: 'PAID', fulfillmentStatus: 'DELIVERED' },
+    'admin@querubim.co',
+    1_800_000_000_000,
+  );
+  assert.equal(archived.id, 'QBM-FINAL');
+  assert.equal(archived.adminArchivedBy, 'admin@querubim.co');
+  assert.equal(archived.adminArchivedAt, new Date(1_800_000_000_000).toISOString());
+
+  const pending = archiveManagedOrder(
+    { id: 'QBM-PENDIENTE', status: 'CREATED', fulfillmentStatus: 'PENDING', inventoryStatus: 'RESERVED' },
+    'admin@querubim.co',
+    1_800_000_000_000,
+  );
+  assert.equal(pending.status, 'EXPIRED');
+  assert.equal(pending.fulfillmentStatus, 'CANCELLED');
+  assert.equal(pending.inventoryStatus, 'RELEASED');
 });

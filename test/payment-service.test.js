@@ -207,6 +207,34 @@ test('procesa un pago aprobado una sola vez', async () => {
   assert.equal((await orderStore.get('QBM-ORDER-001')).fulfillmentStatus, 'CONFIRMED');
 });
 
+test('vuelve a mostrar un pedido archivado cuando Bold notifica un pago tardío', async () => {
+  const orderStore = new MemoryOrders();
+  const service = createService({ orderStore });
+  await service.createOrder(validPayload());
+  const archived = orderStore.orders.get('QBM-ORDER-001');
+  archived.adminArchivedAt = new Date(1_799_999_000_000).toISOString();
+  archived.adminArchivedBy = 'admin@querubim.co';
+  orderStore.orders.set(archived.id, archived);
+
+  const event = {
+    id: 'event-approved-after-archive',
+    type: 'SALE_APPROVED',
+    subject: 'BOLD-PAYMENT-AFTER-ARCHIVE',
+    data: {
+      payment_id: 'BOLD-PAYMENT-AFTER-ARCHIVE',
+      payment_method: 'CARD_WEB',
+      amount: { currency: 'COP', total: 1312500 },
+      metadata: { reference: 'QBM-ORDER-001' },
+    },
+  };
+  const rawBody = Buffer.from(JSON.stringify(event));
+  const result = await service.processWebhook(rawBody, createWebhookSignature(rawBody, ''));
+
+  assert.equal(result.order.status, 'PAID');
+  assert.equal(Object.hasOwn(result.order, 'adminArchivedAt'), false);
+  assert.equal(Object.hasOwn(result.order, 'adminArchivedBy'), false);
+});
+
 test('cancela operativamente las ventas rechazadas y anuladas', async () => {
   const rejectedStore = new MemoryOrders();
   const rejectedService = createService({ orderStore: rejectedStore });

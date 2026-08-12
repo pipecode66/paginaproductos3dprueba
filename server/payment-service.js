@@ -371,6 +371,9 @@ export class PaymentService {
           paymentMethod: cleanText(event.data?.payment_method, 40),
           payerEmail: cleanText(event.data?.payer_email, 160),
         };
+        // Una notificación tardía vuelve a mostrar un pedido archivado para que el equipo pueda revisarlo.
+        delete next.adminArchivedAt;
+        delete next.adminArchivedBy;
 
         if ((!amountMatches || !currencyMatches) && !isSandboxProbe) {
           next.status = 'REVIEW_REQUIRED';

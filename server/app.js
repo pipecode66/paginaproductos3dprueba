@@ -9,9 +9,10 @@ import {
   verifyAdminCredentials,
 } from './admin-auth.js';
 import { validateCatalogProduct } from './catalog-validation.js';
+import { createCatalogExcel } from './catalog-excel.js';
 import { InternationalRequestService } from './international-request-service.js';
 import { InternationalRequestStore } from './international-request-store.js';
-import { normalizeManagedOrder, updateManagedOrder } from './order-management.js';
+import { archiveManagedOrder, normalizeManagedOrder, updateManagedOrder } from './order-management.js';
 import { PaymentError, PaymentService } from './payment-service.js';
 import { buildPaymentReadiness } from './payment-readiness.js';
 import { createPersistence } from './persistence.js';
@@ -285,7 +286,7 @@ export function createApp({
         resolvedOrders.list(100),
         resolvedSiteContent.get(),
       ]);
-      const orders = storedOrders.map(normalizeManagedOrder);
+      const orders = storedOrders.filter((order) => !order.adminArchivedAt).map(normalizeManagedOrder);
       const internationalRequests = await internationalRequestService.listForAdmin(orders);
       const activeProducts = products.filter((product) => product.active !== false);
       const customers = new Set(
@@ -338,6 +339,52 @@ export function createApp({
       response.json({ order: normalizeManagedOrder(order) });
     } catch (error) {
       const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.delete('/api/admin/orders/:orderId', async (request, response) => {
+    const orderId = String(request.params.orderId || '');
+    if (!/^[A-Za-z0-9_-]{1,60}$/.test(orderId)) {
+      response.status(400).json({ error: 'La referencia de la orden no es válida.', code: 'INVALID_ORDER_ID' });
+      return;
+    }
+
+    try {
+      const current = await resolvedOrders.get(orderId);
+      if (!current) {
+        response.status(404).json({ error: 'No encontramos la orden solicitada.', code: 'ORDER_NOT_FOUND' });
+        return;
+      }
+      const archived = archiveManagedOrder(current, request.admin.sub);
+      const archivedAt = archived.adminArchivedAt;
+      const result = await resolvedOrders.recordEvent(
+        `admin-archive-${orderId}-${Date.parse(archivedAt)}`,
+        { id: `admin-archive-${orderId}-${Date.parse(archivedAt)}`, type: 'ADMIN_ARCHIVED', orderId, receivedAt: archivedAt },
+        () => archived,
+      );
+      if (!result.order) throw new Error('La orden desapareció durante la actualización.');
+      response.json({ deleted: true, orderId });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.get('/api/admin/catalog/export', async (request, response) => {
+    try {
+      const products = await resolvedCatalog.listAll();
+      const workbook = await createCatalogExcel(products.filter((product) => product.active !== false));
+      const date = new Date().toISOString().slice(0, 10);
+      response.set({
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="querubim-catalogo-${date}.xlsx"`,
+        'Cache-Control': 'no-store',
+      });
+      response.send(Buffer.from(workbook));
+    } catch (error) {
+      const serialized = serializeError(error);
+      logger.error('Error exportando el catálogo a Excel', error);
       response.status(serialized.statusCode).json(serialized.body);
     }
   });

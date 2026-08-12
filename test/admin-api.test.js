@@ -119,6 +119,12 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
   assert.equal(dashboardData.summary.paidRevenue, 990000);
   assert.equal(dashboardData.storage.configured, true);
 
+  const excel = await fetch(`${baseUrl}/api/admin/catalog/export`, { headers: { Cookie: cookie } });
+  const excelBytes = Buffer.from(await excel.arrayBuffer());
+  assert.equal(excel.status, 200);
+  assert.match(excel.headers.get('content-type'), /spreadsheetml/);
+  assert.equal(excelBytes.subarray(0, 2).toString(), 'PK');
+
   const storageHealth = await fetch(`${baseUrl}/api/storage/health`).then((response) => response.json());
   assert.equal(storageHealth.configured, true);
 
@@ -224,6 +230,26 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
   assert.equal(managedData.order.status, 'PAID');
   assert.equal(managedData.order.fulfillmentStatus, 'PREPARING');
   assert.equal(managedData.order.internalNotes, 'Empaque de regalo solicitado.');
+
+  const ready = await fetch(`${baseUrl}/api/admin/orders/${paymentOrderData.order.id}`, {
+    method: 'PATCH',
+    headers: adminHeaders,
+    body: JSON.stringify({ fulfillmentStatus: 'READY', internalNotes: 'Pedido terminado.' }),
+  });
+  assert.equal(ready.status, 200);
+  const delivered = await fetch(`${baseUrl}/api/admin/orders/${paymentOrderData.order.id}`, {
+    method: 'PATCH',
+    headers: adminHeaders,
+    body: JSON.stringify({ fulfillmentStatus: 'DELIVERED', internalNotes: 'Entregado al cliente.' }),
+  });
+  assert.equal(delivered.status, 200);
+  const deletedOrder = await fetch(`${baseUrl}/api/admin/orders/${paymentOrderData.order.id}`, {
+    method: 'DELETE',
+    headers: adminHeaders,
+  });
+  assert.equal(deletedOrder.status, 200);
+  const dashboardAfterDelete = await fetch(`${baseUrl}/api/admin/dashboard`, { headers: { Cookie: cookie } }).then((response) => response.json());
+  assert.equal(dashboardAfterDelete.orders.some((order) => order.id === paymentOrderData.order.id), false);
 
   const removed = await fetch(`${baseUrl}/api/admin/products/${adminProduct.id}`, {
     method: 'DELETE',

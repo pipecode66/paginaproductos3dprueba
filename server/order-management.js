@@ -36,6 +36,33 @@ export function normalizeManagedOrder(order) {
   return { ...order, fulfillmentStatus: getDefaultFulfillmentStatus(order) };
 }
 
+export function archiveManagedOrder(order, adminEmail, now = Date.now()) {
+  const fulfillmentStatus = getDefaultFulfillmentStatus(order);
+  const paymentIsPending = order?.status === 'CREATED';
+  const paymentIsTerminal = ['REJECTED', 'VOIDED', 'EXPIRED'].includes(order?.status);
+  const fulfillmentIsTerminal = ['DELIVERED', 'CANCELLED'].includes(fulfillmentStatus);
+  if (!paymentIsPending && !paymentIsTerminal && !fulfillmentIsTerminal) {
+    throw new OrderManagementError(
+      'Solo se pueden eliminar pedidos pendientes de pago, finalizados, cancelados, rechazados, anulados o vencidos.',
+      409,
+      'ORDER_NOT_ARCHIVABLE',
+    );
+  }
+
+  const archivedAt = new Date(now).toISOString();
+  return {
+    ...order,
+    ...(paymentIsPending ? {
+      status: 'EXPIRED',
+      fulfillmentStatus: 'CANCELLED',
+      inventoryStatus: order.inventoryStatus === 'RESERVED' ? 'RELEASED' : order.inventoryStatus,
+      expiredAt: archivedAt,
+    } : {}),
+    adminArchivedAt: archivedAt,
+    adminArchivedBy: adminEmail,
+  };
+}
+
 export function updateManagedOrder(order, payload, adminEmail, now = Date.now()) {
   const current = getDefaultFulfillmentStatus(order);
   const requested = cleanText(payload?.fulfillmentStatus || current, 30).toUpperCase();

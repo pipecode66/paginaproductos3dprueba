@@ -2877,6 +2877,41 @@ body.admin-route .whatsapp-button {
   color: var(--color-secondary);
 }
 
+.admin-product-form label:has(.admin-required) {
+  display: block;
+}
+
+.admin-product-form label:has(.admin-required) > input,
+.admin-product-form label:has(.admin-required) > select,
+.admin-product-form label:has(.admin-required) > textarea {
+  margin-top: 8px;
+}
+
+.admin-required {
+  margin-left: 5px;
+  color: #a2263f !important;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-field-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-field-heading strong {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.admin-field-heading small {
+  color: #847c73;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .admin-login-card input,
 .admin-product-form input,
 .admin-product-form select,
@@ -3028,6 +3063,22 @@ body.admin-route .whatsapp-button {
   border-radius: var(--radius-md);
   position: relative;
   background: var(--color-primary-light);
+  cursor: grab;
+  transition: opacity 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+
+.admin-image-preview figure:active {
+  cursor: grabbing;
+}
+
+.admin-image-preview figure.drag-source {
+  opacity: 0.42;
+}
+
+.admin-image-preview figure.drag-target {
+  border-color: #7d263d;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(110, 38, 56, 0.16);
 }
 
 .admin-image-preview figure.primary {
@@ -3048,6 +3099,98 @@ body.admin-route .whatsapp-button {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.admin-image-drag-handle {
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(43, 27, 19, 0.78);
+}
+
+.admin-image-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-image-order-actions {
+  display: flex !important;
+  gap: 3px;
+}
+
+.admin-image-order-actions button {
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 1px solid rgba(129, 95, 42, 0.2);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: #6f501a;
+  background: #fff;
+  cursor: pointer;
+}
+
+.admin-image-order-actions button:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.admin-image-order-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.admin-measurement-editor,
+.admin-measurement-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-measurement-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.admin-measurement-add .button {
+  min-width: 116px;
+}
+
+.admin-measurement-item {
+  padding: 8px;
+  border: 1px solid #ded9ce;
+  border-radius: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 8px;
+  background: #faf9f6;
+}
+
+.admin-measurement-item input {
+  min-height: 40px;
+  background: #fff;
+}
+
+.admin-measurement-list > p {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed #d8cdbd;
+  border-radius: 6px;
+  color: #847c73;
+  font-size: 0.76rem;
 }
 
 .admin-image-remove {
@@ -3119,10 +3262,36 @@ body.admin-route .whatsapp-button {
 }
 
 .admin-backup-status {
-  margin: 0 0 0 auto;
+  margin: 3px 0 0;
   color: rgba(255, 246, 223, 0.74);
   font-size: var(--text-sm);
   font-weight: 800;
+}
+
+.admin-backup-card {
+  min-height: 54px;
+  margin-left: auto;
+  padding: 8px 12px;
+  border: 1px solid rgba(214, 182, 107, 0.22);
+  border-radius: 7px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  color: #fff6df;
+  background: rgba(255, 249, 237, 0.08);
+}
+
+.admin-backup-card > svg {
+  width: 20px;
+  color: var(--color-gold-shine);
+}
+
+.admin-backup-card span {
+  color: inherit;
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .admin-role-pill {
@@ -3298,6 +3467,21 @@ body.admin-route .whatsapp-button {
   width: 20px;
   height: 20px;
   color: var(--color-primary-dark);
+}
+
+.button-danger {
+  border-color: #7e2637;
+  color: #fff;
+  background: #7e2637;
+}
+
+.button-danger:hover:not(:disabled) {
+  background: #5f1d2a;
+}
+
+.button-danger:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .admin-order-badge {
@@ -4946,6 +5130,42 @@ body.admin-panel-active .admin-panel-view {
   color: #777067;
 }
 
+.admin-app-view .admin-backup-card {
+  border-color: #ded9ce;
+  color: #4f463d;
+  background: #faf9f6;
+}
+
+.admin-app-view .admin-backup-card > svg {
+  color: #8a6a2b;
+}
+
+.admin-product-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.42fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.admin-product-filters > label {
+  display: grid;
+  gap: 8px;
+  color: #777067;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-product-filters select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #ded9ce;
+  border-radius: 7px;
+  color: #2b2722;
+  background: #fffaf0;
+}
+
 .admin-stats {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
@@ -5354,5 +5574,19 @@ body.admin-panel-active .admin-panel-view {
   .admin-app-view .admin-backup-status {
     margin: 0;
     text-align: left;
+  }
+
+  .admin-app-view .admin-backup-card {
+    width: 100%;
+    margin: 0;
+  }
+
+  .admin-product-filters,
+  .admin-measurement-add {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-measurement-add .button {
+    width: 100%;
   }
 }

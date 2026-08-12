@@ -4,6 +4,8 @@ import {
   ArrowRight,
   Bell,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   CircleCheck,
   CircleX,
@@ -16,6 +18,7 @@ import {
   Edit3,
   Gem,
   GalleryHorizontalEnd,
+  GripVertical,
   Image,
   ImagePlus,
   KeyRound,
@@ -286,6 +289,8 @@ const icons = {
   ArrowRight,
   Bell,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   CircleCheck,
   CircleX,
@@ -298,6 +303,7 @@ const icons = {
   Edit3,
   Gem,
   GalleryHorizontalEnd,
+  GripVertical,
   Image,
   ImagePlus,
   KeyRound,
@@ -351,6 +357,7 @@ const state = {
   query: '',
   premiumQuery: '',
   adminQuery: '',
+  adminCategoryFilter: 'todos',
   activeAdminView: 'overview',
   editingProductId: null,
   adminTimeoutId: null,
@@ -372,6 +379,7 @@ const state = {
   adminStorage: { ...DEFAULT_ADMIN_STORAGE },
   adminImageUploading: false,
   adminUploadProgress: 0,
+  adminDraggedImageIndex: null,
   originalAdminImages: [],
   pendingR2Uploads: new Set(),
   pendingContentUploads: new Set(),
@@ -422,7 +430,6 @@ const selectors = {
   adminLoginMessage: document.querySelector('#admin-login-message'),
   adminLogout: document.querySelector('#admin-logout'),
   adminStats: document.querySelector('#admin-stats'),
-  adminDiagnostics: document.querySelector('#admin-diagnostics'),
   adminOperations: document.querySelector('#admin-operations'),
   adminOrderList: document.querySelector('#admin-order-list'),
   adminOrderSearch: document.querySelector('#admin-order-search'),
@@ -438,6 +445,7 @@ const selectors = {
   adminOrderMessage: document.querySelector('#admin-order-message'),
   adminOrderClose: document.querySelector('#admin-order-close'),
   adminOrderCancel: document.querySelector('#admin-order-cancel'),
+  adminOrderDelete: document.querySelector('#admin-order-delete'),
   adminCommercialForm: document.querySelector('#admin-commercial-form'),
   adminCommercialMessage: document.querySelector('#admin-commercial-message'),
   adminInternationalList: document.querySelector('#admin-international-list'),
@@ -458,9 +466,9 @@ const selectors = {
   adminInternationalClose: document.querySelector('#admin-international-close'),
   adminExportCatalog: document.querySelector('#admin-export-catalog'),
   adminBackupStatus: document.querySelector('#admin-backup-status'),
-  adminSecurityAction: document.querySelector('#admin-security-action'),
   adminProductList: document.querySelector('#admin-product-list'),
   adminSearchInput: document.querySelector('#admin-product-search'),
+  adminCategoryFilter: document.querySelector('#admin-product-category-filter'),
   adminProductForm: document.querySelector('#admin-product-form'),
   adminFormTitle: document.querySelector('#admin-form-title'),
   adminEditId: document.querySelector('#admin-edit-id'),
@@ -484,6 +492,9 @@ const selectors = {
   adminGemstone: document.querySelector('#admin-gemstone'),
   adminEngraving: document.querySelector('#admin-engraving'),
   adminMeasurements: document.querySelector('#admin-measurements'),
+  adminMeasurementEntry: document.querySelector('#admin-measurement-entry'),
+  adminMeasurementAdd: document.querySelector('#admin-measurement-add'),
+  adminMeasurementList: document.querySelector('#admin-measurement-list'),
   adminDescription: document.querySelector('#admin-description'),
   adminPremium: document.querySelector('#admin-premium'),
   adminFeatured: document.querySelector('#admin-featured'),
@@ -550,7 +561,6 @@ const adminViewMeta = {
   orders: { title: 'Pedidos', description: 'Pagos confirmados y seguimiento de entregas' },
   international: { title: 'Solicitudes internacionales', description: 'Condiciones, coordinación y enlaces de pago' },
   content: { title: 'Contenido comercial', description: 'Portadas, campañas y vitrinas de la tienda' },
-  diagnostics: { title: 'Diagnóstico', description: 'Estado técnico y mejoras operativas' },
 };
 
 function setupAdminApplicationShell() {
@@ -563,7 +573,6 @@ function setupAdminApplicationShell() {
     stats: panel.querySelector('#admin-stats'),
     commercial: panel.querySelector('.admin-commercial-panel'),
     international: panel.querySelector('.admin-international-panel'),
-    diagnostics: panel.querySelector('.admin-diagnostics-panel'),
     operations: panel.querySelector('#admin-operations'),
     orders: panel.querySelector('.admin-orders-management'),
     products: panel.querySelector('.admin-workspace'),
@@ -587,7 +596,6 @@ function setupAdminApplicationShell() {
         <button type="button" data-admin-view-target="orders"><i data-lucide="clipboard-list"></i><span>Pedidos</span><b id="admin-nav-orders-count">0</b></button>
         <button type="button" data-admin-view-target="international"><i data-lucide="plane"></i><span>Internacional</span><b id="admin-nav-international-count">0</b></button>
         <button type="button" data-admin-view-target="content"><i data-lucide="gallery-horizontal-end"></i><span>Contenido</span></button>
-        <button type="button" data-admin-view-target="diagnostics"><i data-lucide="shield-check"></i><span>Diagnóstico</span></button>
       </nav>
       <div class="admin-sidebar-footer">
         <div class="admin-sidebar-user">
@@ -614,7 +622,6 @@ function setupAdminApplicationShell() {
         <section class="admin-app-view" data-admin-view="orders"></section>
         <section class="admin-app-view" data-admin-view="international"></section>
         <section class="admin-app-view" data-admin-view="content"></section>
-        <section class="admin-app-view" data-admin-view="diagnostics"></section>
       </div>
     </div>`;
 
@@ -635,7 +642,6 @@ function setupAdminApplicationShell() {
   if (nodes.orders) view('orders').appendChild(nodes.orders);
   if (nodes.international) view('international').appendChild(nodes.international);
   if (nodes.commercial) view('content').appendChild(nodes.commercial);
-  if (nodes.diagnostics) view('diagnostics').appendChild(nodes.diagnostics);
   if (logoutButton) {
     logoutButton.className = 'admin-sidebar-logout';
     logoutButton.innerHTML = '<i data-lucide="log-out"></i><span>Cerrar sesión</span>';
@@ -1534,6 +1540,15 @@ function populateAdminCategoryOptions() {
         `<option value="${escapeHtml(category.slug)}"${category.slug === selectedCategory ? ' selected' : ''}>${escapeHtml(category.label)}</option>`,
     )
     .join('');
+
+  if (selectors.adminCategoryFilter) {
+    const selectedFilter = state.adminCategoryFilter;
+    selectors.adminCategoryFilter.innerHTML = categories
+      .map((category) =>
+        `<option value="${escapeHtml(category.slug)}"${category.slug === selectedFilter ? ' selected' : ''}>${escapeHtml(category.label)}</option>`,
+      )
+      .join('');
+  }
 }
 
 function getAdminVisibleProducts() {
@@ -1541,6 +1556,7 @@ function getAdminVisibleProducts() {
 
   return products
     .filter((product) => {
+      if (state.adminCategoryFilter !== 'todos' && product.category !== state.adminCategoryFilter) return false;
       const variants = getProductVariants(product);
       const searchableText = normalizeText(
         `${product.name} ${getCategoryLabel(product.category)} ${product.material} ${product.value} ${variants.metal} ${variants.purity} ${variants.gemstone} stock ${getProductStock(product)}`,
@@ -1602,7 +1618,7 @@ function getLastBackupLabel() {
 
 function updateBackupState() {
   if (selectors.adminBackupStatus) {
-    selectors.adminBackupStatus.textContent = `${getLastBackupLabel()} · sesión segura de 15 minutos.`;
+    selectors.adminBackupStatus.textContent = getLastBackupLabel();
   }
 
   if (selectors.adminResetCatalog) selectors.adminResetCatalog.disabled = state.adminLoading;
@@ -1974,6 +1990,11 @@ function closeAdminOrderDialog() {
   if (selectors.adminOrderDialog?.open) selectors.adminOrderDialog.close();
 }
 
+function canDeleteAdminOrder(order) {
+  return ['CREATED', 'REJECTED', 'VOIDED', 'EXPIRED'].includes(order?.status)
+    || ['DELIVERED', 'CANCELLED'].includes(order?.fulfillmentStatus);
+}
+
 function openAdminOrder(orderId) {
   const order = state.adminOrders.find((item) => item.id === orderId);
   if (!order || !selectors.adminOrderDialog) return;
@@ -2013,6 +2034,13 @@ function openAdminOrder(orderId) {
   selectors.adminOrderNotes.value = order.internalNotes || '';
   selectors.adminOrderMessage.textContent = '';
   selectors.adminOrderMessage.classList.remove('error', 'success');
+  if (selectors.adminOrderDelete) {
+    const canDelete = canDeleteAdminOrder(order);
+    selectors.adminOrderDelete.disabled = !canDelete;
+    selectors.adminOrderDelete.title = canDelete
+      ? 'Eliminar este pedido de las vistas administrativas'
+      : 'Solo puede eliminarse cuando esté pendiente de pago, finalizado, cancelado, rechazado, anulado o vencido';
+  }
   if (!selectors.adminOrderDialog.open) selectors.adminOrderDialog.showModal();
   refreshIcons();
 }
@@ -2050,6 +2078,29 @@ async function saveAdminOrder(event) {
     selectors.adminOrderMessage.classList.add('error');
   } finally {
     submitButton.disabled = false;
+  }
+}
+
+async function deleteAdminOrder() {
+  const orderId = state.activeAdminOrderId;
+  const order = state.adminOrders.find((item) => item.id === orderId);
+  if (!order || !canDeleteAdminOrder(order)) return;
+  if (!window.confirm(`¿Eliminar el pedido ${orderId} del panel administrativo? El registro de pago se conservará de forma protegida.`)) return;
+
+  selectors.adminOrderDelete.disabled = true;
+  selectors.adminOrderMessage.textContent = 'Eliminando pedido del panel...';
+  selectors.adminOrderMessage.classList.remove('error', 'success');
+  try {
+    await apiRequest(`/api/admin/orders/${encodeURIComponent(orderId)}`, { method: 'DELETE' });
+    state.adminOrders = state.adminOrders.filter((item) => item.id !== orderId);
+    closeAdminOrderDialog();
+    renderAdminPanel();
+    recordAdminActivity(`Eliminación administrativa del pedido ${orderId}.`);
+    await loadAdminDashboard();
+  } catch (error) {
+    selectors.adminOrderMessage.textContent = error.message;
+    selectors.adminOrderMessage.classList.add('error');
+    selectors.adminOrderDelete.disabled = false;
   }
 }
 
@@ -2444,7 +2495,6 @@ function renderAdminPanel() {
   populateAdminCategoryOptions();
   renderAdminStats();
   renderAdminOverviewCharts();
-  renderAdminDiagnostics();
   renderAdminOperations();
   renderAdminCommercialContent();
   renderAdminInternationalRequests();
@@ -2481,7 +2531,8 @@ function renderAdminImagePreview() {
         .slice(0, MAX_PRODUCT_IMAGES)
         .map(
           (image, index) => `
-            <figure class="${index === 0 ? 'primary' : ''}">
+            <figure class="${index === 0 ? 'primary' : ''}" draggable="true" data-admin-image-index="${index}">
+              <span class="admin-image-drag-handle" aria-hidden="true"><i data-lucide="grip-vertical"></i></span>
               <img src="${escapeHtml(image)}" alt="Vista previa ${index + 1}" loading="lazy" />
               <button
                 class="icon-button admin-image-remove"
@@ -2492,13 +2543,95 @@ function renderAdminImagePreview() {
               >
                 <i data-lucide="trash-2"></i>
               </button>
-              <figcaption>${index === 0 ? 'Principal' : `Foto ${index + 1}`}</figcaption>
+              <figcaption>
+                <span>${index === 0 ? 'Portada' : `Foto ${index + 1}`}</span>
+                <span class="admin-image-order-actions">
+                  <button type="button" data-admin-image-move="${index}" data-direction="-1" aria-label="Mover imagen a la izquierda"${index === 0 ? ' disabled' : ''}><i data-lucide="chevron-left"></i></button>
+                  <button type="button" data-admin-image-move="${index}" data-direction="1" aria-label="Mover imagen a la derecha"${index === images.length - 1 ? ' disabled' : ''}><i data-lucide="chevron-right"></i></button>
+                </span>
+              </figcaption>
             </figure>
           `,
         )
         .join('')
-    : '<p>La vista previa aparecerá cuando agregues rutas o cargues imágenes.</p>';
+    : '<p>Arrastra archivos al área superior o selecciónalos para crear la galería.</p>';
   refreshIcons();
+}
+
+function reorderAdminImage(fromIndex, toIndex) {
+  const images = normalizeMultilineList(selectors.adminImages.value);
+  if (
+    state.adminImageUploading ||
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= images.length ||
+    toIndex >= images.length
+  ) return;
+  const [image] = images.splice(fromIndex, 1);
+  images.splice(toIndex, 0, image);
+  selectors.adminImages.value = images.join('\n');
+  setAdminFormMessage('Orden de la galería actualizado. Guarda el producto para publicarlo.');
+  renderAdminImagePreview();
+}
+
+function renderAdminMeasurements() {
+  if (!selectors.adminMeasurements || !selectors.adminMeasurementList) return;
+  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  selectors.adminMeasurementList.innerHTML = measurements.length
+    ? measurements.map((measurement, index) => `
+        <div class="admin-measurement-item">
+          <input type="text" maxlength="80" value="${escapeHtml(measurement)}" data-admin-measurement-index="${index}" aria-label="Editar medida ${index + 1}" />
+          <button class="icon-button danger-button" type="button" data-admin-measurement-remove="${index}" aria-label="Eliminar ${escapeHtml(measurement)}"><i data-lucide="trash-2"></i></button>
+        </div>`).join('')
+    : '<p>Agrega por lo menos una medida o talla para publicar el producto.</p>';
+  refreshIcons();
+}
+
+function setAdminMeasurements(measurements) {
+  selectors.adminMeasurements.value = measurements.map((item) => String(item).trim()).filter(Boolean).join(', ');
+  renderAdminMeasurements();
+}
+
+function addAdminMeasurement() {
+  const value = selectors.adminMeasurementEntry.value.trim();
+  if (!value) {
+    selectors.adminMeasurementEntry.focus();
+    return;
+  }
+  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  if (measurements.some((item) => normalizeText(item) === normalizeText(value))) {
+    setAdminFormMessage('Esa medida ya está incluida en el producto.', 'error');
+    return;
+  }
+  if (measurements.length >= 30) {
+    setAdminFormMessage('Cada producto admite un máximo de 30 medidas.', 'error');
+    return;
+  }
+  measurements.push(value);
+  selectors.adminMeasurementEntry.value = '';
+  setAdminMeasurements(measurements);
+  setAdminFormMessage('Medida agregada. Guarda el producto para publicarla.');
+  selectors.adminMeasurementEntry.focus();
+}
+
+function removeAdminMeasurement(index) {
+  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  measurements.splice(index, 1);
+  setAdminMeasurements(measurements);
+}
+
+function updateAdminMeasurement(index, value) {
+  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  if (!measurements[index]) return;
+  const cleaned = String(value).trim();
+  if (!cleaned) {
+    renderAdminMeasurements();
+    return;
+  }
+  measurements[index] = cleaned;
+  setAdminMeasurements(measurements);
+  setAdminFormMessage('Medida actualizada. Guarda el producto para publicarla.');
 }
 
 function updateAdminImageUploadState() {
@@ -2702,13 +2835,15 @@ function resetAdminForm() {
   selectors.adminGemstone.value = 'Sin piedra principal';
   selectors.adminEngraving.value = 'Disponible bajo solicitud';
   selectors.adminImages.value = '';
-  selectors.adminMeasurements.value = 'Medida personalizada';
+  selectors.adminMeasurements.value = '';
+  selectors.adminMeasurementEntry.value = '';
   selectors.adminDescription.value = '';
   selectors.adminFeatured.checked = false;
   selectors.adminFormMessage.textContent = '';
   selectors.adminFormMessage.classList.remove('error', 'success');
   populateAdminCategoryOptions();
   renderAdminImagePreview();
+  renderAdminMeasurements();
 }
 
 function fillAdminForm(productId) {
@@ -2737,6 +2872,7 @@ function fillAdminForm(productId) {
   selectors.adminFormMessage.textContent = '';
   selectors.adminFormMessage.classList.remove('error', 'success');
   renderAdminImagePreview();
+  renderAdminMeasurements();
   selectors.adminName.focus();
 }
 
@@ -2799,20 +2935,20 @@ async function saveAdminProduct(event) {
   if (!product.measurements.length) {
     selectors.adminFormMessage.textContent = 'Agrega por lo menos una medida disponible.';
     selectors.adminFormMessage.classList.add('error');
-    selectors.adminMeasurements.focus();
+    selectors.adminMeasurementEntry.focus();
     return;
   }
 
   if (!product.images.length) {
     selectors.adminFormMessage.textContent = 'Agrega por lo menos una imagen para la galería.';
     selectors.adminFormMessage.classList.add('error');
-    selectors.adminImages.focus();
+    selectors.adminImageDrop.focus();
     return;
   }
 
   if (product.images.length > MAX_PRODUCT_IMAGES) {
     setAdminFormMessage(`Cada producto admite un máximo de ${MAX_PRODUCT_IMAGES} imágenes.`, 'error');
-    selectors.adminImages.focus();
+    selectors.adminImageDrop.focus();
     return;
   }
 
@@ -2971,67 +3107,39 @@ function registerAdminActivity() {
     .catch(() => undefined);
 }
 
-function exportCatalogCsv() {
-  const headers = [
-    'id',
-    'nombre',
-    'categoria',
-    'precio_cop',
-    'stock',
-    'material',
-    'metal',
-    'pureza',
-    'piedra_gema',
-    'grabado',
-    'premium',
-    'destacado',
-    'medidas',
-    'imagenes',
-    'descripcion',
-  ];
-
-  const rows = products.map((product) => {
-    const variants = getProductVariants(product);
-    return [
-      product.id,
-      product.name,
-      getCategoryLabel(product.category),
-      getProductPrice(product),
-      getProductStock(product),
-      product.material,
-      variants.metal,
-      variants.purity,
-      variants.gemstone,
-      variants.engraving,
-      product.premium ? 'Sí' : 'No',
-      product.featured ? 'Sí' : 'No',
-      product.measurements?.join(' | ') || '',
-      getProductImages(product).join(' | '),
-      product.description,
-    ];
-  });
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `querubim-catalogo-${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
-
-  localStorage.setItem(ADMIN_BACKUP_KEY, new Date().toISOString());
-  updateBackupState();
-  recordAdminActivity('Exportación de respaldo CSV del catálogo.');
-}
-
-function handlePasswordRecovery() {
-  if (!selectors.adminBackupStatus) return;
-  selectors.adminBackupStatus.textContent =
-    'La recuperación por correo se habilitará al conectar el proveedor de correo transaccional. Por seguridad, solicita el cambio al responsable técnico.';
-  recordAdminActivity('Consulta de recuperación de contraseña.');
+async function exportCatalogExcel() {
+  if (!selectors.adminExportCatalog) return;
+  selectors.adminExportCatalog.disabled = true;
+  selectors.adminBackupStatus.textContent = 'Preparando archivo de Excel...';
+  try {
+    const response = await fetch('/api/admin/catalog/export', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      const error = new Error(result.error || 'No fue posible generar el archivo de Excel.');
+      error.status = response.status;
+      throw error;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `querubim-catalogo-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    localStorage.setItem(ADMIN_BACKUP_KEY, new Date().toISOString());
+    updateBackupState();
+    recordAdminActivity('Exportación del catálogo en formato Excel.');
+  } catch (error) {
+    selectors.adminBackupStatus.textContent = error.message;
+    if (error.status === 401) await checkAdminSession();
+  } finally {
+    selectors.adminExportCatalog.disabled = false;
+  }
 }
 
 function openPanel(panel) {
@@ -3281,8 +3389,7 @@ function setupEvents() {
 
   selectors.adminLoginForm?.addEventListener('submit', handleAdminLogin);
   selectors.adminLogout?.addEventListener('click', handleAdminLogout);
-  selectors.adminExportCatalog?.addEventListener('click', exportCatalogCsv);
-  selectors.adminSecurityAction?.addEventListener('click', handlePasswordRecovery);
+  selectors.adminExportCatalog?.addEventListener('click', exportCatalogExcel);
   selectors.adminProductForm?.addEventListener('submit', saveAdminProduct);
   selectors.adminCommercialForm?.addEventListener('submit', saveAdminCommercialContent);
   selectors.adminOrderForm?.addEventListener('submit', saveAdminOrder);
@@ -3292,6 +3399,7 @@ function setupEvents() {
   selectors.adminInternationalClose?.addEventListener('click', closeAdminInternationalDialog);
   selectors.adminOrderClose?.addEventListener('click', closeAdminOrderDialog);
   selectors.adminOrderCancel?.addEventListener('click', closeAdminOrderDialog);
+  selectors.adminOrderDelete?.addEventListener('click', deleteAdminOrder);
   selectors.adminOrderSearch?.addEventListener('input', (event) => {
     state.adminOrderQuery = event.target.value;
     state.adminOrderPage = 1;
@@ -3331,8 +3439,52 @@ function setupEvents() {
     selectors.adminImageDrop.classList.remove('dragging');
     handleAdminImageFiles(event.dataTransfer.files);
   });
+  selectors.adminImagePreview?.addEventListener('dragstart', (event) => {
+    const figure = event.target.closest('[data-admin-image-index]');
+    if (!figure || state.adminImageUploading) return;
+    state.adminDraggedImageIndex = Number(figure.dataset.adminImageIndex);
+    figure.classList.add('drag-source');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', figure.dataset.adminImageIndex);
+  });
+  selectors.adminImagePreview?.addEventListener('dragover', (event) => {
+    const figure = event.target.closest('[data-admin-image-index]');
+    if (!figure || state.adminDraggedImageIndex === null) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    selectors.adminImagePreview.querySelectorAll('.drag-target').forEach((item) => item.classList.remove('drag-target'));
+    figure.classList.add('drag-target');
+  });
+  selectors.adminImagePreview?.addEventListener('drop', (event) => {
+    const figure = event.target.closest('[data-admin-image-index]');
+    if (!figure || state.adminDraggedImageIndex === null) return;
+    event.preventDefault();
+    reorderAdminImage(state.adminDraggedImageIndex, Number(figure.dataset.adminImageIndex));
+    state.adminDraggedImageIndex = null;
+  });
+  selectors.adminImagePreview?.addEventListener('dragend', () => {
+    state.adminDraggedImageIndex = null;
+    selectors.adminImagePreview.querySelectorAll('.drag-source, .drag-target').forEach((item) =>
+      item.classList.remove('drag-source', 'drag-target'),
+    );
+  });
+  selectors.adminMeasurementAdd?.addEventListener('click', addAdminMeasurement);
+  selectors.adminMeasurementEntry?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    addAdminMeasurement();
+  });
+  selectors.adminMeasurementList?.addEventListener('change', (event) => {
+    const input = event.target.closest('[data-admin-measurement-index]');
+    if (input) updateAdminMeasurement(Number(input.dataset.adminMeasurementIndex), input.value);
+  });
   selectors.adminSearchInput?.addEventListener('input', (event) => {
     state.adminQuery = event.target.value;
+    renderAdminProducts();
+    refreshIcons();
+  });
+  selectors.adminCategoryFilter?.addEventListener('change', (event) => {
+    state.adminCategoryFilter = event.target.value;
     renderAdminProducts();
     refreshIcons();
   });
@@ -3354,6 +3506,8 @@ function setupEvents() {
     const adminEditButton = event.target.closest('[data-admin-edit]');
     const adminDeleteButton = event.target.closest('[data-admin-delete]');
     const adminImageRemoveButton = event.target.closest('[data-admin-image-remove]');
+    const adminImageMoveButton = event.target.closest('[data-admin-image-move]');
+    const adminMeasurementRemoveButton = event.target.closest('[data-admin-measurement-remove]');
     const adminOrderButton = event.target.closest('[data-admin-order]');
     const adminOrderPageButton = event.target.closest('[data-admin-order-page]');
     const adminInternationalButton = event.target.closest('[data-admin-international]');
@@ -3387,6 +3541,11 @@ function setupEvents() {
     }
     if (removeButton) removeCartItem(removeButton.dataset.removeCart);
     if (adminImageRemoveButton) await removeAdminImage(Number(adminImageRemoveButton.dataset.adminImageRemove));
+    if (adminImageMoveButton && !adminImageMoveButton.disabled) {
+      const index = Number(adminImageMoveButton.dataset.adminImageMove);
+      reorderAdminImage(index, index + Number(adminImageMoveButton.dataset.direction));
+    }
+    if (adminMeasurementRemoveButton) removeAdminMeasurement(Number(adminMeasurementRemoveButton.dataset.adminMeasurementRemove));
     if (adminEditButton) {
       if (state.pendingR2Uploads.size) {
         const shouldDiscard = window.confirm('Hay imágenes nuevas sin guardar. ¿Deseas descartarlas y editar otro producto?');
