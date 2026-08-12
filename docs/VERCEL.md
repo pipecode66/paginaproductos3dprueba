@@ -22,7 +22,7 @@ PUBLIC_BASE_URL=https://DOMINIO-REAL
 ALLOW_BOLD_PRODUCTION=false
 ```
 
-`BOLD_SECRET_KEY` debe marcarse como variable sensible. No es necesario configurar `PORT` en Vercel. `BOLD_TAX` debe omitirse hasta que el responsable contable confirme el impuesto que corresponde.
+`BOLD_SECRET_KEY` debe marcarse como variable sensible. No es necesario configurar `PORT` ni `BOLD_TAX` en Vercel: la aplicación envía `vat-19` de forma fija según la definición tributaria confirmada por el comercio.
 
 Después del redespliegue, abre:
 

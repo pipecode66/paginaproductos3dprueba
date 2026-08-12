@@ -18,6 +18,7 @@ test('deshabilita el almacenamiento temporal en Vercel sin base de datos', () =>
 test('conserva archivos JSON únicamente para desarrollo local', () => {
   const config = createRuntimeConfig({}, 'C:/app');
   assert.equal(config.storage.mode, 'json');
+  assert.equal(config.bold.tax, 'vat-19');
 });
 
 test('conserva la ruta original de la API después del rewrite de Vercel', () => {
@@ -50,6 +51,7 @@ test('Vercel informa que falta la base sin guardar órdenes temporalmente', asyn
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customer: { fullName: 'Cliente', email: 'cliente@example.com', phone: '3000000000' },
+      destination: { scope: 'national' },
       items: [{ productId: 'anillo-rubi-aurora', measure: 'Talla 6', quantity: 1 }],
     }),
   });

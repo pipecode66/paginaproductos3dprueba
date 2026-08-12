@@ -16,6 +16,7 @@ const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     customer: { fullName: 'Cliente Gestión', email: 'gestion@example.com', phone: '3001234567' },
+    destination: { scope: 'national' },
     items: [{ productId: 'dije-mano-sagrada', measure: 'Mini', quantity: 1 }],
   }),
 });

@@ -38,7 +38,7 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
       identityKey: String(env.BOLD_IDENTITY_KEY || '').trim(),
       secretKey: String(env.BOLD_SECRET_KEY || '').trim(),
       publicBaseUrl,
-      tax: String(env.BOLD_TAX || '').trim(),
+      tax: 'vat-19',
       productionEnabled: env.ALLOW_BOLD_PRODUCTION === 'true',
     },
   };

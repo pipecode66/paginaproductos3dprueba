@@ -5,7 +5,7 @@ Este procedimiento evita activar cobros reales antes de comprobar las credencial
 ## 1. Requisitos antes del cambio
 
 - Revocar y generar nuevamente las llaves de producción de Bold que hayan sido compartidas fuera de un canal seguro.
-- Confirmar con el responsable contable si los precios incluyen impuesto y qué valor debe usar `BOLD_TAX`.
+- Confirmar que los precios y los ajustes comerciales incluyen IVA del 19 %.
 - Confirmar que la cuenta Bold del comercio esté activa y que sus límites permitan los precios del catálogo.
 - Conservar las llaves de prueba únicamente en Preview y Development. No mezclar llaves de prueba y producción.
 
@@ -18,9 +18,10 @@ BOLD_ENVIRONMENT=production
 BOLD_IDENTITY_KEY=<nueva llave de identidad de producción>
 BOLD_SECRET_KEY=<nueva llave secreta de producción>
 PUBLIC_BASE_URL=https://joyeriaquerubim.vercel.app
-BOLD_TAX=<valor confirmado o vacío si Bold debe mostrar impuesto 0>
 ALLOW_BOLD_PRODUCTION=false
 ```
+
+La aplicación envía automáticamente `vat-19`. No se configura `BOLD_TAX` en Vercel.
 
 No modificar `DATABASE_URL`, las variables administrativas ni las de Cloudflare R2. Después de guardar las variables, hacer un redeploy de Production.
 

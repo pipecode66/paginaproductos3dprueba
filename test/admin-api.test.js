@@ -48,7 +48,7 @@ async function createAdminServer(context) {
       identityKey: 'test-identity',
       secretKey: 'test-secret',
       publicBaseUrl: 'http://localhost:4173',
-      tax: '',
+      tax: 'vat-19',
       productionEnabled: false,
     },
     admin: {
@@ -170,12 +170,13 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customer: { fullName: 'Compra desde panel', email: 'compra@example.com', phone: '3007654321' },
+      destination: { scope: 'national' },
       items: [{ productId: adminProduct.id, measure: 'Talla 6', quantity: 1 }],
     }),
   });
   const paymentOrderData = await paymentOrder.json();
   assert.equal(paymentOrder.status, 201);
-  assert.equal(paymentOrderData.order.amount, 1050000);
+  assert.equal(paymentOrderData.order.amount, 1102500);
 
   const blockedPreparation = await fetch(`${baseUrl}/api/admin/orders/${paymentOrderData.order.id}`, {
     method: 'PATCH',
@@ -192,7 +193,7 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
     data: {
       payment_id: 'BOLD-ADMIN-PAYMENT-1',
       payment_method: 'CARD_WEB',
-      amount: { currency: 'COP', total: 1050000 },
+      amount: { currency: 'COP', total: 1102500 },
       metadata: { reference: paymentOrderData.order.id },
     },
   };

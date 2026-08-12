@@ -3,12 +3,14 @@
 ## Flujo implementado
 
 1. El cliente añade joyas y medidas a la canasta.
-2. `POST /api/payments/orders` valida cada referencia contra el catálogo del servidor.
-3. El servidor calcula el total en COP, crea una referencia única y genera el hash SHA-256 con la llave secreta.
-4. El navegador abre `BoldCheckout` con `renderMode: embedded`.
-5. Bold envía el resultado a `POST /api/payments/bold/webhook`.
-6. El servidor valida `x-bold-signature` sobre el cuerpo crudo, evita eventos duplicados y actualiza la orden.
-7. `/pago/resultado` consulta el estado registrado por el servidor.
+2. El cliente selecciona si la entrega será en Colombia o fuera de Colombia.
+3. `POST /api/payments/orders` valida cada referencia contra el catálogo del servidor.
+4. El servidor aplica el ajuste comercial del 5 % para Colombia o del 6 % para entregas internacionales.
+5. El total conserva el IVA del 19 % incluido, se crea una referencia única y se genera el hash SHA-256 con la llave secreta.
+6. El navegador abre `BoldCheckout` con `renderMode: embedded`.
+7. Bold envía el resultado a `POST /api/payments/bold/webhook`.
+8. El servidor valida `x-bold-signature` sobre el cuerpo crudo, evita eventos duplicados y actualiza la orden.
+9. `/pago/resultado` consulta el estado registrado por el servidor.
 
 En el ambiente de pruebas, Bold firma la notificación del botón `Probar el webhook` usando una clave vacía. En producción se utiliza la llave secreta del Botón de pagos.
 
@@ -25,9 +27,10 @@ BOLD_SECRET_KEY=
 DATABASE_URL=
 PUBLIC_BASE_URL=http://localhost:4173
 PORT=4173
-BOLD_TAX=
 ALLOW_BOLD_PRODUCTION=false
 ```
+
+El IVA está fijado en `vat-19` dentro de la configuración de la aplicación. No requiere una variable adicional en Vercel. Los ajustes del 5 % y 6 % forman parte del total firmado y no se reportan como un impuesto independiente.
 
 No se deben incluir llaves reales en Git, JavaScript del navegador, capturas, registros ni documentación. La llave de identidad se entrega al checkout desde el servidor; la llave secreta nunca sale del backend.
 
@@ -55,7 +58,7 @@ La aplicación está preparada para ejecutarse como una función de Node.js en V
 2. Conectar una base de datos PostgreSQL persistente al proyecto de Vercel.
 3. Configurar las llaves de producción como secretos del proveedor de hosting.
 4. Definir `BOLD_ENVIRONMENT=production` y la URL pública real.
-5. Confirmar con contabilidad el tratamiento de impuestos antes de definir `BOLD_TAX`.
+5. Confirmar que el resumen muestre IVA del 19 % incluido y el ajuste correspondiente al destino.
 6. Registrar y probar el webhook desde el panel Bold.
 7. Confirmar los límites de monto habilitados para el comercio.
 8. Ejecutar una compra real controlada de bajo valor.

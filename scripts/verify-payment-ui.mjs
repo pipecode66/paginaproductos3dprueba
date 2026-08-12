@@ -8,6 +8,7 @@ const orderResponse = await fetch(`${baseUrl}/api/payments/orders`, {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     customer: { fullName: 'Prueba Visual', email: 'visual@example.com', phone: '3001234567' },
+    destination: { scope: 'national' },
     items: [{ productId: 'dije-mano-sagrada', measure: 'Mini', quantity: 1 }],
   }),
 });
@@ -30,6 +31,11 @@ try {
   await mobile.locator('#detail-close').click();
   await mobile.locator('#cart-button').click();
   await mobile.locator('#checkout-form').waitFor();
+  const nationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
+  const nationalTotal = await mobile.locator('#checkout-total').textContent();
+  await mobile.locator('#checkout-destination').selectOption('international');
+  const internationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
+  const internationalTotal = await mobile.locator('#checkout-total').textContent();
   const drawerBox = await mobile.locator('#selection-drawer').boundingBox();
   const hasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   await mobile.screenshot({ path: 'test-results/checkout-cart-mobile.png', fullPage: true });
@@ -39,9 +45,19 @@ try {
     cartFormVisible: await mobile.locator('#checkout-form').isVisible(),
     drawerInsideViewport: Boolean(drawerBox && drawerBox.x >= 0 && drawerBox.x + drawerBox.width <= 390),
     hasHorizontalOverflow,
+    nationalAdjustmentApplied: /5\s*%/.test(nationalAdjustment || ''),
+    internationalAdjustmentApplied:
+      /6\s*%/.test(internationalAdjustment || '') && internationalTotal !== nationalTotal,
   };
   console.log(JSON.stringify(result));
-  if (!result.paymentResultVisible || !result.cartFormVisible || !result.drawerInsideViewport || result.hasHorizontalOverflow) {
+  if (
+    !result.paymentResultVisible ||
+    !result.cartFormVisible ||
+    !result.drawerInsideViewport ||
+    result.hasHorizontalOverflow ||
+    !result.nationalAdjustmentApplied ||
+    !result.internationalAdjustmentApplied
+  ) {
     throw new Error('La verificación visual del flujo de pago no fue satisfactoria.');
   }
 } finally {

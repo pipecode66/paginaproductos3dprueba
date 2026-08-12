@@ -51,7 +51,7 @@ function createService(overrides = {}) {
       identityKey: 'test-identity',
       secretKey: 'test-secret',
       publicBaseUrl: 'http://localhost:4173',
-      tax: '',
+      tax: 'vat-19',
       productionEnabled: false,
       ...overrides.boldConfig,
     },
@@ -63,19 +63,50 @@ function createService(overrides = {}) {
 function validPayload(extraItemFields = {}) {
   return {
     customer: { fullName: 'Cliente Prueba', email: 'cliente@example.com', phone: '3001234567' },
+    destination: { scope: 'national' },
     items: [{ productId: product.id, measure: 'Talla 6', quantity: 1, ...extraItemFields }],
   };
 }
 
 test('recalcula el total desde el catálogo e ignora precios enviados por el navegador', async () => {
   const service = createService();
-  const result = await service.createOrder(validPayload({ price: 1000, subtotal: 1000 }));
+  const result = await service.createOrder({
+    ...validPayload({ price: 1000, subtotal: 1000 }),
+    amount: 1000,
+    adjustmentRate: 0,
+    destination: { scope: 'national', adjustmentRate: 0 },
+  });
 
-  assert.equal(result.order.amount, 1250000);
-  assert.equal(result.payment.amount, '1250000');
+  assert.equal(result.order.subtotal, 1250000);
+  assert.equal(result.order.commercialAdjustment, 62500);
+  assert.equal(result.order.adjustmentRate, 5);
+  assert.equal(result.order.amount, 1312500);
+  assert.equal(result.payment.amount, '1312500');
+  assert.equal(result.payment.tax, 'vat-19');
   assert.equal(result.payment.renderMode, 'embedded');
   assert.equal(Object.hasOwn(result.payment, 'redirectionUrl'), false);
   assert.equal(Object.hasOwn(result.payment, 'secretKey'), false);
+});
+
+test('aplica el 6 % a entregas internacionales y rechaza destinos desconocidos', async () => {
+  const service = createService();
+  const international = await service.createOrder({
+    ...validPayload(),
+    destination: { scope: 'international' },
+  });
+
+  assert.equal(international.order.commercialAdjustment, 75000);
+  assert.equal(international.order.adjustmentRate, 6);
+  assert.equal(international.order.amount, 1325000);
+  assert.equal(international.order.destination.label, 'Fuera de Colombia');
+
+  await assert.rejects(
+    () => service.createOrder({ ...validPayload(), destination: { scope: 'desconocido' } }),
+    (error) => {
+      assert.equal(error.code, 'INVALID_PAYMENT_REQUEST');
+      return true;
+    },
+  );
 });
 
 test('incluye la redirección únicamente cuando la tienda usa HTTPS', async () => {
@@ -110,7 +141,7 @@ test('procesa un pago aprobado una sola vez', async () => {
       payment_id: 'BOLD-PAYMENT-1',
       payment_method: 'CARD_WEB',
       payer_email: 'cliente@example.com',
-      amount: { currency: 'COP', total: 1250000 },
+      amount: { currency: 'COP', total: 1312500 },
       metadata: { reference: 'QBM-ORDER-001' },
     },
   };
@@ -137,7 +168,7 @@ test('cancela operativamente las ventas rechazadas y anuladas', async () => {
     data: {
       payment_id: 'BOLD-REJECTED-1',
       payment_method: 'CARD_WEB',
-      amount: { currency: 'COP', total: 1250000 },
+      amount: { currency: 'COP', total: 1312500 },
       metadata: { reference: 'QBM-ORDER-001' },
     },
   };
@@ -156,7 +187,7 @@ test('cancela operativamente las ventas rechazadas y anuladas', async () => {
     data: {
       payment_id: 'BOLD-VOID-1',
       payment_method: 'CARD_WEB',
-      amount: { currency: 'COP', total: 1250000 },
+      amount: { currency: 'COP', total: 1312500 },
       metadata: { reference: 'QBM-ORDER-001' },
     },
   };
@@ -241,7 +272,7 @@ test('continúa recibiendo webhooks cuando las nuevas ventas de producción est�
     data: {
       payment_id: 'BOLD-PRODUCTION-LOCK-1',
       payment_method: 'CARD_WEB',
-      amount: { currency: 'COP', total: 1250000 },
+      amount: { currency: 'COP', total: 1312500 },
       metadata: { reference: 'QBM-ORDER-001' },
     },
   };

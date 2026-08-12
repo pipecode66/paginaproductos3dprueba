@@ -444,6 +444,10 @@ const selectors = {
   selectionItems: document.querySelector('#selection-items'),
   selectionEmpty: document.querySelector('#selection-empty'),
   checkoutForm: document.querySelector('#checkout-form'),
+  checkoutDestination: document.querySelector('#checkout-destination'),
+  checkoutSubtotal: document.querySelector('#checkout-subtotal'),
+  checkoutAdjustmentLabel: document.querySelector('#checkout-adjustment-label'),
+  checkoutAdjustment: document.querySelector('#checkout-adjustment'),
   checkoutTotal: document.querySelector('#checkout-total'),
   checkoutMessage: document.querySelector('#checkout-message'),
   checkoutPayButton: document.querySelector('#checkout-pay-button'),
@@ -858,13 +862,29 @@ function removeCartItem(key) {
   renderCart();
 }
 
+function getCartPricing() {
+  const subtotal = state.cartItems.reduce((total, item) => total + getProductPrice(item.product), 0);
+  const international = selectors.checkoutDestination?.value === 'international';
+  const adjustmentRate = international ? 6 : 5;
+  const commercialAdjustment = Math.round((subtotal * adjustmentRate) / 100);
+  return {
+    subtotal,
+    commercialAdjustment,
+    adjustmentRate,
+    amount: subtotal + commercialAdjustment,
+    destinationScope: international ? 'international' : 'national',
+  };
+}
+
 function renderCart() {
+  const pricing = getCartPricing();
   selectors.cartCount.textContent = String(state.cartItems.length);
   selectors.selectionEmpty.hidden = state.cartItems.length > 0;
   selectors.checkoutForm.hidden = state.cartItems.length === 0;
-  selectors.checkoutTotal.textContent = formatCurrency(
-    state.cartItems.reduce((total, item) => total + getProductPrice(item.product), 0),
-  );
+  selectors.checkoutSubtotal.textContent = formatCurrency(pricing.subtotal);
+  selectors.checkoutAdjustmentLabel.textContent = `${pricing.destinationScope === 'international' ? 'Ajuste internacional' : 'Ajuste nacional'} (${pricing.adjustmentRate} %)`;
+  selectors.checkoutAdjustment.textContent = formatCurrency(pricing.commercialAdjustment);
+  selectors.checkoutTotal.textContent = formatCurrency(pricing.amount);
   selectors.selectionItems.innerHTML = state.cartItems
     .map(
       ({ key, product, measure }) => `
@@ -945,6 +965,7 @@ async function handleCheckoutSubmit(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customer,
+        destination: { scope: String(formData.get('destinationType') || '') },
         items: state.cartItems.map(({ product, measure }) => ({ productId: product.id, measure, quantity: 1 })),
       }),
     });
@@ -1031,6 +1052,7 @@ function renderPaymentResult(order, errorMessage = '') {
     ? `
         <div><dt>Orden</dt><dd>${escapeHtml(order.id)}</dd></div>
         <div><dt>Total</dt><dd>${formatCurrency(order.amount)}</dd></div>
+        <div><dt>Destino</dt><dd>${escapeHtml(order.destination?.label || 'Por confirmar')}</dd></div>
         <div><dt>Estado</dt><dd>${escapeHtml(paymentStatusLabels[order.status] || order.status)}</dd></div>
       `
     : '';
@@ -1469,6 +1491,11 @@ function openAdminOrder(orderId) {
     <section class="admin-order-detail-block">
       <h3>Pago verificado por Bold</h3>
       <p><span class="admin-order-badge ${getOrderStatusClass(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span><br />${escapeHtml(formatCurrency(order.amount))} · ${escapeHtml(order.paymentMethod || 'Método pendiente')}</p>
+      <p>Subtotal: ${escapeHtml(formatCurrency(order.subtotal ?? order.amount))}<br />Ajuste ${order.adjustmentRate || 0} %: ${escapeHtml(formatCurrency(order.commercialAdjustment || 0))}<br />IVA incluido: ${order.taxRate || 19} %</p>
+    </section>
+    <section class="admin-order-detail-block">
+      <h3>Destino de entrega</h3>
+      <p>${escapeHtml(order.destination?.label || 'Pendiente de confirmar')}</p>
     </section>
     <section class="admin-order-detail-block wide">
       <h3>Piezas solicitadas</h3>
@@ -2578,6 +2605,7 @@ function setupEvents() {
   });
 
   selectors.detailAddCart.addEventListener('click', addActiveProductToCart);
+  selectors.checkoutDestination.addEventListener('change', renderCart);
   selectors.checkoutForm.addEventListener('submit', handleCheckoutSubmit);
   selectors.paymentResultRefresh.addEventListener('click', () => consultPaymentOrder({ scheduleNext: true }));
 

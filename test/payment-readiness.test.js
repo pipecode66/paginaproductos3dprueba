@@ -8,7 +8,7 @@ const baseBoldConfig = {
   identityKey: 'production-identity',
   secretKey: 'production-secret',
   publicBaseUrl: 'https://joyeriaquerubim.vercel.app',
-  tax: '',
+  tax: 'vat-19',
   productionEnabled: false,
 };
 
@@ -19,6 +19,7 @@ test('mantiene producción bloqueada aun cuando la infraestructura está lista',
   assert.equal(readiness.configured, false);
   assert.equal(readiness.canReceiveWebhooks, true);
   assert.equal(readiness.productionEnabled, false);
+  assert.equal(readiness.checks.taxConfigured, true);
   assert.equal(
     readiness.webhookUrl,
     'https://joyeriaquerubim.vercel.app/api/payments/bold/webhook',

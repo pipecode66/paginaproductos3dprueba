@@ -5,6 +5,10 @@ import { getDefaultFulfillmentStatus } from './order-management.js';
 const ORDER_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const MAX_ITEMS = 20;
 const MAX_QUANTITY = 10;
+const DESTINATION_POLICIES = {
+  national: { label: 'Colombia', adjustmentRate: 5 },
+  international: { label: 'Fuera de Colombia', adjustmentRate: 6 },
+};
 
 export class PaymentError extends Error {
   constructor(message, statusCode = 400, code = 'INVALID_PAYMENT_REQUEST') {
@@ -36,6 +40,15 @@ function sanitizeCustomer(customer = {}) {
   return sanitized;
 }
 
+function sanitizeDestination(destination = {}) {
+  const scope = cleanText(destination.scope, 20).toLowerCase();
+  const policy = DESTINATION_POLICIES[scope];
+  if (!policy) {
+    throw new PaymentError('Selecciona si la entrega será en Colombia o fuera de Colombia.');
+  }
+  return { scope, label: policy.label };
+}
+
 function createOrderId(now = Date.now()) {
   const time = now.toString(36).toUpperCase();
   const random = randomBytes(5).toString('hex').toUpperCase();
@@ -54,6 +67,11 @@ function publicOrder(order) {
     id: order.id,
     status: order.status,
     amount: order.amount,
+    subtotal: order.subtotal,
+    commercialAdjustment: order.commercialAdjustment,
+    adjustmentRate: order.adjustmentRate,
+    destination: order.destination,
+    taxRate: order.taxRate,
     currency: order.currency,
     items: order.items,
     createdAt: order.createdAt,
@@ -149,7 +167,11 @@ export class PaymentService {
       });
     }
 
-    const amount = orderItems.reduce((total, item) => total + item.subtotal, 0);
+    const subtotal = orderItems.reduce((total, item) => total + item.subtotal, 0);
+    const destination = sanitizeDestination(payload.destination);
+    const adjustmentRate = DESTINATION_POLICIES[destination.scope].adjustmentRate;
+    const commercialAdjustment = Math.round((subtotal * adjustmentRate) / 100);
+    const amount = subtotal + commercialAdjustment;
     if (!Number.isSafeInteger(amount) || amount < 1000) {
       throw new PaymentError('El total de la orden no es válido.');
     }
@@ -163,6 +185,11 @@ export class PaymentService {
       id: orderId,
       status: 'CREATED',
       amount,
+      subtotal,
+      commercialAdjustment,
+      adjustmentRate,
+      destination,
+      taxRate: 19,
       currency,
       items: orderItems,
       customer,

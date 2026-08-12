@@ -890,11 +890,14 @@
       <div class="selection-items" id="selection-items"></div>
       <p class="selection-empty" id="selection-empty">Aún no has añadido joyas a la canasta.</p>
       <form class="checkout-form" id="checkout-form" novalidate hidden>
-        <div class="checkout-total">
-          <span>Total de productos</span>
-          <strong id="checkout-total">$0</strong>
-        </div>
         <div class="checkout-customer-fields">
+          <label for="checkout-destination">
+            Destino de entrega
+            <select id="checkout-destination" name="destinationType" required>
+              <option value="national">Colombia</option>
+              <option value="international">Fuera de Colombia</option>
+            </select>
+          </label>
           <label for="checkout-name">
             Nombre completo
             <input id="checkout-name" name="fullName" type="text" maxlength="100" autocomplete="name" required />
@@ -907,6 +910,21 @@
             Celular
             <input id="checkout-phone" name="phone" type="tel" maxlength="24" autocomplete="tel" required />
           </label>
+        </div>
+        <div class="checkout-summary" aria-label="Resumen del pago">
+          <div>
+            <span>Subtotal</span>
+            <strong id="checkout-subtotal">$0</strong>
+          </div>
+          <div>
+            <span id="checkout-adjustment-label">Ajuste nacional (5 %)</span>
+            <strong id="checkout-adjustment">$0</strong>
+          </div>
+          <div class="checkout-total">
+            <span>Total a pagar</span>
+            <strong id="checkout-total">$0</strong>
+          </div>
+          <small>IVA del 19 % incluido en el total.</small>
         </div>
         <p class="checkout-message" id="checkout-message" role="status" aria-live="polite"></p>
         <button class="button button-primary checkout-pay-button" id="checkout-pay-button" type="submit">

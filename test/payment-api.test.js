@@ -18,7 +18,7 @@ test('crea y consulta una orden por HTTP sin exponer la llave secreta', async (c
       identityKey: 'test-identity',
       secretKey: 'never-return-this-secret',
       publicBaseUrl: 'http://localhost:4173',
-      tax: '',
+      tax: 'vat-19',
       productionEnabled: false,
     },
   };
@@ -36,13 +36,16 @@ test('crea y consulta una orden por HTTP sin exponer la llave secreta', async (c
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customer: { fullName: 'Cliente API', email: 'api@example.com', phone: '3001234567' },
+      destination: { scope: 'national' },
       items: [{ productId: 'anillo-rubi-aurora', measure: 'Talla 6', quantity: 1, price: 1000 }],
     }),
   });
   const created = await createResponse.json();
 
   assert.equal(createResponse.status, 201);
-  assert.equal(created.order.amount, 1120000);
+  assert.equal(created.order.amount, 1176000);
+  assert.equal(created.order.commercialAdjustment, 56000);
+  assert.equal(created.payment.tax, 'vat-19');
   assert.equal(JSON.stringify(created).includes('never-return-this-secret'), false);
 
   const getResponse = await fetch(`${baseUrl}/api/payments/orders/${created.order.id}`);
@@ -59,7 +62,7 @@ test('crea y consulta una orden por HTTP sin exponer la llave secreta', async (c
       payment_id: 'BOLD-API-PAYMENT-1',
       payment_method: 'CARD_WEB',
       payer_email: 'api@example.com',
-      amount: { currency: 'COP', total: 1120000 },
+      amount: { currency: 'COP', total: 1176000 },
       metadata: { reference: created.order.id },
     },
   };
