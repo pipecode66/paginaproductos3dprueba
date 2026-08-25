@@ -147,12 +147,11 @@ p {
   min-height: 58px;
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .brand img {
-  width: 52px;
-  height: 44px;
+  width: clamp(138px, 12vw, 164px);
+  height: 68px;
   object-fit: contain;
 }
 
@@ -3272,6 +3271,18 @@ body.admin-route .whatsapp-button {
   font-weight: 800;
 }
 
+.admin-export-message {
+  width: 100%;
+  margin: 0;
+  color: rgba(255, 246, 223, 0.8);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.admin-export-message:empty {
+  display: none;
+}
+
 .admin-backup-card {
   min-height: 54px;
   margin-left: auto;
@@ -4186,8 +4197,8 @@ body.admin-route .whatsapp-button {
 
 @media (max-width: 620px) {
   .brand img {
-    width: 44px;
-    height: 38px;
+    width: 126px;
+    height: 58px;
   }
 
   .brand strong {
@@ -5147,6 +5158,10 @@ body.admin-panel-active .admin-panel-view {
 }
 
 .admin-app-view .admin-backup-status {
+  color: #777067;
+}
+
+.admin-app-view .admin-export-message {
   color: #777067;
 }
 

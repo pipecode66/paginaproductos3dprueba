@@ -153,6 +153,10 @@ try {
   await page.locator('#admin-export-catalog').click();
   const catalogDownload = await downloadPromise;
   const excelExportVerified = catalogDownload.suggestedFilename().endsWith('.xlsx');
+  const pdfDownloadPromise = page.waitForEvent('download');
+  await page.locator('#admin-export-catalog-pdf').click();
+  const pdfDownload = await pdfDownloadPromise;
+  const pdfExportVerified = pdfDownload.suggestedFilename().endsWith('.pdf');
   await page.screenshot({ path: 'test-results/admin-dashboard-desktop.png', fullPage: true });
 
   await page.locator('[data-admin-view-target="content"]').click();
@@ -280,6 +284,7 @@ try {
     imageOrderVerified,
     measurementsVerified,
     excelExportVerified,
+    pdfExportVerified,
     commercialSlotCount,
     commercialUploadVerified,
     internationalDialogVisible,
@@ -288,7 +293,7 @@ try {
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {

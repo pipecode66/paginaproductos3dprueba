@@ -347,7 +347,7 @@ const DEFAULT_ADMIN_STORAGE = {
   maxImageSize: 8 * 1024 * 1024,
   acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
 };
-const MAX_PRODUCT_IMAGES = 12;
+const MAX_PRODUCT_IMAGES = 4;
 
 const state = {
   activeFilter: 'todos',
@@ -465,6 +465,8 @@ const selectors = {
   adminInternationalCancel: document.querySelector('#admin-international-cancel'),
   adminInternationalClose: document.querySelector('#admin-international-close'),
   adminExportCatalog: document.querySelector('#admin-export-catalog'),
+  adminExportCatalogPdf: document.querySelector('#admin-export-catalog-pdf'),
+  adminExportMessage: document.querySelector('#admin-export-message'),
   adminBackupStatus: document.querySelector('#admin-backup-status'),
   adminProductList: document.querySelector('#admin-product-list'),
   adminSearchInput: document.querySelector('#admin-product-search'),
@@ -1588,7 +1590,7 @@ function getAdminActivityLog() {
 
   return [
     {
-      action: 'Panel administrativo rediseñado con diagnóstico operativo.',
+      action: 'Panel administrativo disponible para la gestión comercial.',
       user: state.adminUser?.email || 'Administrador Querubim',
       date: new Date().toISOString(),
     },
@@ -1748,116 +1750,6 @@ function setAdminView(viewName, { scroll = true } = {}) {
   document.querySelector('#admin-app-sidebar')?.classList.remove('open');
   document.body.classList.remove('admin-sidebar-open');
   if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function renderAdminDiagnostics() {
-  if (!selectors.adminDiagnostics) return;
-  const storageReady = Boolean(state.adminStorage.configured);
-
-  const diagnostics = [
-    {
-      icon: 'image-plus',
-      title: 'Almacenamiento de imágenes',
-      before: storageReady
-        ? 'Antes: las galerías dependían de rutas escritas manualmente.'
-        : 'Actual: galerías mediante rutas públicas o URL HTTPS.',
-      improvement: storageReady
-        ? 'Ahora: carga múltiple directa y segura mediante Cloudflare R2.'
-        : 'Siguiente mejora: completar las variables de Cloudflare R2 en el servidor.',
-      status: storageReady ? 'Corregido' : 'En integración',
-    },
-    {
-      icon: 'gallery-horizontal-end',
-      title: 'Portadas dependientes del código',
-      before: 'Antes: cambiar un banner requería modificar y desplegar la aplicación.',
-      improvement: 'Ahora: el administrador publica portadas, campañas y vitrinas Premium desde el panel.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'plane',
-      title: 'Exportaciones sin proceso',
-      before: 'Antes: una venta internacional se confundía con un domicilio nacional.',
-      improvement: 'Ahora: existe una bandeja para acordar el envío, confirmar condiciones y generar el pago después.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'package-check',
-      title: 'Inventario invisible',
-      before: 'Antes: no existía stock.',
-      improvement: 'Ahora: cada orden reserva existencias y las libera automáticamente si el pago se rechaza, se anula o vence.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'layers',
-      title: 'Variantes incompletas',
-      before: 'Antes: solo medidas.',
-      improvement: 'Ahora: metal, pureza, piedra o gema, medida y grabado personalizado.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'clipboard-list',
-      title: 'Pedidos sin seguimiento',
-      before: 'Antes: la bandeja utilizaba datos de ejemplo.',
-      improvement: 'Ahora: muestra las órdenes y estados recibidos desde Bold.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'user-round',
-      title: 'Clientes sin historial',
-      before: 'Antes: los clientes visibles eran demostrativos.',
-      improvement: 'Ahora: el resumen se calcula a partir de compradores y pedidos reales.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'download',
-      title: 'Restauración riesgosa',
-      before: 'Antes: restaurar podía borrar cambios sin respaldo.',
-      improvement: 'Ahora: el botón de restaurar exige exportar el catálogo en CSV primero.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'database',
-      title: 'Catálogo aislado',
-      before: 'Antes: los cambios solo existían en el navegador del administrador.',
-      improvement: 'Ahora: tienda, panel, inventario y pagos consumen la misma base de datos.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'shield-check',
-      title: 'Roles y trazabilidad',
-      before: 'Antes: las credenciales estaban incluidas en el JavaScript público.',
-      improvement: 'Ahora: el servidor valida al administrador y entrega una sesión protegida.',
-      status: 'Mejorado',
-    },
-    {
-      icon: 'key-round',
-      title: 'Sesión administrativa',
-      before: 'Antes: el acceso dependía de localStorage.',
-      improvement: 'Ahora: cookie segura, inaccesible al JavaScript y cierre tras 15 minutos.',
-      status: 'Corregido',
-    },
-    {
-      icon: 'credit-card',
-      title: 'Pagos sin conexión',
-      before: 'Antes: se mostraban proveedores de pago simulados.',
-      improvement: 'Ahora: ingresos y alertas reflejan directamente la integración con Bold.',
-      status: 'Corregido',
-    },
-  ];
-
-  selectors.adminDiagnostics.innerHTML = diagnostics
-    .map(
-      (item) => `
-        <article class="admin-diagnostic-card">
-          <i data-lucide="${item.icon}"></i>
-          <span>${escapeHtml(item.status)}</span>
-          <h3>${escapeHtml(item.title)}</h3>
-          <p>${escapeHtml(item.before)}</p>
-          <strong>${escapeHtml(item.improvement)}</strong>
-        </article>
-      `,
-    )
-    .join('');
 }
 
 function getAdminCustomers() {
@@ -3142,6 +3034,40 @@ async function exportCatalogExcel() {
   }
 }
 
+async function exportCatalogPdf() {
+  if (!selectors.adminExportCatalogPdf) return;
+  selectors.adminExportCatalogPdf.disabled = true;
+  selectors.adminExportMessage.textContent = 'Preparando el catálogo PDF...';
+  try {
+    const response = await fetch('/api/admin/catalog/export/pdf', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/pdf' },
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      const error = new Error(result.error || 'No fue posible generar el catálogo PDF.');
+      error.status = response.status;
+      throw error;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `querubim-catalogo-${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    selectors.adminExportMessage.textContent = 'Catálogo PDF descargado correctamente.';
+    recordAdminActivity('Descarga del catálogo comercial en formato PDF.');
+  } catch (error) {
+    selectors.adminExportMessage.textContent = error.message;
+    if (error.status === 401) await checkAdminSession();
+  } finally {
+    selectors.adminExportCatalogPdf.disabled = false;
+  }
+}
+
 function openPanel(panel) {
   closePanels(false);
   panel.classList.add('open');
@@ -3390,6 +3316,7 @@ function setupEvents() {
   selectors.adminLoginForm?.addEventListener('submit', handleAdminLogin);
   selectors.adminLogout?.addEventListener('click', handleAdminLogout);
   selectors.adminExportCatalog?.addEventListener('click', exportCatalogExcel);
+  selectors.adminExportCatalogPdf?.addEventListener('click', exportCatalogPdf);
   selectors.adminProductForm?.addEventListener('submit', saveAdminProduct);
   selectors.adminCommercialForm?.addEventListener('submit', saveAdminCommercialContent);
   selectors.adminOrderForm?.addEventListener('submit', saveAdminOrder);

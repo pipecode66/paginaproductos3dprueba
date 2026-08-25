@@ -89,7 +89,8 @@ async function createSchema(pool) {
         `INSERT INTO querubim_catalog_products
           (id, name, category, price, stock, measurements, active, data)
          VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb)
-         ON CONFLICT (id) DO NOTHING`,
+         ON CONFLICT (id) DO UPDATE SET
+           data = EXCLUDED.data || querubim_catalog_products.data`,
         [
           product.id,
           product.name,

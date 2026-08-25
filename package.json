@@ -26,7 +26,9 @@
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "lucide": "latest",
+    "pdfkit": "^0.17.2",
     "pg": "^8.23.0",
+    "sharp": "^0.35.3",
     "simple-icons": "^16.26.0"
   },
   "devDependencies": {

@@ -10,6 +10,7 @@ import {
 } from './admin-auth.js';
 import { validateCatalogProduct } from './catalog-validation.js';
 import { createCatalogExcel } from './catalog-excel.js';
+import { createCatalogPdf } from './catalog-pdf.js';
 import { InternationalRequestService } from './international-request-service.js';
 import { InternationalRequestStore } from './international-request-store.js';
 import { archiveManagedOrder, normalizeManagedOrder, updateManagedOrder } from './order-management.js';
@@ -385,6 +386,28 @@ export function createApp({
     } catch (error) {
       const serialized = serializeError(error);
       logger.error('Error exportando el catálogo a Excel', error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
+  });
+
+  app.get('/api/admin/catalog/export/pdf', async (request, response) => {
+    try {
+      const products = await resolvedCatalog.listAll();
+      const pdf = await createCatalogPdf(products, {
+        rootDir: config.rootDir || process.cwd(),
+        publicBaseUrl: config.bold.publicBaseUrl,
+        allowedImageOrigins: [config.r2?.publicUrl],
+      });
+      const date = new Date().toISOString().slice(0, 10);
+      response.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="querubim-catalogo-${date}.pdf"`,
+        'Cache-Control': 'no-store',
+      });
+      response.send(pdf);
+    } catch (error) {
+      const serialized = serializeError(error);
+      logger.error('Error exportando el catálogo a PDF', error);
       response.status(serialized.statusCode).json(serialized.body);
     }
   });

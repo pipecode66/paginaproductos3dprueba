@@ -13,15 +13,15 @@
     <meta property="og:image" content="/logo/querubim-logo-full.png" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_CO" />
-    <link rel="canonical" href="https://joyeriaquerubim.com" />
+    <link rel="canonical" href="https://joyeriaquerubim.vercel.app" />
     <link rel="icon" type="image/png" href="/logo/querubim-symbol.png" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "JewelryStore",
         "name": "Joyería Querubim",
-        "url": "https://joyeriaquerubim.com",
-        "logo": "https://joyeriaquerubim.com/logo/querubim-logo-full.png",
+        "url": "https://joyeriaquerubim.vercel.app",
+        "logo": "https://joyeriaquerubim.vercel.app/logo/querubim-logo-full.png",
         "telephone": "+57 322 543 5618",
         "email": "joyeriaquerubimsas@gmail.com",
         "address": {
@@ -64,11 +64,7 @@
 
     <header class="site-header" id="site-header">
       <a class="brand" href="#home" aria-label="Ir al inicio de Joyería Querubim">
-        <img src="/logo/querubim-symbol.png" alt="" width="52" height="44" />
-        <span>
-          <strong>Querubim</strong>
-          <small>Joyería S.A.S.</small>
-        </span>
+        <img src="/logo/querubim-logo-full.png" alt="Joyería Querubim" width="164" height="68" />
       </a>
 
       <nav class="desktop-nav" aria-label="Navegación principal">
@@ -486,7 +482,7 @@
             <div>
               <span class="eyebrow">Panel administrativo</span>
               <h1>Centro de gestión Querubim</h1>
-              <p>Catálogo, inventario, pedidos, clientes, respaldo y diagnóstico operativo en un solo lugar.</p>
+              <p>Catálogo, inventario, pedidos, clientes, contenido comercial y respaldos en un solo lugar.</p>
             </div>
             <button class="button button-secondary-dark" id="admin-logout" type="button">
               Salir
@@ -503,10 +499,15 @@
               Exportar catálogo a Excel
               <i data-lucide="download"></i>
             </button>
+            <button class="button button-secondary" id="admin-export-catalog-pdf" type="button">
+              Descargar catálogo PDF
+              <i data-lucide="file-down"></i>
+            </button>
             <div class="admin-backup-card">
               <i data-lucide="database"></i>
               <div><span>Respaldo del catálogo</span><p class="admin-backup-status" id="admin-backup-status" role="status" aria-live="polite"></p></div>
             </div>
+            <p class="admin-export-message" id="admin-export-message" role="status" aria-live="polite"></p>
           </div>
 
           <div class="admin-stats" id="admin-stats" aria-live="polite"></div>

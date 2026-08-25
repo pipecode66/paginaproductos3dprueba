@@ -1,4 +1,4 @@
-const MAX_IMAGES = 12;
+const MAX_IMAGES = 4;
 const MAX_MEASUREMENTS = 30;
 
 export class CatalogValidationError extends Error {
@@ -29,7 +29,11 @@ export function validateCatalogProduct(input, forcedId) {
   const price = Number(input?.price);
   const stock = Number(input?.stock);
   const measurements = textList(input?.measurements, { maxItems: MAX_MEASUREMENTS, maxLength: 80 });
-  const images = textList(input?.images, { maxItems: MAX_IMAGES, maxLength: 1000 });
+  const rawImages = Array.isArray(input?.images) ? input.images : [];
+  if (rawImages.length > MAX_IMAGES) {
+    throw new CatalogValidationError(`Cada producto admite un máximo de ${MAX_IMAGES} imágenes.`, 'TOO_MANY_IMAGES');
+  }
+  const images = textList(rawImages, { maxItems: MAX_IMAGES, maxLength: 1000 });
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) {
     throw new CatalogValidationError('La referencia del producto no es válida.', 'INVALID_PRODUCT_ID');

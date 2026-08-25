@@ -125,6 +125,12 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
   assert.match(excel.headers.get('content-type'), /spreadsheetml/);
   assert.equal(excelBytes.subarray(0, 2).toString(), 'PK');
 
+  const pdf = await fetch(`${baseUrl}/api/admin/catalog/export/pdf`, { headers: { Cookie: cookie } });
+  const pdfBytes = Buffer.from(await pdf.arrayBuffer());
+  assert.equal(pdf.status, 200);
+  assert.match(pdf.headers.get('content-type'), /application\/pdf/);
+  assert.equal(pdfBytes.subarray(0, 5).toString(), '%PDF-');
+
   const storageHealth = await fetch(`${baseUrl}/api/storage/health`).then((response) => response.json());
   assert.equal(storageHealth.configured, true);
 
@@ -159,6 +165,17 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
     body: JSON.stringify(adminProduct),
   });
   assert.equal(created.status, 201);
+
+  const tooManyImages = await fetch(`${baseUrl}/api/admin/products/${adminProduct.id}`, {
+    method: 'PUT',
+    headers: adminHeaders,
+    body: JSON.stringify({
+      ...adminProduct,
+      images: Array.from({ length: 5 }, (_, index) => `https://pub.example.r2.dev/products/${adminProduct.id}/${index + 1}.jpg`),
+    }),
+  });
+  assert.equal(tooManyImages.status, 400);
+  assert.equal((await tooManyImages.json()).code, 'TOO_MANY_IMAGES');
 
   const updated = await fetch(`${baseUrl}/api/admin/products/${adminProduct.id}`, {
     method: 'PUT',
