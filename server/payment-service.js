@@ -150,8 +150,18 @@ export class PaymentService {
   }
 
   assertConfigured() {
-    const { environment, productionEnabled, publicBaseUrl, tax } = this.boldConfig;
+    const { environment, productionEnabled, publicBaseUrl, tax, credentialEnvironment } = this.boldConfig;
     this.assertCredentialsConfigured();
+    const credentialsMatchEnvironment = !credentialEnvironment
+      || credentialEnvironment === environment
+      || (credentialEnvironment === 'legacy' && environment === 'test');
+    if (!credentialsMatchEnvironment) {
+      throw new PaymentError(
+        'Las credenciales de Bold no corresponden al ambiente seleccionado.',
+        503,
+        'BOLD_CREDENTIAL_ENVIRONMENT_MISMATCH',
+      );
+    }
     if (environment === 'production' && !productionEnabled) {
       throw new PaymentError('Los pagos de producción están bloqueados hasta completar la validación final.', 503, 'PRODUCTION_LOCKED');
     }

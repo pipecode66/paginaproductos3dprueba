@@ -21,6 +21,30 @@ test('conserva archivos JSON únicamente para desarrollo local', () => {
   assert.equal(config.bold.tax, 'vat-19');
 });
 
+test('selecciona exclusivamente el par de credenciales del ambiente Bold', () => {
+  const production = createRuntimeConfig({
+    BOLD_ENVIRONMENT: 'production',
+    BOLD_IDENTITY_KEY: 'legacy-test-identity',
+    BOLD_SECRET_KEY: 'legacy-test-secret',
+    BOLD_PRODUCTION_IDENTITY_KEY: 'production-identity',
+    BOLD_PRODUCTION_SECRET_KEY: 'production-secret',
+  }, 'C:/app');
+  assert.equal(production.bold.identityKey, 'production-identity');
+  assert.equal(production.bold.secretKey, 'production-secret');
+  assert.equal(production.bold.credentialEnvironment, 'production');
+  assert.equal(production.bold.credentialSource, 'production_specific');
+
+  const testConfig = createRuntimeConfig({
+    BOLD_ENVIRONMENT: 'test',
+    BOLD_PRODUCTION_IDENTITY_KEY: 'production-identity',
+    BOLD_PRODUCTION_SECRET_KEY: 'production-secret',
+    BOLD_TEST_IDENTITY_KEY: 'test-identity',
+    BOLD_TEST_SECRET_KEY: 'test-secret',
+  }, 'C:/app');
+  assert.equal(testConfig.bold.identityKey, 'test-identity');
+  assert.equal(testConfig.bold.credentialEnvironment, 'test');
+});
+
 test('conserva la ruta original de la API después del rewrite de Vercel', () => {
   const request = {
     query: { path: 'payments/orders/QBM-001', vista: 'resumen' },

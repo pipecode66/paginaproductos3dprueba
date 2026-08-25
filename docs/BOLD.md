@@ -26,8 +26,10 @@ Estados internos: `CREATED`, `PAID`, `REJECTED`, `VOIDED` y `REVIEW_REQUIRED`.
 
 ```dotenv
 BOLD_ENVIRONMENT=test
-BOLD_IDENTITY_KEY=
-BOLD_SECRET_KEY=
+BOLD_TEST_IDENTITY_KEY=
+BOLD_TEST_SECRET_KEY=
+BOLD_PRODUCTION_IDENTITY_KEY=
+BOLD_PRODUCTION_SECRET_KEY=
 DATABASE_URL=
 PUBLIC_BASE_URL=http://localhost:4173
 PORT=4173
@@ -36,7 +38,7 @@ ALLOW_BOLD_PRODUCTION=false
 
 El IVA está fijado en `vat-19` dentro de la configuración de la aplicación. No requiere una variable adicional en Vercel. Los ajustes del 5 % y 6 % forman parte del total firmado y no se reportan como un impuesto independiente.
 
-No se deben incluir llaves reales en Git, JavaScript del navegador, capturas, registros ni documentación. La llave de identidad se entrega al checkout desde el servidor; la llave secreta nunca sale del backend.
+No se deben incluir llaves reales en Git, JavaScript del navegador, capturas, registros ni documentación. La llave de identidad se entrega al checkout desde el servidor; la llave secreta nunca sale del backend. Los pares separados impiden que Production seleccione por accidente las credenciales de Preview.
 
 ## Pruebas
 
@@ -60,7 +62,7 @@ La aplicación está preparada para ejecutarse como una función de Node.js en V
 
 1. Rotar las llaves que hayan sido compartidas por canales no destinados a secretos.
 2. Conectar una base de datos PostgreSQL persistente al proyecto de Vercel.
-3. Configurar las llaves de producción como secretos del proveedor de hosting.
+3. Configurar las llaves de producción en `BOLD_PRODUCTION_IDENTITY_KEY` y `BOLD_PRODUCTION_SECRET_KEY` como secretos del proveedor de hosting.
 4. Definir `BOLD_ENVIRONMENT=production` y la URL pública real.
 5. Confirmar que el resumen muestre IVA del 19 % incluido y el ajuste correspondiente al destino.
 6. Registrar y probar el webhook desde el panel Bold.

@@ -538,6 +538,7 @@ const selectors = {
   checkoutTotalNote: document.querySelector('#checkout-total-note'),
   checkoutMessage: document.querySelector('#checkout-message'),
   checkoutPayButton: document.querySelector('#checkout-pay-button'),
+  checkoutQuoteButton: document.querySelector('#checkout-quote-button'),
   checkoutPayLabel: document.querySelector('#checkout-pay-label'),
   checkoutPayCardIcon: document.querySelector('#checkout-pay-card-icon'),
   checkoutPayMessageIcon: document.querySelector('#checkout-pay-message-icon'),
@@ -1123,6 +1124,21 @@ function getCartPricing() {
   };
 }
 
+function buildCartWhatsAppLink(pricing = getCartPricing()) {
+  const products = state.cartItems
+    .map(({ product, measure }, index) => `${index + 1}. ${product.name} (${measure})`)
+    .join('\n');
+  const message = [
+    'Hola Querubim, quiero solicitar una cotización personalizada para estas joyas:',
+    products,
+    `Total estimado de las joyas: ${formatCurrency(pricing.amount)}.`,
+    'Quedo atento(a) a su asesoría.',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 function syncCheckoutDeliveryForm() {
   const method = selectors.checkoutDeliveryMethod.value;
   const isDelivery = method === 'delivery';
@@ -1171,6 +1187,7 @@ function renderCart() {
   selectors.checkoutAdjustmentLabel.textContent = `${pricing.destinationScope === 'international' ? 'Ajuste internacional' : 'Ajuste nacional'} (${pricing.adjustmentRate} %)`;
   selectors.checkoutAdjustment.textContent = formatCurrency(pricing.commercialAdjustment);
   selectors.checkoutTotal.textContent = formatCurrency(pricing.amount);
+  selectors.checkoutQuoteButton.href = buildCartWhatsAppLink(pricing);
   selectors.selectionItems.innerHTML = state.cartItems
     .map(
       ({ key, product, measure }) => `

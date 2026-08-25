@@ -61,9 +61,7 @@ body {
   background: var(--color-bg-main);
 }
 
-.mobile-drawer::-webkit-scrollbar,
-.product-detail-panel::-webkit-scrollbar,
-.selection-drawer::-webkit-scrollbar {
+.mobile-drawer::-webkit-scrollbar {
   width: 0;
   height: 0;
   display: none;
@@ -1526,6 +1524,15 @@ body.premium-route .site-footer {
   width: 100%;
 }
 
+.checkout-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.checkout-quote-button {
+  width: 100%;
+}
+
 .checkout-pay-button.loading svg,
 .payment-result-icon.pending svg {
   animation: paymentSpin 900ms linear infinite;
@@ -2172,6 +2179,82 @@ body.payment-route .scroll-top-button {
 
   .payment-result-actions .button {
     width: 100%;
+  }
+}
+
+/* Desplazamiento interno: conserva una sola barra del navegador para la página. */
+.catalog-toolbar .filter-group,
+.premium-catalog-toolbar .filter-group,
+.selection-drawer,
+.product-detail-panel {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #9a742f rgba(109, 83, 49, 0.12);
+}
+
+.catalog-toolbar .filter-group,
+.premium-catalog-toolbar .filter-group {
+  max-height: min(46vh, 440px);
+  padding-right: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.catalog-toolbar .filter-group::-webkit-scrollbar,
+.premium-catalog-toolbar .filter-group::-webkit-scrollbar,
+.selection-drawer::-webkit-scrollbar,
+.product-detail-panel::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.catalog-toolbar .filter-group::-webkit-scrollbar-track,
+.selection-drawer::-webkit-scrollbar-track,
+.product-detail-panel::-webkit-scrollbar-track {
+  background: rgba(109, 83, 49, 0.12);
+}
+
+.catalog-toolbar .filter-group::-webkit-scrollbar-thumb,
+.selection-drawer::-webkit-scrollbar-thumb,
+.product-detail-panel::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #9a742f;
+  background-clip: padding-box;
+}
+
+.premium-catalog-toolbar .filter-group {
+  scrollbar-color: #d6b66b rgba(255, 244, 194, 0.1);
+}
+
+.premium-catalog-toolbar .filter-group::-webkit-scrollbar-track {
+  background: rgba(255, 244, 194, 0.1);
+}
+
+.premium-catalog-toolbar .filter-group::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #d6b66b;
+  background-clip: padding-box;
+}
+
+@media (max-width: 1180px) {
+  .catalog-toolbar .filter-group,
+  .premium-catalog-toolbar .filter-group {
+    max-height: none;
+    padding: 0 0 10px;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-gutter: auto;
+  }
+
+  .catalog-toolbar .filter-group button,
+  .premium-catalog-toolbar .filter-group button {
+    min-width: max-content;
+    padding-inline: 18px;
+    flex: 0 0 auto;
   }
 }
 

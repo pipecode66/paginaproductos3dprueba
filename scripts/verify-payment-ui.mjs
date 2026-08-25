@@ -31,12 +31,38 @@ try {
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   await mobile.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+  const catalogCategoryScroll = await mobile.locator('#category-filters').evaluate((element) => ({
+    horizontal: element.scrollWidth > element.clientWidth,
+    overflowX: getComputedStyle(element).overflowX,
+  }));
+  await mobile.locator('#category-filters').scrollIntoViewIfNeeded();
+  await mobile.waitForTimeout(150);
+  await mobile.screenshot({ path: 'test-results/catalog-categories-mobile.png' });
   await mobile.locator(`[data-open-product="${availableProduct.id}"]`).click();
+  const detailScroll = await mobile.locator('#product-detail-panel').evaluate((element) => ({
+    vertical: element.scrollHeight > element.clientHeight,
+    overflowY: getComputedStyle(element).overflowY,
+    scrollbarWidth: getComputedStyle(element).scrollbarWidth,
+  }));
+  await mobile.waitForTimeout(300);
+  await mobile.screenshot({ path: 'test-results/product-detail-mobile.png' });
+  await mobile.locator('#product-detail-panel').evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await mobile.waitForTimeout(150);
+  await mobile.screenshot({ path: 'test-results/product-detail-mobile-bottom.png' });
   await mobile.locator('#detail-measure').selectOption(availableProduct.measurements[0]);
   await mobile.locator('#detail-add-cart').click();
   await mobile.locator('#detail-close').click();
   await mobile.locator('#cart-button').click();
   await mobile.locator('#checkout-form').waitFor();
+  const cartScroll = await mobile.locator('#selection-drawer').evaluate((element) => ({
+    vertical: element.scrollHeight > element.clientHeight,
+    overflowY: getComputedStyle(element).overflowY,
+    scrollbarWidth: getComputedStyle(element).scrollbarWidth,
+  }));
+  await mobile.locator('#checkout-delivery-method').selectOption('pickup');
+  await mobile.locator('#selection-drawer').evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await mobile.waitForTimeout(200);
+  await mobile.screenshot({ path: 'test-results/checkout-cart-bold-mobile.png' });
   await mobile.locator('#checkout-delivery-method').selectOption('delivery');
   const nationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
   const nationalTotal = await mobile.locator('#checkout-total').textContent();
@@ -49,9 +75,22 @@ try {
   const internationalAdjustment = await mobile.locator('#checkout-adjustment-label').textContent();
   const internationalTotal = await mobile.locator('#checkout-total').textContent();
   const internationalAction = await mobile.locator('#checkout-pay-label').textContent();
+  const quoteHref = await mobile.locator('#checkout-quote-button').getAttribute('href');
   const drawerBox = await mobile.locator('#selection-drawer').boundingBox();
   const hasHorizontalOverflow = await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-  await mobile.screenshot({ path: 'test-results/checkout-cart-mobile.png', fullPage: true });
+  await mobile.locator('#selection-drawer').evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  await mobile.waitForTimeout(300);
+  await mobile.screenshot({ path: 'test-results/checkout-cart-mobile.png' });
+
+  const premium = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  await premium.goto(`${baseUrl}/premium`, { waitUntil: 'domcontentloaded' });
+  const premiumCategoryScroll = await premium.locator('#premium-category-filters').evaluate((element) => ({
+    horizontal: element.scrollWidth > element.clientWidth,
+    overflowX: getComputedStyle(element).overflowX,
+  }));
+  await premium.locator('#premium-category-filters').scrollIntoViewIfNeeded();
+  await premium.waitForTimeout(150);
+  await premium.screenshot({ path: 'test-results/premium-categories-mobile.png' });
 
   const internationalPayment = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await internationalPayment.route('**/api/international-requests/QBI-UI-PAY/checkout?*', async (route) => {
@@ -77,6 +116,11 @@ try {
       shippingNoticeVisible && /envío internacional se cotiza y acuerda por separado/i.test(shippingNotice || '')
       && /coordinar envío internacional/i.test(internationalAction || ''),
     internationalPaymentVisible: await internationalPayment.locator('#international-payment-open').isVisible(),
+    catalogCategoryScrollable: catalogCategoryScroll.horizontal && catalogCategoryScroll.overflowX === 'auto',
+    premiumCategoryScrollable: premiumCategoryScroll.horizontal && premiumCategoryScroll.overflowX === 'auto',
+    detailScrollable: detailScroll.vertical && detailScroll.overflowY === 'auto' && detailScroll.scrollbarWidth !== 'none',
+    cartScrollable: cartScroll.vertical && cartScroll.overflowY === 'auto' && cartScroll.scrollbarWidth !== 'none',
+    customQuoteVisible: /^https:\/\/wa\.me\//.test(quoteHref || ''),
   };
   console.log(JSON.stringify(result));
   if (
@@ -88,6 +132,11 @@ try {
     !result.internationalAdjustmentApplied ||
     !result.internationalCoordinationVisible
     || !result.internationalPaymentVisible
+    || !result.catalogCategoryScrollable
+    || !result.premiumCategoryScrollable
+    || !result.detailScrollable
+    || !result.cartScrollable
+    || !result.customQuoteVisible
   ) {
     throw new Error('La verificación visual del flujo de pago no fue satisfactoria.');
   }

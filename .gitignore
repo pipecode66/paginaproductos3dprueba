@@ -8,3 +8,6 @@ dist/
 var/
 test-results/
 artifacts/
+
+.vercel
+.env*

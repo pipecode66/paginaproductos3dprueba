@@ -7,6 +7,8 @@ const baseBoldConfig = {
   environment: 'production',
   identityKey: 'production-identity',
   secretKey: 'production-secret',
+  credentialEnvironment: 'production',
+  credentialSource: 'production_specific',
   publicBaseUrl: 'https://joyeriaquerubim.vercel.app',
   tax: 'vat-19',
   productionEnabled: false,
@@ -20,10 +22,26 @@ test('mantiene producción bloqueada aun cuando la infraestructura está lista',
   assert.equal(readiness.canReceiveWebhooks, true);
   assert.equal(readiness.productionEnabled, false);
   assert.equal(readiness.checks.taxConfigured, true);
+  assert.equal(readiness.checks.credentialsMatchEnvironment, true);
+  assert.match(readiness.identityKeyFingerprint, /^[a-f0-9]{12}$/);
   assert.equal(
     readiness.webhookUrl,
     'https://joyeriaquerubim.vercel.app/api/payments/bold/webhook',
   );
+});
+
+test('no declara producción activa con credenciales de otro ambiente', () => {
+  const readiness = buildPaymentReadiness({
+    boldConfig: {
+      ...baseBoldConfig,
+      productionEnabled: true,
+      credentialEnvironment: 'legacy',
+    },
+    storage,
+  });
+  assert.equal(readiness.launchStage, 'production_incomplete');
+  assert.equal(readiness.configured, false);
+  assert.equal(readiness.checks.credentialsMatchEnvironment, false);
 });
 
 test('solo informa producción activa después de abrir el interruptor explícito', () => {
@@ -57,6 +75,8 @@ test('permite pruebas locales sin exigir HTTPS de producción', () => {
     boldConfig: {
       ...baseBoldConfig,
       environment: 'test',
+      credentialEnvironment: 'test',
+      credentialSource: 'test_specific',
       publicBaseUrl: 'http://localhost:4173',
     },
     storage,

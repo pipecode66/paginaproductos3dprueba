@@ -29,7 +29,8 @@ if (health.launchStage !== expectedStage) {
   throw new Error(`Se esperaba ${expectedStage}, pero el despliegue informa ${health.launchStage}.`);
 }
 
-if (!health.boldConfigured || !health.storage?.ready || !health.canReceiveWebhooks) {
+if (!health.boldConfigured || !health.storage?.ready || !health.canReceiveWebhooks
+  || !health.checks?.credentialsMatchEnvironment) {
   throw new Error(`La infraestructura de pagos está incompleta: ${JSON.stringify(health.checks)}`);
 }
 
@@ -51,6 +52,8 @@ console.log(
     canReceiveWebhooks: health.canReceiveWebhooks,
     webhookUrl: health.webhookUrl,
     taxConfigured: health.checks?.taxConfigured,
+    credentialEnvironment: health.credentialEnvironment,
+    credentialsMatchEnvironment: health.checks?.credentialsMatchEnvironment,
     availableProducts: catalog.products.filter((product) => product.stock > 0).length,
     verified: true,
   }),

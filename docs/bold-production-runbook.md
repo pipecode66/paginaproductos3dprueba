@@ -18,8 +18,8 @@ Configurar estas variables solamente para el entorno Production:
 
 ```text
 BOLD_ENVIRONMENT=production
-BOLD_IDENTITY_KEY=<nueva llave de identidad de producción>
-BOLD_SECRET_KEY=<nueva llave secreta de producción>
+BOLD_PRODUCTION_IDENTITY_KEY=<nueva llave de identidad de producción>
+BOLD_PRODUCTION_SECRET_KEY=<nueva llave secreta de producción>
 PUBLIC_BASE_URL=https://joyeriaquerubim.vercel.app
 ALLOW_BOLD_PRODUCTION=false
 ```
@@ -34,7 +34,7 @@ Verificar el despliegue bloqueado:
 npm run test:production-readiness -- https://joyeriaquerubim.vercel.app production_locked
 ```
 
-El resultado correcto debe indicar `launchStage: production_locked`, `readyToActivate: true` y `canReceiveWebhooks: true`.
+El resultado correcto debe indicar `launchStage: production_locked`, `readyToActivate: true`, `canReceiveWebhooks: true` y `credentialsMatchEnvironment: true`.
 
 ## 3. Configurar el webhook de producción en Bold
 

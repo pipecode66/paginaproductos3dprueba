@@ -1147,11 +1147,17 @@
           <small id="checkout-total-note">IVA del 19 % incluido en el total.</small>
         </div>
         <p class="checkout-message" id="checkout-message" role="status" aria-live="polite"></p>
-        <button class="button button-primary checkout-pay-button" id="checkout-pay-button" type="submit">
-          <span id="checkout-pay-label">Pagar con Bold</span>
-          <i id="checkout-pay-card-icon" data-lucide="credit-card"></i>
-          <i id="checkout-pay-message-icon" data-lucide="message-circle" hidden></i>
-        </button>
+        <div class="checkout-actions">
+          <button class="button button-primary checkout-pay-button" id="checkout-pay-button" type="submit">
+            <span id="checkout-pay-label">Pagar con Bold</span>
+            <i id="checkout-pay-card-icon" data-lucide="credit-card"></i>
+            <i id="checkout-pay-message-icon" data-lucide="message-circle" hidden></i>
+          </button>
+          <a class="button button-secondary-dark checkout-quote-button" id="checkout-quote-button" href="#" target="_blank" rel="noopener">
+            Cotización personalizada
+            <i data-lucide="message-circle"></i>
+          </a>
+        </div>
         <p class="checkout-security" id="checkout-security"><i data-lucide="shield-check"></i> Pago protegido por Bold</p>
       </form>
     </aside>

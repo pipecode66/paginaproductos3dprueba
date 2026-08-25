@@ -16,13 +16,13 @@ El repositorio ya contiene la función de pagos, el enrutamiento de Vercel y la 
 
 ```dotenv
 BOLD_ENVIRONMENT=test
-BOLD_IDENTITY_KEY=<llave de identidad de pruebas>
-BOLD_SECRET_KEY=<llave secreta de pruebas>
+BOLD_TEST_IDENTITY_KEY=<llave de identidad de pruebas>
+BOLD_TEST_SECRET_KEY=<llave secreta de pruebas>
 PUBLIC_BASE_URL=https://DOMINIO-REAL
 ALLOW_BOLD_PRODUCTION=false
 ```
 
-`BOLD_SECRET_KEY` debe marcarse como variable sensible. No es necesario configurar `PORT` ni `BOLD_TAX` en Vercel: la aplicación envía `vat-19` de forma fija según la definición tributaria confirmada por el comercio.
+`BOLD_TEST_SECRET_KEY` debe marcarse como variable sensible. No es necesario configurar `PORT` ni `BOLD_TAX` en Vercel: la aplicación envía `vat-19` de forma fija según la definición tributaria confirmada por el comercio.
 
 Después del redespliegue, abre:
 
@@ -30,7 +30,7 @@ Después del redespliegue, abre:
 https://DOMINIO-REAL/api/payments/health
 ```
 
-La respuesta correcta debe incluir `"configured": true`, `"mode": "postgresql"` y `"ready": true`.
+La respuesta correcta debe incluir `"configured": true`, `"mode": "postgresql"`, `"ready": true` y `"credentialsMatchEnvironment": true`.
 
 ## Acción en Bold
 
@@ -55,7 +55,7 @@ La prueba consulta la salud del servicio, lee el catálogo, crea una orden técn
 ## Activación de producción
 
 1. Solicita a Bold nuevas llaves de producción si las anteriores fueron compartidas por chat, correo o capturas.
-2. Sustituye las variables de pruebas por las nuevas llaves de producción.
+2. Guarda las nuevas llaves en `BOLD_PRODUCTION_IDENTITY_KEY` y `BOLD_PRODUCTION_SECRET_KEY` solamente para Production.
 3. Cambia `BOLD_ENVIRONMENT=production`.
 4. Confirma la URL pública, los impuestos y el límite de monto del comercio.
 5. Realiza una compra real controlada de bajo valor.
