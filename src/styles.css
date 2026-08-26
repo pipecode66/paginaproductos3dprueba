@@ -2731,6 +2731,155 @@ body.premium-route .premium-back-link svg {
   color: rgba(255, 247, 230, 0.72);
 }
 
+/* El detalle Premium conserva el lenguaje oscuro y dorado del catálogo. */
+body.premium-detail-open .overlay.visible {
+  background: rgba(3, 3, 2, 0.76);
+  backdrop-filter: blur(6px);
+}
+
+.product-detail-panel.premium-detail {
+  border-color: rgba(221, 174, 79, 0.58);
+  color: #fff7e6;
+  background:
+    linear-gradient(145deg, rgba(255, 244, 194, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(23, 19, 15, 0.98), rgba(7, 6, 5, 0.99));
+  box-shadow:
+    0 34px 110px rgba(0, 0, 0, 0.72),
+    inset 0 0 0 1px rgba(255, 244, 194, 0.06);
+  scrollbar-color: #d6b66b rgba(255, 244, 194, 0.08);
+}
+
+.product-detail-panel.premium-detail::-webkit-scrollbar-track {
+  background: rgba(255, 244, 194, 0.08);
+}
+
+.product-detail-panel.premium-detail::-webkit-scrollbar-thumb {
+  background: #d6b66b;
+  background-clip: padding-box;
+}
+
+.premium-detail .drawer-header .eyebrow,
+.premium-detail .detail-specs dt {
+  color: #d7ad52;
+}
+
+.premium-detail .drawer-header h2,
+.premium-detail .detail-specs dd {
+  color: #fff7e6;
+}
+
+.premium-detail .drawer-header .icon-button {
+  border-color: rgba(221, 174, 79, 0.48);
+  color: #f2d282;
+  background: rgba(8, 7, 6, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 244, 194, 0.05);
+}
+
+.premium-detail .drawer-header .icon-button:hover,
+.premium-detail .drawer-header .icon-button:focus-visible {
+  border-color: #f2d282;
+  background: rgba(221, 174, 79, 0.14);
+}
+
+.premium-detail .drawer-header .icon-button svg,
+.premium-detail .measure-select-wrap svg {
+  color: #f2d282;
+}
+
+.premium-detail .detail-gallery > img {
+  border-color: rgba(221, 174, 79, 0.58);
+  background: #f4f0e7;
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
+}
+
+.premium-detail .detail-thumbs button {
+  border-color: rgba(221, 174, 79, 0.3);
+  background: #12100d;
+}
+
+.premium-detail .detail-thumbs button.active,
+.premium-detail .detail-thumbs button:hover,
+.premium-detail .detail-thumbs button:focus-visible {
+  border-color: #f2d282;
+  box-shadow: 0 0 0 1px rgba(242, 210, 130, 0.34);
+}
+
+.premium-detail .detail-info > p {
+  color: rgba(255, 247, 230, 0.76);
+}
+
+.premium-detail .detail-specs {
+  background: transparent;
+}
+
+.premium-detail .detail-specs div {
+  border: 1px solid rgba(221, 174, 79, 0.24);
+  background:
+    linear-gradient(145deg, rgba(255, 244, 194, 0.06), transparent 52%),
+    rgba(18, 15, 12, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.premium-detail .measure-field {
+  color: rgba(255, 247, 230, 0.82);
+}
+
+.premium-detail .measure-field b {
+  color: #d7ad52;
+}
+
+.premium-detail .measure-field select {
+  border-color: rgba(221, 174, 79, 0.58);
+  color: #fff7e6;
+  background: #17130f;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 244, 194, 0.05);
+}
+
+.premium-detail .measure-field select:focus {
+  outline-color: #d6b66b;
+}
+
+.premium-detail .measure-field select option {
+  color: #fff7e6;
+  background: #17130f;
+}
+
+.premium-detail .detail-message {
+  color: #f2d282;
+}
+
+.premium-detail .detail-message.error {
+  color: #ff9d9d;
+}
+
+.premium-detail .detail-message.success {
+  color: #8ed4a6;
+}
+
+.premium-detail .detail-actions .button-primary {
+  border-color: rgba(221, 174, 79, 0.58);
+  color: #160f08;
+  background: linear-gradient(115deg, #8a6828, #f1d68a 48%, #9b7228);
+  box-shadow:
+    0 18px 46px rgba(221, 174, 79, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.premium-detail .detail-actions .button-secondary-dark {
+  border-color: rgba(221, 174, 79, 0.54);
+  color: #f5d98a;
+  background: rgba(8, 7, 6, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(255, 244, 194, 0.04);
+}
+
+.premium-detail .detail-actions .button-secondary-dark:hover,
+.premium-detail .detail-actions .button-secondary-dark:focus-visible {
+  color: #fff7e6;
+  background: rgba(221, 174, 79, 0.16);
+}
+
 .institutional-section {
   min-height: calc(100vh - var(--header-height));
   overflow: hidden;

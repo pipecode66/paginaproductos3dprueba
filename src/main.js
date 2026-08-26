@@ -1045,6 +1045,8 @@ function renderDetail() {
   const images = getProductImages(product);
   const image = images[state.activeImageIndex] ?? images[0];
 
+  selectors.detailPanel.classList.toggle('premium-detail', Boolean(product.premium));
+
   selectors.detailCategory.textContent = getCategoryLabel(product.category);
   selectors.detailName.textContent = product.name;
   selectors.detailMainImage.src = image;
@@ -1080,6 +1082,7 @@ function openProductDetail(productId) {
   state.activeImageIndex = 0;
   renderDetail();
   openPanel(selectors.detailPanel);
+  document.body.classList.toggle('premium-detail-open', Boolean(product.premium));
 }
 
 function addActiveProductToCart() {
@@ -3108,6 +3111,7 @@ function closePanels(removeOverlay = true) {
   if (removeOverlay) {
     selectors.overlay.classList.remove('visible');
     document.body.classList.remove('panel-open');
+    document.body.classList.remove('premium-detail-open');
   }
 }
 
