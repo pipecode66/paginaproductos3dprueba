@@ -1037,8 +1037,11 @@
           <p id="detail-description"></p>
           <dl class="detail-specs" id="detail-specs"></dl>
           <label class="measure-field" for="detail-measure">
-            <span>Medida para la joya <b>*</b></span>
-            <select id="detail-measure" required></select>
+            <span class="measure-label">Medida para la joya <b>*</b></span>
+            <span class="measure-select-wrap">
+              <select id="detail-measure" required></select>
+              <i data-lucide="chevron-down" aria-hidden="true"></i>
+            </span>
           </label>
           <p class="detail-message" id="detail-message" role="status" aria-live="polite"></p>
           <div class="detail-actions">

@@ -1286,9 +1286,9 @@ body.premium-route .site-footer {
 
 .measure-field {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   color: var(--color-text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 900;
 }
 
@@ -1296,14 +1296,34 @@ body.premium-route .site-footer {
   color: var(--color-secondary);
 }
 
+.measure-select-wrap {
+  display: block;
+  position: relative;
+}
+
+.measure-select-wrap svg {
+  width: 22px;
+  height: 22px;
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  color: var(--color-primary-dark);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
 .measure-field select {
   width: 100%;
-  min-height: 48px;
-  padding: 0 13px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
+  min-height: 62px;
+  padding: 0 54px 0 18px;
+  border: 2px solid rgba(154, 116, 47, 0.42);
+  border-radius: var(--radius-lg);
+  appearance: none;
   color: var(--color-text-primary);
   background: var(--color-surface);
+  box-shadow: 0 10px 28px rgba(61, 38, 23, 0.08);
+  font: inherit;
+  cursor: pointer;
 }
 
 .measure-field select:focus {
@@ -4396,11 +4416,11 @@ body.admin-route .whatsapp-button {
   }
 
   .detail-specs {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .detail-thumbs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .selection-drawer {
@@ -5706,5 +5726,108 @@ body.admin-panel-active .admin-panel-view {
 
   .admin-measurement-add .button {
     width: 100%;
+  }
+}
+
+/* Tarjetas de catálogo con altura natural para Safari móvil y monitores amplios. */
+.product-grid,
+.premium-product-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  grid-auto-rows: max-content;
+  align-items: start;
+  justify-content: center;
+}
+
+.product-card {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  align-self: start;
+  justify-self: center;
+  aspect-ratio: auto;
+}
+
+.product-card-view {
+  height: auto;
+  grid-template-rows: auto auto;
+  overflow: hidden;
+}
+
+.product-image-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.product-card-content {
+  min-height: 0;
+}
+
+.product-card-cta {
+  min-height: 44px;
+}
+
+@media (max-width: 560px) {
+  .product-grid,
+  .premium-product-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .product-card {
+    max-width: none;
+  }
+
+  .product-image-wrap,
+  .detail-gallery > img {
+    aspect-ratio: 4 / 3;
+  }
+
+  .product-card-content {
+    padding: 18px;
+    gap: 7px;
+  }
+
+  .product-card-name {
+    font-size: clamp(1.55rem, 7.5vw, 1.95rem);
+    line-height: 1;
+  }
+
+  .product-card-material {
+    font-size: 0.92rem;
+  }
+
+  .product-card-value {
+    font-size: 0.78rem;
+  }
+
+  .product-card-cta {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 5px;
+  }
+
+  .detail-specs div {
+    min-height: 100px;
+    padding: 13px;
+  }
+
+  .detail-specs dt {
+    font-size: 0.7rem;
+  }
+
+  .detail-specs dd {
+    font-size: 0.92rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .measure-field {
+    gap: 11px;
+    font-size: 1rem;
+  }
+
+  .measure-field select {
+    min-height: 68px;
+    font-size: 1rem;
   }
 }
