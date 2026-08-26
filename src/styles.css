@@ -5597,6 +5597,54 @@ body.admin-panel-active .admin-panel-view {
   display: none;
 }
 
+/* Jerarquía de acciones exclusiva del panel administrativo. */
+body.admin-panel-active .button-secondary {
+  border-color: var(--color-cta);
+  color: #fff8e8;
+  background: var(--color-cta);
+}
+
+body.admin-panel-active .button-secondary:hover:not(:disabled),
+body.admin-panel-active .button-secondary:focus-visible:not(:disabled) {
+  border-color: var(--color-cta-hover);
+  color: #fff8e8;
+  background: var(--color-cta-hover);
+}
+
+body.admin-panel-active .button-secondary:disabled,
+body.admin-panel-active .button-secondary:disabled:hover,
+body.admin-panel-active .button-secondary:disabled:focus-visible {
+  border-color: #8f7958;
+  color: #fff8e8;
+  background: #8f7958;
+  opacity: 0.58;
+}
+
+body.admin-panel-active #admin-order-close,
+body.admin-panel-active #admin-international-close,
+body.admin-panel-active .admin-image-remove {
+  border-color: #7e2637;
+  color: #fff;
+  background: #7e2637;
+}
+
+body.admin-panel-active #admin-order-close svg,
+body.admin-panel-active #admin-international-close svg,
+body.admin-panel-active .admin-image-remove svg {
+  color: #fff;
+}
+
+body.admin-panel-active #admin-order-close:hover,
+body.admin-panel-active #admin-order-close:focus-visible,
+body.admin-panel-active #admin-international-close:hover,
+body.admin-panel-active #admin-international-close:focus-visible,
+body.admin-panel-active .admin-image-remove:hover,
+body.admin-panel-active .admin-image-remove:focus-visible {
+  border-color: #5f1d2a;
+  color: #fff;
+  background: #5f1d2a;
+}
+
 @media (max-width: 1240px) {
   .admin-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));

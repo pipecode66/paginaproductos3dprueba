@@ -17,6 +17,7 @@ import {
   Database,
   Download,
   Edit3,
+  FileDown,
   Gem,
   GalleryHorizontalEnd,
   GripVertical,
@@ -303,6 +304,7 @@ const icons = {
   Database,
   Download,
   Edit3,
+  FileDown,
   Gem,
   GalleryHorizontalEnd,
   GripVertical,
@@ -1523,6 +1525,7 @@ async function loadAdminDashboard() {
     }
   } finally {
     state.adminLoading = false;
+    updateBackupState();
   }
 }
 

@@ -149,6 +149,26 @@ try {
   await page.locator('#admin-stats .admin-stat').first().waitFor();
   await page.locator('#admin-overview-charts .admin-chart-panel').first().waitFor();
   await page.waitForFunction(() => Number(document.querySelector('#admin-nav-orders-count')?.textContent || 0) > 0);
+  const adminButtonVisuals = await page.evaluate(() => {
+    const background = (selector) => getComputedStyle(document.querySelector(selector)).backgroundColor;
+    return {
+      pdf: background('#admin-export-catalog-pdf'),
+      secondary: background('#admin-reset-catalog'),
+      changeImage: background('[data-content-slot="hero"] .button-success'),
+      removeImage: background('[data-content-remove="hero"]'),
+      closeDialog: background('#admin-order-close'),
+      cancelRequest: background('#admin-international-cancel'),
+      pdfIconVisible: Boolean(document.querySelector('#admin-export-catalog-pdf svg')),
+    };
+  });
+  const adminButtonColorsVerified =
+    adminButtonVisuals.pdf === 'rgb(123, 90, 38)'
+    && adminButtonVisuals.secondary === 'rgb(123, 90, 38)'
+    && adminButtonVisuals.changeImage === 'rgb(36, 109, 80)'
+    && adminButtonVisuals.removeImage === 'rgb(126, 38, 55)'
+    && adminButtonVisuals.closeDialog === 'rgb(126, 38, 55)'
+    && adminButtonVisuals.cancelRequest === 'rgb(126, 38, 55)'
+    && adminButtonVisuals.pdfIconVisible;
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#admin-export-catalog').click();
   const catalogDownload = await downloadPromise;
@@ -288,12 +308,14 @@ try {
     commercialSlotCount,
     commercialUploadVerified,
     internationalDialogVisible,
+    adminButtonColorsVerified,
+    adminButtonVisuals,
     dialogInsideViewport: Boolean(dialogBox && dialogBox.x >= 0 && dialogBox.x + dialogBox.width <= 390),
     hasHorizontalOverflow,
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.adminButtonColorsVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {
