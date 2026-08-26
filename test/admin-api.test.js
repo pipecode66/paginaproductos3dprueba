@@ -106,11 +106,13 @@ test('protege el panel y permite administrar el catálogo con una sesión válid
   assert.match(setCookie, /Max-Age=900/);
   const cookie = setCookie.split(';')[0];
   assert.match(cookie, /^querubim_admin_session=/);
+  const loginData = await login.json();
+  assert.ok(loginData.csrfToken);
 
   const adminHeaders = {
     'Content-Type': 'application/json',
     Cookie: cookie,
-    'x-querubim-admin': '1',
+    'x-querubim-csrf': loginData.csrfToken,
   };
   const dashboard = await fetch(`${baseUrl}/api/admin/dashboard`, { headers: { Cookie: cookie } });
   const dashboardData = await dashboard.json();

@@ -368,6 +368,8 @@ const state = {
   adminAuthenticated: false,
   adminSessionChecked: false,
   adminUser: null,
+  adminCsrfToken: '',
+  adminMfaRequired: true,
   adminOrders: [],
   adminInternationalRequests: [],
   siteContent: null,
@@ -432,6 +434,8 @@ const selectors = {
   adminPanelView: document.querySelector('#admin-panel-view'),
   adminLoginForm: document.querySelector('#admin-login-form'),
   adminLoginMessage: document.querySelector('#admin-login-message'),
+  adminTotpField: document.querySelector('#admin-totp-field'),
+  adminTotp: document.querySelector('#admin-totp'),
   adminLogout: document.querySelector('#admin-logout'),
   adminStats: document.querySelector('#admin-stats'),
   adminOperations: document.querySelector('#admin-operations'),
@@ -810,7 +814,13 @@ async function apiRequest(url, options = {}) {
   const method = options.method || 'GET';
   const headers = { Accept: 'application/json', ...(options.headers || {}) };
   if (options.body) headers['Content-Type'] = 'application/json';
-  if (method !== 'GET') headers['x-querubim-admin'] = '1';
+  const isProtectedAdminMutation =
+    url.startsWith('/api/admin/')
+    && url !== '/api/admin/login'
+    && !['GET', 'HEAD', 'OPTIONS'].includes(method);
+  if (isProtectedAdminMutation && state.adminCsrfToken) {
+    headers['x-querubim-csrf'] = state.adminCsrfToken;
+  }
 
   const response = await fetch(url, { ...options, method, headers, credentials: 'same-origin' });
   const result = await response.json().catch(() => ({}));
@@ -1537,6 +1547,10 @@ async function checkAdminSession() {
     const result = await apiRequest('/api/admin/session');
     state.adminAuthenticated = Boolean(result.authenticated);
     state.adminUser = result.user;
+    state.adminCsrfToken = result.csrfToken || '';
+    state.adminMfaRequired = result.mfaRequired !== false;
+    if (selectors.adminTotpField) selectors.adminTotpField.hidden = !state.adminMfaRequired;
+    if (selectors.adminTotp) selectors.adminTotp.required = state.adminMfaRequired;
     if (result.authenticated) state.adminHeartbeatAt = Date.now();
     if (!result.configured && selectors.adminLoginMessage) {
       selectors.adminLoginMessage.textContent = 'El acceso administrativo debe configurarse en Vercel antes de ingresar.';
@@ -1545,6 +1559,7 @@ async function checkAdminSession() {
   } catch (error) {
     state.adminAuthenticated = false;
     state.adminUser = null;
+    state.adminCsrfToken = '';
     if (error.code === 'ADMIN_NOT_CONFIGURED' && selectors.adminLoginMessage) {
       selectors.adminLoginMessage.textContent = 'El acceso administrativo debe configurarse en Vercel antes de ingresar.';
       selectors.adminLoginMessage.classList.add('error');
@@ -2934,7 +2949,9 @@ async function handleAdminLogin(event) {
   event.preventDefault();
 
   if (!selectors.adminLoginForm.checkValidity()) {
-    selectors.adminLoginMessage.textContent = 'Completa el correo y la contraseña.';
+    selectors.adminLoginMessage.textContent = state.adminMfaRequired
+      ? 'Completa el correo, la contraseña y el código del autenticador.'
+      : 'Completa el correo y la contraseña.';
     selectors.adminLoginMessage.classList.add('error');
     selectors.adminLoginForm.reportValidity();
     return;
@@ -2943,6 +2960,7 @@ async function handleAdminLogin(event) {
   const formData = new FormData(selectors.adminLoginForm);
   const email = String(formData.get('email') || '').trim();
   const password = String(formData.get('password') || '');
+  const totpCode = String(formData.get('totpCode') || '').trim();
 
   const submitButton = selectors.adminLoginForm.querySelector('button[type="submit"]');
   submitButton.disabled = true;
@@ -2952,11 +2970,12 @@ async function handleAdminLogin(event) {
   try {
     const result = await apiRequest('/api/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, totpCode }),
     });
     state.adminAuthenticated = true;
     state.adminSessionChecked = true;
     state.adminUser = result.user;
+    state.adminCsrfToken = result.csrfToken || '';
     state.adminHeartbeatAt = Date.now();
     selectors.adminLoginForm.reset();
     selectors.adminLoginMessage.textContent = '';
@@ -2986,6 +3005,7 @@ async function handleAdminLogout() {
   state.adminAuthenticated = false;
   state.adminSessionChecked = true;
   state.adminUser = null;
+  state.adminCsrfToken = '';
   state.adminOrders = [];
   state.adminInternationalRequests = [];
   state.adminSummary = null;
@@ -3020,6 +3040,7 @@ function registerAdminActivity() {
   apiRequest('/api/admin/session')
     .then((result) => {
       if (!result.authenticated) handleAdminLogout();
+      else state.adminCsrfToken = result.csrfToken || state.adminCsrfToken;
     })
     .catch(() => undefined);
 }

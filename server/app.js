@@ -2,12 +2,20 @@ import path from 'node:path';
 import express from 'express';
 import {
   clearAdminSessionCookie,
-  getAdminSession,
+  createAdminCsrfToken,
+  createAdminLoginKeys,
+  createAdminSession,
+  createAdminSessionId,
   isAdminConfigured,
+  isAdminHardened,
+  isTrustedAdminOrigin,
   requireAdmin,
+  resolveAdminSession,
   setAdminSessionCookie,
   verifyAdminCredentials,
+  verifyAdminTotpCode,
 } from './admin-auth.js';
+import { AdminSecurityStore } from './admin-security-store.js';
 import { validateCatalogProduct } from './catalog-validation.js';
 import { createCatalogExcel } from './catalog-excel.js';
 import { createCatalogPdf } from './catalog-pdf.js';
@@ -59,6 +67,7 @@ export function createApp({
   orderStore,
   siteContentRepository,
   internationalRequestStore,
+  adminSecurityStore,
   r2Storage,
   logger = console,
 } = {}) {
@@ -72,6 +81,9 @@ export function createApp({
   const resolvedInternationalRequests = internationalRequestStore
     ?? persistence?.internationalRequestStore
     ?? new InternationalRequestStore(path.join(config.runtimeDir, 'international-requests.json'));
+  const resolvedAdminSecurity = adminSecurityStore
+    ?? persistence?.adminSecurityStore
+    ?? new AdminSecurityStore(path.join(config.runtimeDir, 'admin-security.json'));
   const storage = catalogRepository && orderStore
     ? { mode: 'injected', configured: true, ready: () => Promise.resolve(true) }
     : persistence.storage;
@@ -86,11 +98,26 @@ export function createApp({
     publicBaseUrl: config.bold.publicBaseUrl,
   });
   const adminConfig = config.admin ?? {};
+  const adminLoginPolicy = adminConfig.loginPolicy ?? {
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    lockMs: 15 * 60 * 1000,
+  };
   const imageStorage = r2Storage ?? new R2Storage(config.r2);
   const app = express();
 
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
+  app.use((request, response, next) => {
+    response.set('X-Content-Type-Options', 'nosniff');
+    response.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.set('X-Frame-Options', 'DENY');
+    response.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    if (/^https:/i.test(config.bold.publicBaseUrl)) {
+      response.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    }
+    next();
+  });
 
   app.get('/api/payments/health', async (request, response) => {
     let storageReady = false;
@@ -139,6 +166,11 @@ export function createApp({
   );
 
   app.use(express.json({ limit: '64kb' }));
+  app.use('/api/admin', (request, response, next) => {
+    response.set('Cache-Control', 'no-store, max-age=0');
+    response.set('Pragma', 'no-cache');
+    next();
+  });
 
   app.post(
     '/api/international-requests',
@@ -170,17 +202,55 @@ export function createApp({
   app.post(
     '/api/admin/login',
     createRateLimiter({ windowMs: 15 * 60_000, limit: 10 }),
-    (request, response) => {
+    async (request, response) => {
       try {
         const email = String(request.body?.email || '').trim().toLowerCase();
         const password = String(request.body?.password || '');
-        if (!verifyAdminCredentials(email, password, adminConfig)) {
+        const totpCode = String(request.body?.totpCode || '');
+        if (!isAdminConfigured(adminConfig)) {
+          response.status(503).json({ error: 'El acceso administrativo todavía no está configurado.', code: 'ADMIN_NOT_CONFIGURED' });
+          return;
+        }
+        if (!isTrustedAdminOrigin(request, adminConfig)) {
+          response.status(403).json({ error: 'La solicitud administrativa no pudo verificarse.', code: 'ADMIN_ORIGIN_REJECTED' });
+          return;
+        }
+
+        const now = Date.now();
+        const loginKeys = createAdminLoginKeys(request, email, adminConfig);
+        const lockedUntil = await resolvedAdminSecurity.getLoginLock(loginKeys, now);
+        if (lockedUntil > now) {
+          response.set('Retry-After', String(Math.max(1, Math.ceil((lockedUntil - now) / 1000))));
+          response.status(429).json({ error: 'Demasiados intentos. Espera unos minutos y vuelve a intentarlo.', code: 'ADMIN_LOGIN_LOCKED' });
+          return;
+        }
+
+        const lastTotpStep = await resolvedAdminSecurity.getLastTotpStep(adminConfig.email);
+        const [credentialsValid, totpResult] = await Promise.all([
+          verifyAdminCredentials(email, password, adminConfig),
+          verifyAdminTotpCode(totpCode, adminConfig, lastTotpStep),
+        ]);
+        const totpAccepted = credentialsValid
+          && totpResult.valid
+          && (totpResult.timeStep === undefined
+            || await resolvedAdminSecurity.consumeTotpStep(adminConfig.email, totpResult.timeStep, now));
+        if (!credentialsValid || !totpAccepted) {
+          await resolvedAdminSecurity.recordLoginFailure(loginKeys, adminLoginPolicy, now);
           response.status(401).json({ error: 'Credenciales incorrectas.', code: 'ADMIN_INVALID_CREDENTIALS' });
           return;
         }
 
-        setAdminSessionCookie(response, email, adminConfig);
-        response.json({ authenticated: true, user: { email } });
+        await resolvedAdminSecurity.clearLoginFailures(loginKeys);
+        const sessionId = createAdminSessionId();
+        const expiresAt = now + adminConfig.sessionTtlMs;
+        await resolvedAdminSecurity.createSession({ id: sessionId, email, expiresAt, createdAt: now });
+        setAdminSessionCookie(response, createAdminSession(email, adminConfig, now, sessionId), adminConfig);
+        response.json({
+          authenticated: true,
+          user: { email },
+          csrfToken: createAdminCsrfToken(sessionId, adminConfig),
+          expiresAt: new Date(expiresAt).toISOString(),
+        });
       } catch (error) {
         const serialized = serializeError(error);
         response.status(serialized.statusCode).json(serialized.body);
@@ -188,22 +258,43 @@ export function createApp({
     },
   );
 
-  app.get('/api/admin/session', (request, response) => {
-    const session = getAdminSession(request, adminConfig);
-    if (session) setAdminSessionCookie(response, session.sub, adminConfig);
-    response.json({
-      authenticated: Boolean(session),
-      configured: isAdminConfigured(adminConfig),
-      user: session ? { email: session.sub } : null,
-    });
+  app.get('/api/admin/session', async (request, response) => {
+    try {
+      const now = Date.now();
+      const session = await resolveAdminSession(request, adminConfig, resolvedAdminSecurity, now);
+      let expiresAt;
+      if (session) {
+        expiresAt = now + adminConfig.sessionTtlMs;
+        const touched = await resolvedAdminSecurity.touchSession(session.sid, expiresAt, now);
+        if (!touched) {
+          clearAdminSessionCookie(response, adminConfig);
+          response.json({ authenticated: false, configured: isAdminConfigured(adminConfig), hardened: isAdminHardened(adminConfig), mfaRequired: Boolean(adminConfig.totpSecret), user: null });
+          return;
+        }
+        setAdminSessionCookie(response, createAdminSession(session.sub, adminConfig, now, session.sid), adminConfig);
+      }
+      response.json({
+        authenticated: Boolean(session),
+        configured: isAdminConfigured(adminConfig),
+        hardened: isAdminHardened(adminConfig),
+        mfaRequired: Boolean(adminConfig.totpSecret),
+        user: session ? { email: session.sub } : null,
+        csrfToken: session ? createAdminCsrfToken(session.sid, adminConfig) : null,
+        expiresAt: session ? new Date(expiresAt).toISOString() : null,
+      });
+    } catch (error) {
+      const serialized = serializeError(error);
+      response.status(serialized.statusCode).json(serialized.body);
+    }
   });
 
-  app.post('/api/admin/logout', (request, response) => {
+  app.post('/api/admin/logout', requireAdmin(adminConfig, resolvedAdminSecurity), async (request, response) => {
+    await resolvedAdminSecurity.revokeSession(request.admin.sid);
     clearAdminSessionCookie(response, adminConfig);
     response.json({ authenticated: false });
   });
 
-  app.use('/api/admin', requireAdmin(adminConfig));
+  app.use('/api/admin', requireAdmin(adminConfig, resolvedAdminSecurity));
 
   app.post(
     '/api/admin/uploads/presign',

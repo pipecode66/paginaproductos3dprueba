@@ -1,6 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import dotenv from 'dotenv';
+import { generate as generateTotp } from 'otplib';
 import { createWebhookSignature } from '../server/bold.js';
 
 dotenv.config({ path: '.env.local' });
@@ -10,6 +11,7 @@ const executablePath = process.env.BROWSER_PATH || 'C:\\Program Files (x86)\\Mic
 const browser = await chromium.launch({ headless: true, executablePath });
 const adminEmail = process.env.ADMIN_EMAIL;
 const adminPassword = process.env.ADMIN_PASSWORD;
+const adminTotpSecret = String(process.env.ADMIN_TOTP_SECRET || '').replace(/\s+/g, '').toUpperCase();
 if (!adminEmail || !adminPassword) throw new Error('Configura ADMIN_EMAIL y ADMIN_PASSWORD en .env.local.');
 const catalogResponse = await fetch(`${baseUrl}/api/catalog/payment-products`);
 const catalog = await catalogResponse.json();
@@ -144,6 +146,10 @@ try {
   await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle' });
   await page.locator('#admin-email').fill(adminEmail);
   await page.locator('#admin-password').fill(adminPassword);
+  if (await page.locator('#admin-totp-field').isVisible()) {
+    if (!adminTotpSecret) throw new Error('Configura ADMIN_TOTP_SECRET en .env.local para verificar el acceso reforzado.');
+    await page.locator('#admin-totp').fill(await generateTotp({ secret: adminTotpSecret }));
+  }
   await page.locator('#admin-login-form button[type="submit"]').click();
   await page.locator('#admin-panel-view:not([hidden])').waitFor();
   await page.locator('#admin-stats .admin-stat').first().waitFor();

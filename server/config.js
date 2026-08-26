@@ -33,6 +33,7 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
   const publicBaseUrl = env.PUBLIC_BASE_URL || `http://localhost:${port}`;
   const databaseUrl = String(env.DATABASE_URL || '').trim();
   const isVercel = Boolean(env.VERCEL);
+  const adminSecurityEnforced = isVercel || env.ADMIN_SECURITY_ENFORCED === 'true';
   const boldCredentials = resolveBoldCredentials(env, environment);
 
   return {
@@ -46,9 +47,19 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
     admin: {
       email: String(env.ADMIN_EMAIL || '').trim().toLowerCase(),
       password: String(env.ADMIN_PASSWORD || ''),
+      passwordHash: String(env.ADMIN_PASSWORD_HASH || ''),
       sessionSecret: String(env.ADMIN_SESSION_SECRET || ''),
+      totpSecret: String(env.ADMIN_TOTP_SECRET || '').replace(/\s+/g, '').toUpperCase(),
       sessionTtlMs: 15 * 60 * 1000,
       publicBaseUrl,
+      allowLegacyPassword: !adminSecurityEnforced,
+      securityEnforced: adminSecurityEnforced,
+      enforceOrigin: adminSecurityEnforced,
+      loginPolicy: {
+        windowMs: 15 * 60 * 1000,
+        limit: 5,
+        lockMs: 15 * 60 * 1000,
+      },
     },
     r2: {
       accountId: String(env.CLOUDFLARE_R2_ACCOUNT_ID || '').trim(),

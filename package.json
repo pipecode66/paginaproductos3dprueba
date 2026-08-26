@@ -17,17 +17,22 @@
     "test:responsive": "node scripts/verify-catalog-responsive.mjs",
     "test:premium-detail": "node scripts/verify-premium-detail.mjs",
     "test:admin": "node scripts/verify-admin-ui.mjs",
-    "test:deployment": "node scripts/verify-vercel-deployment.mjs"
+    "test:deployment": "node scripts/verify-vercel-deployment.mjs",
+    "admin:security:setup": "node scripts/setup-admin-security.mjs",
+    "admin:security:apply": "node scripts/apply-admin-security-vercel.mjs",
+    "admin:security:apply-local": "node scripts/apply-admin-security-local.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1107.0",
     "@aws-sdk/s3-request-presigner": "^3.1107.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.9.2",
+    "argon2": "^0.45.1",
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "lucide": "latest",
+    "otplib": "^13.5.0",
     "pdfkit": "^0.17.2",
     "pg": "^8.23.0",
     "sharp": "^0.35.3",
@@ -36,6 +41,7 @@
   "devDependencies": {
     "pg-mem": "^3.0.14",
     "playwright-core": "^1.62.1",
+    "qrcode": "^1.5.4",
     "vite": "^8.2.1"
   },
   "overrides": {

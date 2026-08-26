@@ -83,6 +83,36 @@ async function createSchema(pool) {
       CREATE INDEX IF NOT EXISTS querubim_international_requests_created_at_idx
       ON querubim_international_requests (created_at DESC)
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS querubim_admin_sessions (
+        id_hash TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        expires_at BIGINT NOT NULL,
+        created_at BIGINT NOT NULL,
+        last_seen_at BIGINT NOT NULL,
+        revoked_at BIGINT
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS querubim_admin_sessions_email_idx
+      ON querubim_admin_sessions (email, expires_at DESC)
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS querubim_admin_login_limits (
+        key_hash TEXT PRIMARY KEY,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        window_started_at BIGINT NOT NULL,
+        locked_until BIGINT,
+        updated_at BIGINT NOT NULL
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS querubim_admin_totp_state (
+        email TEXT PRIMARY KEY,
+        last_time_step BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
+      )
+    `);
 
     for (const product of catalogSeed) {
       await client.query(

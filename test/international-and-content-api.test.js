@@ -53,7 +53,8 @@ async function login(baseUrl) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@querubim.co', password: 'correct-password' }),
   });
-  return response.headers.get('set-cookie').split(';')[0];
+  const result = await response.json();
+  return { cookie: response.headers.get('set-cookie').split(';')[0], csrfToken: result.csrfToken };
 }
 
 test('administra contenido comercial y coordina una venta internacional antes de cobrar', async (context) => {
@@ -84,8 +85,8 @@ test('administra contenido comercial y coordina una venta internacional antes de
   assert.equal((await orderStore.list()).length, 0);
   assert.equal((await catalogRepository.findById(originalProduct.id)).stock, originalProduct.stock);
 
-  const cookie = await login(baseUrl);
-  const adminHeaders = { 'Content-Type': 'application/json', Cookie: cookie, 'x-querubim-admin': '1' };
+  const { cookie, csrfToken } = await login(baseUrl);
+  const adminHeaders = { 'Content-Type': 'application/json', Cookie: cookie, 'x-querubim-csrf': csrfToken };
   const contentResponse = await fetch(`${baseUrl}/api/admin/site-content`, {
     method: 'PUT',
     headers: adminHeaders,

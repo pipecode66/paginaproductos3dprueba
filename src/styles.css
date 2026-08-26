@@ -3180,6 +3180,20 @@ body.admin-route .whatsapp-button {
   background: var(--color-surface);
 }
 
+.admin-totp-field {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-totp-field[hidden] {
+  display: none;
+}
+
+.admin-totp-field input {
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .admin-product-form textarea {
   min-height: 98px;
   padding-block: 12px;

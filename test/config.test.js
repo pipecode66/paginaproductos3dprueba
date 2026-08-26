@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { isAdminConfigured } from '../server/admin-auth.js';
 import { createApp } from '../server/app.js';
 import { createRuntimeConfig } from '../server/config.js';
 import { normalizeVercelRewrite } from '../server/vercel-request.js';
@@ -19,6 +20,19 @@ test('conserva archivos JSON únicamente para desarrollo local', () => {
   const config = createRuntimeConfig({}, 'C:/app');
   assert.equal(config.storage.mode, 'json');
   assert.equal(config.bold.tax, 'vat-19');
+});
+
+test('Vercel rechaza la contraseña administrativa en texto plano', () => {
+  const config = createRuntimeConfig({
+    VERCEL: '1',
+    ADMIN_EMAIL: 'admin@querubim.co',
+    ADMIN_PASSWORD: 'Esta-clave-no-debe-bastar-en-produccion',
+    ADMIN_SESSION_SECRET: 'session-secret-with-more-than-thirty-two-characters',
+  }, 'C:/app');
+
+  assert.equal(config.admin.securityEnforced, true);
+  assert.equal(config.admin.allowLegacyPassword, false);
+  assert.equal(isAdminConfigured(config.admin), false);
 });
 
 test('selecciona exclusivamente el par de credenciales del ambiente Bold', () => {
