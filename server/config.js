@@ -50,6 +50,7 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
       passwordHash: String(env.ADMIN_PASSWORD_HASH || ''),
       sessionSecret: String(env.ADMIN_SESSION_SECRET || ''),
       totpSecret: String(env.ADMIN_TOTP_SECRET || '').replace(/\s+/g, '').toUpperCase(),
+      totpRequired: env.ADMIN_TOTP_REQUIRED !== 'false',
       sessionTtlMs: 15 * 60 * 1000,
       publicBaseUrl,
       allowLegacyPassword: !adminSecurityEnforced,

@@ -55,6 +55,7 @@ await writeFile(envOutputPath, [
   envLine('ADMIN_PASSWORD_HASH', passwordHash),
   envLine('ADMIN_SESSION_SECRET', sessionSecret),
   envLine('ADMIN_TOTP_SECRET', totpSecret),
+  'ADMIN_TOTP_REQUIRED=true',
   'ADMIN_SECURITY_ENFORCED=true',
   '',
 ].join('\n'), { mode: 0o600 });

@@ -53,6 +53,23 @@ test('acepta TOTP vigente y rechaza su reutilización persistente', async (conte
   assert.equal(replay.valid, false);
 });
 
+test('permite suspender temporalmente TOTP sin aceptar contraseñas en texto plano', async () => {
+  const config = {
+    email: ADMIN_EMAIL,
+    passwordHash: await hashAdminPassword(ADMIN_PASSWORD),
+    sessionSecret: 'temporary-mfa-session-secret-with-more-than-thirty-two-characters',
+    totpSecret: generateSecret(),
+    totpRequired: false,
+    allowLegacyPassword: false,
+    securityEnforced: true,
+  };
+
+  assert.equal(isAdminHardened(config), true);
+  assert.deepEqual(await verifyAdminTotpCode('', config), { valid: true, timeStep: undefined });
+  assert.equal(await verifyAdminCredentials(ADMIN_EMAIL, ADMIN_PASSWORD, config), true);
+  assert.equal(await verifyAdminCredentials(ADMIN_EMAIL, 'incorrecta', config), false);
+});
+
 test('exige origen y CSRF, revoca la sesión y conserva el bloqueo de acceso', async (context) => {
   const runtimeDir = await mkdtemp(path.join(tmpdir(), 'querubim-hardened-admin-'));
   context.after(() => rm(runtimeDir, { recursive: true, force: true }));

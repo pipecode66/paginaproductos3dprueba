@@ -98,6 +98,7 @@ export function createApp({
     publicBaseUrl: config.bold.publicBaseUrl,
   });
   const adminConfig = config.admin ?? {};
+  const adminMfaRequired = adminConfig.totpRequired !== false && Boolean(adminConfig.totpSecret);
   const adminLoginPolicy = adminConfig.loginPolicy ?? {
     windowMs: 15 * 60 * 1000,
     limit: 5,
@@ -268,7 +269,7 @@ export function createApp({
         const touched = await resolvedAdminSecurity.touchSession(session.sid, expiresAt, now);
         if (!touched) {
           clearAdminSessionCookie(response, adminConfig);
-          response.json({ authenticated: false, configured: isAdminConfigured(adminConfig), hardened: isAdminHardened(adminConfig), mfaRequired: Boolean(adminConfig.totpSecret), user: null });
+          response.json({ authenticated: false, configured: isAdminConfigured(adminConfig), hardened: isAdminHardened(adminConfig), mfaRequired: adminMfaRequired, user: null });
           return;
         }
         setAdminSessionCookie(response, createAdminSession(session.sub, adminConfig, now, session.sid), adminConfig);
@@ -277,7 +278,7 @@ export function createApp({
         authenticated: Boolean(session),
         configured: isAdminConfigured(adminConfig),
         hardened: isAdminHardened(adminConfig),
-        mfaRequired: Boolean(adminConfig.totpSecret),
+        mfaRequired: adminMfaRequired,
         user: session ? { email: session.sub } : null,
         csrfToken: session ? createAdminCsrfToken(session.sid, adminConfig) : null,
         expiresAt: session ? new Date(expiresAt).toISOString() : null,

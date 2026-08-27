@@ -63,11 +63,13 @@ function cookieOptions(config) {
 }
 
 export function isAdminHardened(config) {
+  const totpReady = config?.totpRequired === false
+    || String(config?.totpSecret || '').length >= 26;
   return Boolean(
     config?.email
     && String(config.passwordHash || '').startsWith('$argon2id$')
     && String(config.sessionSecret || '').length >= 32
-    && String(config.totpSecret || '').length >= 26,
+    && totpReady,
   );
 }
 
@@ -109,6 +111,7 @@ export async function verifyAdminCredentials(email, password, config) {
 }
 
 export async function verifyAdminTotpCode(token, config, afterTimeStep) {
+  if (config.totpRequired === false) return { valid: true, timeStep: undefined };
   if (!config.totpSecret) return { valid: !config.securityEnforced, timeStep: undefined };
   const normalized = String(token || '').replace(/\s+/g, '');
   if (!/^\d{6}$/.test(normalized)) return { valid: false, timeStep: undefined };

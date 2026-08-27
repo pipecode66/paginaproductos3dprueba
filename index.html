@@ -469,7 +469,7 @@
             <label for="admin-password">Contraseña</label>
             <input id="admin-password" name="password" type="password" autocomplete="current-password" required />
 
-            <div class="admin-totp-field" id="admin-totp-field">
+            <div class="admin-totp-field" id="admin-totp-field" hidden>
               <label for="admin-totp">Código del autenticador</label>
               <input
                 id="admin-totp"
@@ -480,7 +480,6 @@
                 pattern="[0-9]{6}"
                 minlength="6"
                 maxlength="6"
-                required
               />
             </div>
 

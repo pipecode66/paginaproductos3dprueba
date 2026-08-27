@@ -35,6 +35,11 @@ test('Vercel rechaza la contraseña administrativa en texto plano', () => {
   assert.equal(isAdminConfigured(config.admin), false);
 });
 
+test('permite suspender temporalmente el segundo factor mediante una variable explícita', () => {
+  const config = createRuntimeConfig({ VERCEL: '1', ADMIN_TOTP_REQUIRED: 'false' }, 'C:/app');
+  assert.equal(config.admin.totpRequired, false);
+});
+
 test('selecciona exclusivamente el par de credenciales del ambiente Bold', () => {
   const production = createRuntimeConfig({
     BOLD_ENVIRONMENT: 'production',

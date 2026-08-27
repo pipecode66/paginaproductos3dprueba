@@ -146,7 +146,9 @@ try {
   await page.goto(`${baseUrl}/admin`, { waitUntil: 'networkidle' });
   await page.locator('#admin-email').fill(adminEmail);
   await page.locator('#admin-password').fill(adminPassword);
-  if (await page.locator('#admin-totp-field').isVisible()) {
+  const mfaFieldVisibleAtLogin = await page.locator('#admin-totp-field').isVisible();
+  const mfaExpected = process.env.ADMIN_TOTP_REQUIRED !== 'false' && Boolean(adminTotpSecret);
+  if (mfaFieldVisibleAtLogin) {
     if (!adminTotpSecret) throw new Error('Configura ADMIN_TOTP_SECRET en .env.local para verificar el acceso reforzado.');
     await page.locator('#admin-totp').fill(await generateTotp({ secret: adminTotpSecret }));
   }
@@ -302,6 +304,7 @@ try {
 
   const result = {
     authenticated: await page.locator('#admin-panel-view:not([hidden])').isVisible(),
+    mfaVisibilityVerified: mfaFieldVisibleAtLogin === mfaExpected,
     statCount: await page.locator('#admin-stats .admin-stat').count(),
     productCount: await page.locator('#admin-product-list .admin-product-item').count(),
     orderUpdated,
@@ -321,7 +324,7 @@ try {
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.adminButtonColorsVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || !result.mfaVisibilityVerified || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.adminButtonColorsVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {
