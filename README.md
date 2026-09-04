@@ -1,6 +1,6 @@
 # Joyería Querubim
 
-Tienda web de Joyería Querubim con catálogo, secciones institucionales, contacto, canasta, contenido comercial administrable y pagos en línea mediante Bold Embedded Checkout.
+Tienda web de Joyería Querubim con catálogo, precios por talla calculados según el peso del oro, secciones institucionales, contacto, canasta, contenido comercial administrable y pagos en línea mediante Bold Embedded Checkout.
 
 Vercel Web Analytics se inyecta automáticamente en las compilaciones de producción. Para comenzar a recibir visitas y páginas vistas, habilita `Analytics` desde el panel del proyecto en Vercel y realiza un nuevo despliegue.
 
@@ -32,7 +32,7 @@ Consulta el procedimiento completo en [Integración Bold](docs/BOLD.md).
 
 ## Panel administrativo
 
-La configuración del acceso privado, catálogo editable, portadas comerciales y solicitudes internacionales está en [Panel administrativo](docs/ADMIN.md).
+La configuración del acceso privado, cuenta maestra, perfiles de empleados, precio del oro, categorías configurables, catálogo editable, portadas comerciales y solicitudes internacionales está en [Panel administrativo](docs/ADMIN.md).
 
 ## Despliegue
 

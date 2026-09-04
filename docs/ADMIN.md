@@ -6,20 +6,52 @@ Registra estas variables en `Project Settings > Environment Variables` para Prod
 
 ```text
 ADMIN_EMAIL=correo elegido por el responsable
+ADMIN_MASTER_EMAIL=adminmaster@querubim.com
 ADMIN_PASSWORD=contraseña fuerte y exclusiva
 ADMIN_SESSION_SECRET=secreto aleatorio de 32 caracteres o más
 ```
 
 Después de guardar las variables, crea un nuevo despliegue. Las credenciales se validan únicamente en el servidor y la sesión se entrega mediante una cookie `HttpOnly`, `SameSite=Strict` y `Secure` bajo HTTPS. La sesión expira después de 15 minutos de inactividad.
 
-En desarrollo local deben declararse las mismas tres variables dentro de `.env.local`, archivo que está excluido de Git.
+En desarrollo local deben declararse las mismas variables dentro de `.env.local`, archivo que está excluido de Git.
+
+## Entrega de la cuenta maestra
+
+1. Ingresa con el acceso administrativo de transición.
+2. Abre `Equipo` y selecciona `Preparar acceso maestro`.
+3. Guarda el código de activación mostrado una sola vez y entrégalo por un canal privado a la administradora.
+4. La administradora entra con `adminmaster@querubim.com`, escribe el código y crea una contraseña de al menos 12 caracteres.
+5. La contraseña queda almacenada únicamente como un hash Argon2id. Al finalizar la activación se revocan las sesiones anteriores y se deshabilita el acceso de transición.
+
+El código vence después de 24 horas y no puede reutilizarse. No existe recuperación automática de la contraseña maestra; debe conservarse de forma privada. Para que el proveedor del desarrollo deje de tener acceso real, el cliente también debe ser propietario de GitHub, Vercel, PostgreSQL, Cloudflare R2 y Bold, y retirar de esas plataformas los usuarios o tokens del proveedor después de la entrega.
+
+## Precio del oro por talla
+
+El administrador define manualmente el valor vigente de un gramo de oro en `Precio del oro`. Cada talla del producto registra su propio peso y el sistema calcula:
+
+```text
+precio final = precio de la prenda + (peso de la talla en gramos x precio del oro por gramo)
+```
+
+La tarjeta pública muestra el menor precio disponible con el texto `Desde`. En el detalle, el valor final aparece solamente después de elegir una talla y cambia al cambiar la selección. El comprador nunca recibe el precio de la prenda, el peso ni el valor por gramo; el servidor vuelve a calcular el total al crear la orden para impedir alteraciones desde el navegador.
+
+Los productos existentes conservan su precio fijo hasta que el administrador los edite y asigne un peso válido a cada talla.
+
+## Categorías y equipo
+
+- Las categorías se pueden crear, editar, ocultar y eliminar cuando ya no tengan productos activos.
+- Cada categoría define sus propios campos, tipo de dato y condición obligatoria u opcional.
+- Nombre, descripción, precio de la prenda, inventario, galería y tallas con peso siempre son datos base obligatorios.
+- Una categoría oculta también retira sus productos del catálogo y bloquea nuevas compras mientras permanezca desactivada.
+- La administradora maestra puede invitar empleados y elegir los módulos que cada persona puede consultar o modificar.
+- Los cambios de permisos se aplican desde el servidor, incluso si alguien intenta entrar directamente a una ruta no autorizada.
 
 ## Datos administrados
 
 - Catálogo público y catálogo premium.
 - Nombre, categoría, precio, existencias, material y descripción.
 - Metal, pureza, gema, grabado y medidas.
-- Galería de hasta 12 rutas públicas o URL HTTPS.
+- Galería de hasta 4 imágenes públicas o URL HTTPS por producto.
 - Productos destacados y premium.
 - Órdenes, clientes, ingresos y estados recibidos desde Bold.
 - Búsqueda, filtros y paginación de pedidos.

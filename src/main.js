@@ -61,7 +61,7 @@ const ADMIN_BACKUP_KEY = 'querubim-last-catalog-backup';
 const ADMIN_ACTIVITY_KEY = 'querubim-admin-activity';
 const ADMIN_INACTIVITY_LIMIT = 15 * 60 * 1000;
 
-const categories = [
+const defaultCategories = [
   { slug: 'todos', label: 'Todas' },
   { slug: 'cadenas', label: 'Cadenas' },
   { slug: 'dijes', label: 'Dijes' },
@@ -81,6 +81,7 @@ const categories = [
   { slug: 'argollas-matrimonio', label: 'Argollas Matrimonio' },
   { slug: 'fabricaciones', label: 'Fabricaciones' },
 ];
+let categories = cloneProductList(defaultCategories);
 
 const importedCatalogGroups = [
   {
@@ -370,8 +371,15 @@ const state = {
   adminUser: null,
   adminCsrfToken: '',
   adminMfaRequired: true,
+  adminLoginMode: 'password',
   adminOrders: [],
   adminInternationalRequests: [],
+  adminUsers: [],
+  adminPermissionOptions: [],
+  adminAnalytics: null,
+  adminBusinessSettings: { gold: { enabled: false, pricePerGram: 0 }, categories: [] },
+  adminMeasurementOptions: [],
+  editingCategorySlug: null,
   siteContent: null,
   originalSiteContent: null,
   adminSummary: null,
@@ -433,7 +441,14 @@ const selectors = {
   adminLoginView: document.querySelector('#admin-login-view'),
   adminPanelView: document.querySelector('#admin-panel-view'),
   adminLoginForm: document.querySelector('#admin-login-form'),
+  adminEmail: document.querySelector('#admin-email'),
   adminLoginMessage: document.querySelector('#admin-login-message'),
+  adminPassword: document.querySelector('#admin-password'),
+  adminLoginSubmitLabel: document.querySelector('#admin-login-submit-label'),
+  adminActivationFields: document.querySelector('#admin-activation-fields'),
+  adminActivationToken: document.querySelector('#admin-activation-token'),
+  adminNewPassword: document.querySelector('#admin-new-password'),
+  adminConfirmPassword: document.querySelector('#admin-confirm-password'),
   adminTotpField: document.querySelector('#admin-totp-field'),
   adminTotp: document.querySelector('#admin-totp'),
   adminLogout: document.querySelector('#admin-logout'),
@@ -503,14 +518,41 @@ const selectors = {
   adminEngraving: document.querySelector('#admin-engraving'),
   adminMeasurements: document.querySelector('#admin-measurements'),
   adminMeasurementEntry: document.querySelector('#admin-measurement-entry'),
+  adminMeasurementWeight: document.querySelector('#admin-measurement-weight'),
+  adminMeasurementUnit: document.querySelector('#admin-measurement-unit'),
   adminMeasurementAdd: document.querySelector('#admin-measurement-add'),
   adminMeasurementList: document.querySelector('#admin-measurement-list'),
   adminDescription: document.querySelector('#admin-description'),
+  adminDynamicFields: document.querySelector('#admin-dynamic-fields'),
   adminPremium: document.querySelector('#admin-premium'),
   adminFeatured: document.querySelector('#admin-featured'),
   adminFormMessage: document.querySelector('#admin-form-message'),
   adminCancelEdit: document.querySelector('#admin-cancel-edit'),
   adminResetCatalog: document.querySelector('#admin-reset-catalog'),
+  adminGoldForm: document.querySelector('#admin-gold-form'),
+  adminGoldPrice: document.querySelector('#admin-gold-price'),
+  adminGoldStatus: document.querySelector('#admin-gold-status'),
+  adminGoldMessage: document.querySelector('#admin-gold-message'),
+  adminCategoryList: document.querySelector('#admin-category-list'),
+  adminCategoryForm: document.querySelector('#admin-category-form'),
+  adminCategoryEditSlug: document.querySelector('#admin-category-edit-slug'),
+  adminCategoryName: document.querySelector('#admin-category-name'),
+  adminCategorySlug: document.querySelector('#admin-category-slug'),
+  adminCategoryActive: document.querySelector('#admin-category-active'),
+  adminCategoryAddField: document.querySelector('#admin-category-add-field'),
+  adminTemplateFields: document.querySelector('#admin-template-fields'),
+  adminCategoryMessage: document.querySelector('#admin-category-message'),
+  adminCategoryNew: document.querySelector('#admin-category-new'),
+  adminCategoryDelete: document.querySelector('#admin-category-delete'),
+  adminTeamForm: document.querySelector('#admin-team-form'),
+  adminTeamName: document.querySelector('#admin-team-name'),
+  adminTeamEmail: document.querySelector('#admin-team-email'),
+  adminPermissionGrid: document.querySelector('#admin-permission-grid'),
+  adminTeamList: document.querySelector('#admin-team-list'),
+  adminTeamMessage: document.querySelector('#admin-team-message'),
+  adminInvitationResult: document.querySelector('#admin-invitation-result'),
+  adminMasterSetup: document.querySelector('#admin-master-setup'),
+  adminMasterInvite: document.querySelector('#admin-master-invite'),
   detailPanel: document.querySelector('#product-detail-panel'),
   detailCategory: document.querySelector('#detail-category'),
   detailName: document.querySelector('#detail-name'),
@@ -518,6 +560,7 @@ const selectors = {
   detailThumbs: document.querySelector('#detail-thumbs'),
   detailDescription: document.querySelector('#detail-description'),
   detailSpecs: document.querySelector('#detail-specs'),
+  detailLivePrice: document.querySelector('#detail-live-price'),
   detailMeasure: document.querySelector('#detail-measure'),
   detailMessage: document.querySelector('#detail-message'),
   detailWhatsapp: document.querySelector('#detail-whatsapp'),
@@ -569,10 +612,33 @@ const selectors = {
 const adminViewMeta = {
   overview: { title: 'Resumen general', description: 'Indicadores y actividad reciente del negocio' },
   products: { title: 'Catálogo e inventario', description: 'Productos, precios, existencias y galerías' },
+  gold: { title: 'Precio del oro', description: 'Valor por gramo y productos calculados por peso' },
+  categories: { title: 'Categorías y plantillas', description: 'Campos obligatorios y opcionales para cada línea' },
   orders: { title: 'Pedidos', description: 'Pagos confirmados y seguimiento de entregas' },
   international: { title: 'Solicitudes internacionales', description: 'Condiciones, coordinación y enlaces de pago' },
   content: { title: 'Contenido comercial', description: 'Portadas, campañas y vitrinas de la tienda' },
+  team: { title: 'Equipo y permisos', description: 'Perfiles internos y accesos autorizados' },
 };
+
+const adminViewPermissions = {
+  overview: 'dashboard.view',
+  products: 'catalog.manage',
+  gold: 'gold.manage',
+  categories: 'categories.manage',
+  orders: 'orders.manage',
+  international: 'international.manage',
+  content: 'content.manage',
+  team: 'team.manage',
+};
+
+function canAdmin(permission) {
+  const role = state.adminUser?.role;
+  return role === 'master' || role === 'bootstrap' || state.adminUser?.permissions?.includes(permission);
+}
+
+function canOpenAdminView(viewName) {
+  return Boolean(adminViewMeta[viewName] && canAdmin(adminViewPermissions[viewName]));
+}
 
 function setupAdminApplicationShell() {
   const panel = selectors.adminPanelView;
@@ -587,6 +653,9 @@ function setupAdminApplicationShell() {
     operations: panel.querySelector('#admin-operations'),
     orders: panel.querySelector('.admin-orders-management'),
     products: panel.querySelector('.admin-workspace'),
+    gold: panel.querySelector('.admin-gold-panel'),
+    categories: panel.querySelector('.admin-categories-panel'),
+    team: panel.querySelector('.admin-team-panel'),
   };
   const logoutButton = selectors.adminLogout;
 
@@ -604,9 +673,12 @@ function setupAdminApplicationShell() {
       <nav class="admin-app-nav">
         <button class="active" type="button" data-admin-view-target="overview"><i data-lucide="layout-dashboard"></i><span>Resumen</span></button>
         <button type="button" data-admin-view-target="products"><i data-lucide="package"></i><span>Catálogo</span><b id="admin-nav-products-count">0</b></button>
+        <button type="button" data-admin-view-target="gold"><i data-lucide="gem"></i><span>Precio del oro</span></button>
+        <button type="button" data-admin-view-target="categories"><i data-lucide="tags"></i><span>Categorías</span></button>
         <button type="button" data-admin-view-target="orders"><i data-lucide="clipboard-list"></i><span>Pedidos</span><b id="admin-nav-orders-count">0</b></button>
         <button type="button" data-admin-view-target="international"><i data-lucide="plane"></i><span>Internacional</span><b id="admin-nav-international-count">0</b></button>
         <button type="button" data-admin-view-target="content"><i data-lucide="gallery-horizontal-end"></i><span>Contenido</span></button>
+        <button type="button" data-admin-view-target="team"><i data-lucide="user-round"></i><span>Equipo</span></button>
       </nav>
       <div class="admin-sidebar-footer">
         <div class="admin-sidebar-user">
@@ -630,9 +702,12 @@ function setupAdminApplicationShell() {
       <div class="admin-app-content">
         <section class="admin-app-view active" data-admin-view="overview"></section>
         <section class="admin-app-view" data-admin-view="products"></section>
+        <section class="admin-app-view" data-admin-view="gold"></section>
+        <section class="admin-app-view" data-admin-view="categories"></section>
         <section class="admin-app-view" data-admin-view="orders"></section>
         <section class="admin-app-view" data-admin-view="international"></section>
         <section class="admin-app-view" data-admin-view="content"></section>
+        <section class="admin-app-view" data-admin-view="team"></section>
       </div>
     </div>`;
 
@@ -650,9 +725,12 @@ function setupAdminApplicationShell() {
   view('overview').appendChild(charts);
   if (nodes.operations) view('overview').appendChild(nodes.operations);
   if (nodes.products) view('products').appendChild(nodes.products);
+  if (nodes.gold) view('gold').appendChild(nodes.gold);
+  if (nodes.categories) view('categories').appendChild(nodes.categories);
   if (nodes.orders) view('orders').appendChild(nodes.orders);
   if (nodes.international) view('international').appendChild(nodes.international);
   if (nodes.commercial) view('content').appendChild(nodes.commercial);
+  if (nodes.team) view('team').appendChild(nodes.team);
   if (logoutButton) {
     logoutButton.className = 'admin-sidebar-logout';
     logoutButton.innerHTML = '<i data-lucide="log-out"></i><span>Cerrar sesión</span>';
@@ -693,7 +771,37 @@ function formatCurrency(value) {
   }).format(Number(value) || 0);
 }
 
-function getProductPrice(product) {
+function buildLocalProductPricing(product) {
+  const garmentPrice = Number(product?.price || 0);
+  const gold = state.adminBusinessSettings?.gold || {};
+  const weights = new Map((product?.measurementWeights || []).map((entry) => [entry.measure, Number(entry.weightGrams)]));
+  const usesGold = Boolean(product?.goldPricing && gold.enabled && Number(gold.pricePerGram) > 0);
+  const options = (product?.measurements || []).map((measure) => ({
+    measure,
+    price: usesGold && weights.has(measure)
+      ? garmentPrice + Math.round(weights.get(measure) * Number(gold.pricePerGram))
+      : garmentPrice,
+  }));
+  const prices = options.map((option) => option.price).filter((price) => Number.isFinite(price) && price > 0);
+  return {
+    mode: usesGold ? 'gold_by_weight' : 'fixed',
+    requiresSelection: usesGold,
+    startingPrice: prices.length ? Math.min(...prices) : garmentPrice,
+    options,
+  };
+}
+
+function getProductPricing(product) {
+  return product?.pricing?.options?.length ? product.pricing : buildLocalProductPricing(product);
+}
+
+function getProductPrice(product, measure = '') {
+  const pricing = getProductPricing(product);
+  if (measure) {
+    const option = pricing.options.find((item) => item.measure === measure);
+    if (option) return Number(option.price) || 0;
+  }
+  if (Number.isFinite(Number(pricing.startingPrice))) return Number(pricing.startingPrice);
   if (Number.isFinite(Number(product.price))) return Number(product.price);
   const numericValue = String(product.value ?? '').replace(/[^\d]/g, '');
   return Number(numericValue) || 0;
@@ -800,12 +908,15 @@ function createImportedCatalogProducts() {
 function hydrateCatalogProduct(product) {
   const fallback = defaultProducts.find((item) => item.id === product.id) || {};
   const merged = { ...fallback, ...product };
+  const templateManaged = product.templateManaged === true;
   merged.images = Array.isArray(product.images) && product.images.length ? product.images : getProductImages(fallback);
   merged.measurements = Array.isArray(product.measurements) ? product.measurements : fallback.measurements || [];
-  merged.material = product.material || fallback.material || 'Oro amarillo 18K';
+  merged.measurementWeights = Array.isArray(product.measurementWeights) ? product.measurementWeights : fallback.measurementWeights || [];
+  merged.material = templateManaged ? product.material || '' : product.material || fallback.material || 'Oro amarillo 18K';
   merged.description = product.description || fallback.description || 'Joya seleccionada por Querubim.';
-  merged.variants = { ...getProductVariants(fallback), ...(product.variants || {}) };
-  merged.value = formatCurrency(product.price);
+  merged.variants = templateManaged ? {} : { ...getProductVariants(fallback), ...(product.variants || {}) };
+  merged.pricing = product.pricing?.options?.length ? product.pricing : buildLocalProductPricing(merged);
+  merged.value = formatCurrency(merged.pricing.startingPrice);
   merged.details = buildProductDetails(merged);
   return merged;
 }
@@ -843,6 +954,9 @@ function applyRemoteCatalog(remoteProducts) {
 async function loadPublicCatalog() {
   try {
     const result = await apiRequest('/api/catalog/products');
+    if (Array.isArray(result.categories) && result.categories.length) {
+      categories = [{ slug: 'todos', label: 'Todas' }, ...result.categories];
+    }
     if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
   } catch {
     // El catálogo incluido en la aplicación permanece disponible si la API está temporalmente fuera de línea.
@@ -930,15 +1044,33 @@ function refreshCatalogViews() {
 
 function buildProductDetails(product) {
   const stock = getProductStock(product);
+  if (product.templateManaged) {
+    return [
+      ['Categoría', getCategoryLabel(product.category)],
+      ['Línea', product.premium ? 'Premium' : 'Catálogo'],
+      ['Disponibilidad', stock > 0 ? `${stock} unidades` : 'Agotado'],
+      ...(Array.isArray(product.publicAttributes)
+        ? product.publicAttributes.map(({ label, value }) => [label, value])
+        : []),
+    ];
+  }
   const variants = getProductVariants(product);
   const details = [
     ['Categoría', getCategoryLabel(product.category)],
     ['Material', product.material],
-    ['Precio', product.value],
     ['Línea', product.premium ? 'Premium' : 'Catálogo'],
     ['Disponibilidad', stock > 0 ? `${stock} unidades` : 'Agotado'],
     ['Metal y pureza', `${variants.metal} ${variants.purity}`],
   ];
+
+  const publicAttributes = Array.isArray(product.publicAttributes) ? product.publicAttributes : [];
+  if (publicAttributes.length) {
+    const existingLabels = new Set(details.map(([label]) => normalizeText(label)));
+    publicAttributes.forEach(({ label, value }) => {
+      if (!existingLabels.has(normalizeText(label))) details.push([label, value]);
+    });
+    return details;
+  }
 
   if (variants.gemstone) details.push(['Piedra o gema', variants.gemstone]);
   if (product.finish) details.push(['Acabado', product.finish]);
@@ -973,7 +1105,8 @@ function getCategoryLabel(slug) {
 
 function buildWhatsAppLink(product, measure = '') {
   const measureText = measure ? ` Medida seleccionada: ${measure}.` : '';
-  const message = `Hola Querubim, quiero cotizar la joya ${product.name}.${measureText}`;
+  const priceText = measure ? ` Precio actual: ${formatCurrency(getProductPrice(product, measure))}.` : '';
+  const message = `Hola Querubim, quiero cotizar la joya ${product.name}.${measureText}${priceText}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
@@ -1016,6 +1149,8 @@ function renderCategories({ premium = false } = {}) {
 function getProductCardMarkup(product, { premiumCatalog = false, index = 0 } = {}) {
   const image = getProductImages(product)[0];
   const stock = getProductStock(product);
+  const pricing = getProductPricing(product);
+  const displayValue = `${pricing.requiresSelection ? 'Desde ' : ''}${formatCurrency(pricing.startingPrice)}`;
 
   return `
     <article class="product-card${product.premium ? ' premium-product' : ''}${premiumCatalog ? ' premium-catalog-card' : ''}" style="--card-index: ${index}">
@@ -1028,8 +1163,8 @@ function getProductCardMarkup(product, { premiumCatalog = false, index = 0 } = {
           ${stock === 0 ? '<span class="stock-badge">Agotado</span>' : ''}
           <span class="product-card-category">${escapeHtml(getCategoryLabel(product.category))}</span>
           <span class="product-card-name">${escapeHtml(product.name)}</span>
-          <span class="product-card-material">${escapeHtml(product.material)}</span>
-          <span class="product-card-value">${escapeHtml(product.value)}</span>
+          ${product.material ? `<span class="product-card-material">${escapeHtml(product.material)}</span>` : ''}
+          <span class="product-card-value">${escapeHtml(displayValue)}</span>
           <span class="product-card-cta">Ver detalle</span>
         </span>
       </button>
@@ -1070,6 +1205,7 @@ function renderDetail() {
     ...product.measurements.map((measure) => `<option value="${escapeHtml(measure)}">${escapeHtml(measure)}</option>`),
   ].join('');
   selectors.detailMeasure.value = selectedMeasure && product.measurements.includes(selectedMeasure) ? selectedMeasure : '';
+  renderDetailPrice();
   selectors.detailThumbs.innerHTML = images
     .map(
       (src, index) => `
@@ -1085,11 +1221,25 @@ function renderDetail() {
   refreshIcons();
 }
 
+function renderDetailPrice() {
+  const product = state.activeProduct;
+  if (!product || !selectors.detailLivePrice) return;
+  const pricing = getProductPricing(product);
+  const measure = selectors.detailMeasure.value;
+  const selectedPrice = measure ? getProductPrice(product, measure) : 0;
+  selectors.detailLivePrice.classList.toggle('waiting', pricing.requiresSelection && !measure);
+  selectors.detailLivePrice.querySelector('span').textContent = measure ? `Precio para ${measure}` : 'Precio de la joya';
+  selectors.detailLivePrice.querySelector('strong').textContent = pricing.requiresSelection && !measure
+    ? 'Selecciona una talla para conocer el precio'
+    : formatCurrency(selectedPrice || pricing.startingPrice);
+}
+
 function openProductDetail(productId) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
   state.activeProduct = product;
   state.activeImageIndex = 0;
+  selectors.detailMeasure.value = '';
   renderDetail();
   openPanel(selectors.detailPanel);
   document.body.classList.toggle('premium-detail-open', Boolean(product.premium));
@@ -1126,7 +1276,7 @@ function removeCartItem(key) {
 }
 
 function getCartPricing() {
-  const subtotal = state.cartItems.reduce((total, item) => total + getProductPrice(item.product), 0);
+  const subtotal = state.cartItems.reduce((total, item) => total + getProductPrice(item.product, item.measure), 0);
   const international =
     selectors.checkoutDeliveryMethod?.value === 'delivery' &&
     selectors.checkoutDestination?.value === 'international';
@@ -1214,6 +1364,7 @@ function renderCart() {
             <strong>${escapeHtml(product.name)}</strong>
             <span>${getCategoryLabel(product.category)} · ${product.material}</span>
             <small>Medida: ${escapeHtml(measure)}</small>
+            <small class="selection-item-price">${escapeHtml(formatCurrency(getProductPrice(product, measure)))}</small>
           </div>
           <button class="icon-button" type="button" data-remove-cart="${escapeHtml(key)}" aria-label="Quitar ${escapeHtml(product.name)}">
             <i data-lucide="x"></i>
@@ -1511,14 +1662,47 @@ function isAdminLoggedIn() {
   return state.adminAuthenticated;
 }
 
+function clearAdminPrivateState() {
+  products = cloneProductList();
+  categories = defaultCategories.map((category) => ({ ...category }));
+  state.activeFilter = 'todos';
+  state.activePremiumFilter = 'todos';
+  state.activeProduct = products[0];
+  state.activeImageIndex = 0;
+  state.cartItems = [];
+  state.adminOrders = [];
+  state.adminInternationalRequests = [];
+  state.adminUsers = [];
+  state.adminPermissionOptions = [];
+  state.adminAnalytics = null;
+  state.adminBusinessSettings = { gold: { enabled: false, pricePerGram: 0 }, categories: [] };
+  state.adminSummary = null;
+  state.adminMeasurementOptions = [];
+  state.originalAdminImages = [];
+  state.pendingR2Uploads.clear();
+  state.pendingContentUploads.clear();
+  state.editingCategorySlug = null;
+  state.adminStorage = { ...DEFAULT_ADMIN_STORAGE };
+}
+
 async function loadAdminDashboard() {
   if (!isAdminLoggedIn() || state.adminLoading) return;
   state.adminLoading = true;
   try {
     const result = await apiRequest('/api/admin/dashboard');
-    state.adminOrders = Array.isArray(result.orders) ? result.orders : [];
-    state.adminInternationalRequests = Array.isArray(result.internationalRequests) ? result.internationalRequests : [];
+    if (Array.isArray(result.orders)) state.adminOrders = result.orders;
+    if (Array.isArray(result.internationalRequests)) state.adminInternationalRequests = result.internationalRequests;
     state.adminSummary = result.summary || null;
+    state.adminAnalytics = result.analytics || null;
+    if (result.businessSettings) {
+      state.adminBusinessSettings = cloneData(result.businessSettings);
+      if (Array.isArray(result.businessSettings.categories) && result.businessSettings.categories.length) {
+        categories = [
+          { slug: 'todos', label: 'Todas' },
+          ...result.businessSettings.categories.filter((category) => category.active !== false),
+        ];
+      }
+    }
     state.adminStorage = { ...DEFAULT_ADMIN_STORAGE, ...(result.storage || {}) };
     if (result.siteContent) {
       state.originalSiteContent = cloneData(result.siteContent);
@@ -1527,18 +1711,35 @@ async function loadAdminDashboard() {
     }
     updateAdminImageUploadState();
     if (Array.isArray(result.products)) applyRemoteCatalog(result.products);
+    if (canAdmin('team.manage')) await loadAdminTeam();
     renderAdminPanel();
   } catch (error) {
     if (error.status === 401) {
       state.adminAuthenticated = false;
       state.adminUser = null;
+      clearAdminPrivateState();
       updateAdminViews();
+      await loadPublicCatalog();
     } else if (selectors.adminBackupStatus) {
       selectors.adminBackupStatus.textContent = error.message;
     }
   } finally {
     state.adminLoading = false;
     updateBackupState();
+  }
+}
+
+async function loadAdminTeam() {
+  if (!canAdmin('team.manage')) return;
+  try {
+    const result = await apiRequest('/api/admin/team');
+    state.adminUsers = Array.isArray(result.users) ? result.users : [];
+    state.adminPermissionOptions = Array.isArray(result.permissionOptions) ? result.permissionOptions : [];
+  } catch (error) {
+    if (selectors.adminTeamMessage) {
+      selectors.adminTeamMessage.textContent = error.message;
+      selectors.adminTeamMessage.className = 'form-message error';
+    }
   }
 }
 
@@ -1549,8 +1750,10 @@ async function checkAdminSession() {
     state.adminUser = result.user;
     state.adminCsrfToken = result.csrfToken || '';
     state.adminMfaRequired = result.mfaRequired !== false;
-    if (selectors.adminTotpField) selectors.adminTotpField.hidden = !state.adminMfaRequired;
-    if (selectors.adminTotp) selectors.adminTotp.required = state.adminMfaRequired;
+    if (!result.authenticated) {
+      clearAdminPrivateState();
+      setAdminLoginMode('password', { mfaRequired: state.adminMfaRequired });
+    }
     if (result.authenticated) state.adminHeartbeatAt = Date.now();
     if (!result.configured && selectors.adminLoginMessage) {
       selectors.adminLoginMessage.textContent = 'El acceso administrativo debe configurarse en Vercel antes de ingresar.';
@@ -1560,6 +1763,7 @@ async function checkAdminSession() {
     state.adminAuthenticated = false;
     state.adminUser = null;
     state.adminCsrfToken = '';
+    clearAdminPrivateState();
     if (error.code === 'ADMIN_NOT_CONFIGURED' && selectors.adminLoginMessage) {
       selectors.adminLoginMessage.textContent = 'El acceso administrativo debe configurarse en Vercel antes de ingresar.';
       selectors.adminLoginMessage.classList.add('error');
@@ -1574,18 +1778,20 @@ async function checkAdminSession() {
 function populateAdminCategoryOptions() {
   if (!selectors.adminCategory) return;
   const selectedCategory = selectors.adminCategory.value || 'anillos';
+  const adminCategories = state.adminBusinessSettings.categories?.length
+    ? state.adminBusinessSettings.categories
+    : categories.filter((category) => category.slug !== 'todos');
 
-  selectors.adminCategory.innerHTML = categories
-    .filter((category) => category.slug !== 'todos')
+  selectors.adminCategory.innerHTML = adminCategories
     .map(
       (category) =>
-        `<option value="${escapeHtml(category.slug)}"${category.slug === selectedCategory ? ' selected' : ''}>${escapeHtml(category.label)}</option>`,
+        `<option value="${escapeHtml(category.slug)}"${category.slug === selectedCategory ? ' selected' : ''}>${escapeHtml(category.label)}${category.active === false ? ' (oculta)' : ''}</option>`,
     )
     .join('');
 
   if (selectors.adminCategoryFilter) {
     const selectedFilter = state.adminCategoryFilter;
-    selectors.adminCategoryFilter.innerHTML = categories
+    selectors.adminCategoryFilter.innerHTML = [{ slug: 'todos', label: 'Todas' }, ...adminCategories]
       .map((category) =>
         `<option value="${escapeHtml(category.slug)}"${category.slug === selectedFilter ? ' selected' : ''}>${escapeHtml(category.label)}</option>`,
       )
@@ -1620,12 +1826,13 @@ function getCatalogImageCount() {
 }
 
 function getAdminActivityLog() {
+  const storageKey = `${ADMIN_ACTIVITY_KEY}:${state.adminUser?.email || 'sin-sesion'}`;
   try {
-    const storedActivity = localStorage.getItem(ADMIN_ACTIVITY_KEY);
+    const storedActivity = localStorage.getItem(storageKey);
     const parsedActivity = JSON.parse(storedActivity || '[]');
     if (Array.isArray(parsedActivity)) return parsedActivity;
   } catch {
-    localStorage.removeItem(ADMIN_ACTIVITY_KEY);
+    localStorage.removeItem(storageKey);
   }
 
   return [
@@ -1644,7 +1851,8 @@ function recordAdminActivity(action) {
     user: state.adminUser?.email || 'Administrador Querubim',
     date: new Date().toISOString(),
   });
-  localStorage.setItem(ADMIN_ACTIVITY_KEY, JSON.stringify(activity.slice(0, 12)));
+  const storageKey = `${ADMIN_ACTIVITY_KEY}:${state.adminUser?.email || 'sin-sesion'}`;
+  localStorage.setItem(storageKey, JSON.stringify(activity.slice(0, 12)));
   renderAdminOperations();
 }
 
@@ -1671,14 +1879,37 @@ function renderAdminStats() {
 
   const paidRevenue = Number(state.adminSummary?.paidRevenue || 0);
   const lowStock = getLowStockProducts().length;
-  const paidOrders = state.adminOrders.filter((order) => order.status === 'PAID').length;
+  const paidOrders = Number(state.adminSummary?.paidOrders ?? state.adminOrders.filter((order) => order.status === 'PAID').length);
   const pendingInternational = Number(state.adminSummary?.pendingInternationalRequests || 0);
 
+  const analytics = state.adminAnalytics || {};
   const stats = [
-    { icon: 'shopping-bag', label: 'Ingresos confirmados', value: formatCurrency(paidRevenue), detail: `${paidOrders} pagos aprobados`, tone: 'gold' },
-    { icon: 'clipboard-list', label: 'Pedidos registrados', value: state.adminOrders.length, detail: `${state.adminOrders.filter((order) => order.status === 'CREATED').length} esperan pago`, tone: 'burgundy' },
-    { icon: 'package', label: 'Catálogo activo', value: products.length, detail: `${lowStock} alertas de existencias`, tone: 'charcoal' },
-    { icon: 'plane', label: 'Solicitudes internacionales', value: pendingInternational, detail: `${state.adminInternationalRequests.length} solicitudes totales`, tone: 'green' },
+    ...(canAdmin('financials.view') ? [
+      { icon: 'shopping-bag', label: 'Ingresos confirmados', value: formatCurrency(paidRevenue), detail: `${paidOrders} pagos aprobados`, tone: 'gold' },
+      { icon: 'bar-chart-3', label: 'Últimos 30 días', value: formatCurrency(analytics.currentRevenue || 0), detail: `${Number(analytics.revenueChange || 0) >= 0 ? '+' : ''}${Number(analytics.revenueChange || 0)} % frente al periodo anterior`, tone: 'green' },
+      { icon: 'credit-card', label: 'Ticket promedio', value: formatCurrency(analytics.averageTicket || 0), detail: `${Number(analytics.conversionRate || 0)} % de aprobación`, tone: 'charcoal' },
+    ] : []),
+    ...(canAdmin('orders.manage') ? [{
+      icon: 'clipboard-list',
+      label: 'Pedidos registrados',
+      value: Number(state.adminSummary?.orders ?? state.adminOrders.length),
+      detail: `${state.adminOrders.filter((order) => order.status === 'CREATED').length} esperan pago`,
+      tone: 'burgundy',
+    }] : []),
+    ...(canAdmin('catalog.manage') || canAdmin('categories.manage') || canAdmin('gold.manage') ? [{
+      icon: 'package',
+      label: 'Catálogo activo',
+      value: Number(state.adminSummary?.activeProducts ?? products.length),
+      detail: `${Number(state.adminSummary?.lowStockProducts ?? lowStock)} alertas de existencias`,
+      tone: 'charcoal',
+    }] : []),
+    ...(canAdmin('international.manage') ? [{
+      icon: 'plane',
+      label: 'Solicitudes internacionales',
+      value: pendingInternational,
+      detail: `${state.adminInternationalRequests.length} solicitudes totales`,
+      tone: 'green',
+    }] : []),
   ];
 
   selectors.adminStats.innerHTML = stats
@@ -1696,10 +1927,14 @@ function renderAdminStats() {
   const orderCount = document.querySelector('#admin-nav-orders-count');
   const internationalCount = document.querySelector('#admin-nav-international-count');
   if (productCount) productCount.textContent = String(products.length);
-  if (orderCount) orderCount.textContent = String(state.adminOrders.length);
+  if (orderCount) orderCount.textContent = String(state.adminSummary?.orders ?? state.adminOrders.length);
   if (internationalCount) internationalCount.textContent = String(pendingInternational);
   const userEmail = document.querySelector('#admin-sidebar-user-email');
   if (userEmail) userEmail.textContent = state.adminUser?.email || 'Sesión protegida';
+  const userRole = document.querySelector('.admin-sidebar-user strong');
+  if (userRole) userRole.textContent = state.adminUser?.role === 'master'
+    ? 'Administradora maestra'
+    : state.adminUser?.role === 'bootstrap' ? 'Acceso de transición' : state.adminUser?.name || 'Empleado';
 }
 
 function getRecentAdminMonths(count = 6) {
@@ -1718,24 +1953,36 @@ function getRecentAdminMonths(count = 6) {
 function renderAdminOverviewCharts() {
   const target = document.querySelector('#admin-overview-charts');
   if (!target) return;
-  const months = getRecentAdminMonths();
-  const monthByKey = new Map(months.map((month) => [month.key, month]));
-  state.adminOrders.forEach((order) => {
-    const date = new Date(order.createdAt);
-    if (Number.isNaN(date.getTime())) return;
-    const month = monthByKey.get(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-    if (!month) return;
-    if (order.status === 'PAID') {
-      month.orders += 1;
-      month.revenue += Number(order.amount || 0);
-    }
-  });
+  target.hidden = !canAdmin('financials.view');
+  if (!canAdmin('financials.view')) {
+    target.innerHTML = '';
+    return;
+  }
+  const serverMonths = Array.isArray(state.adminAnalytics?.monthlyRevenue)
+    ? state.adminAnalytics.monthlyRevenue
+    : [];
+  const months = serverMonths.length
+    ? serverMonths.map((month) => {
+      const date = new Date(`${month.key}-01T12:00:00`);
+      return {
+        key: month.key,
+        label: Number.isNaN(date.getTime())
+          ? month.key
+          : new Intl.DateTimeFormat('es-CO', { month: 'short' }).format(date).replace('.', ''),
+        revenue: Number(month.revenue || 0),
+        orders: Number(month.orders || 0),
+      };
+    })
+    : getRecentAdminMonths();
   const maxRevenue = Math.max(...months.map((month) => month.revenue), 1);
   const periodRevenue = months.reduce((total, month) => total + month.revenue, 0);
+  const statusCounts = state.adminAnalytics?.paymentStatusCounts || {};
   const paymentCounts = {
-    paid: state.adminOrders.filter((order) => order.status === 'PAID').length,
-    pending: state.adminOrders.filter((order) => order.status === 'CREATED').length,
-    attention: state.adminOrders.filter((order) => ['REJECTED', 'VOIDED', 'EXPIRED', 'REVIEW_REQUIRED'].includes(order.status)).length,
+    paid: Number(statusCounts.PAID ?? state.adminOrders.filter((order) => order.status === 'PAID').length),
+    pending: Number(statusCounts.CREATED ?? state.adminOrders.filter((order) => order.status === 'CREATED').length),
+    attention: ['REJECTED', 'VOIDED', 'EXPIRED', 'REVIEW_REQUIRED']
+      .reduce((total, status) => total + Number(statusCounts[status] || 0), 0)
+      || state.adminOrders.filter((order) => ['REJECTED', 'VOIDED', 'EXPIRED', 'REVIEW_REQUIRED'].includes(order.status)).length,
   };
   const paymentTotal = Math.max(paymentCounts.paid + paymentCounts.pending + paymentCounts.attention, 1);
   const paidEnd = (paymentCounts.paid / paymentTotal) * 100;
@@ -1761,7 +2008,7 @@ function renderAdminOverviewCharts() {
       <div class="admin-chart-heading"><div><span>Pagos</span><h2>Distribución actual</h2></div></div>
       <div class="admin-payment-visual">
         <div class="admin-donut" style="--paid-end:${paidEnd}%;--pending-end:${pendingEnd}%">
-          <div><strong>${state.adminOrders.length}</strong><span>órdenes</span></div>
+          <div><strong>${Number(state.adminAnalytics?.totalOrders ?? state.adminOrders.length)}</strong><span>órdenes</span></div>
         </div>
         <div class="admin-chart-legend">
           <span><i class="paid"></i><b>Aprobados</b><strong>${paymentCounts.paid}</strong></span>
@@ -1769,11 +2016,31 @@ function renderAdminOverviewCharts() {
           <span><i class="attention"></i><b>Requieren atención</b><strong>${paymentCounts.attention}</strong></span>
         </div>
       </div>
+    </section>
+    <section class="admin-chart-panel admin-ranking-panel">
+      <div class="admin-chart-heading"><div><span>Catálogo</span><h2>Joyas con mayores ventas</h2></div><small>Ingresos confirmados</small></div>
+      <div class="admin-ranking-list">
+        ${(state.adminAnalytics?.topProducts || []).length
+          ? state.adminAnalytics.topProducts.map((item, index) => `
+              <div><b>${index + 1}</b><span><strong>${escapeHtml(item.name)}</strong><small>${item.quantity} unidades</small></span><em>${escapeHtml(formatCurrency(item.revenue))}</em></div>
+            `).join('')
+          : '<p class="admin-chart-empty">Los productos destacados aparecerán al confirmar ventas.</p>'}
+      </div>
+    </section>
+    <section class="admin-chart-panel admin-ranking-panel">
+      <div class="admin-chart-heading"><div><span>Preferencias</span><h2>Ventas por categoría</h2></div></div>
+      <div class="admin-ranking-list">
+        ${(state.adminAnalytics?.categorySales || []).length
+          ? state.adminAnalytics.categorySales.slice(0, 5).map((item, index) => `
+              <div><b>${index + 1}</b><span><strong>${escapeHtml(getCategoryLabel(item.category))}</strong><small>${item.quantity} unidades</small></span><em>${escapeHtml(formatCurrency(item.revenue))}</em></div>
+            `).join('')
+          : '<p class="admin-chart-empty">Aún no hay categorías con ventas confirmadas.</p>'}
+      </div>
     </section>`;
 }
 
-function setAdminView(viewName, { scroll = true } = {}) {
-  if (!adminViewMeta[viewName]) return;
+function setAdminView(viewName, { scroll = true, closeSidebar = true } = {}) {
+  if (!canOpenAdminView(viewName)) return;
   state.activeAdminView = viewName;
   document.querySelectorAll('[data-admin-view]').forEach((view) => {
     view.classList.toggle('active', view.dataset.adminView === viewName);
@@ -1787,9 +2054,29 @@ function setAdminView(viewName, { scroll = true } = {}) {
   const description = document.querySelector('#admin-view-description');
   if (title) title.textContent = adminViewMeta[viewName].title;
   if (description) description.textContent = adminViewMeta[viewName].description;
-  document.querySelector('#admin-app-sidebar')?.classList.remove('open');
-  document.body.classList.remove('admin-sidebar-open');
+  if (closeSidebar) {
+    document.querySelector('#admin-app-sidebar')?.classList.remove('open');
+    document.body.classList.remove('admin-sidebar-open');
+  }
   if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateAdminAccessVisibility() {
+  document.querySelectorAll('[data-admin-view-target]').forEach((button) => {
+    button.hidden = !canOpenAdminView(button.dataset.adminViewTarget);
+  });
+  if (!canOpenAdminView(state.activeAdminView)) {
+    state.activeAdminView = Object.keys(adminViewMeta).find(canOpenAdminView) || 'overview';
+  }
+  if (selectors.adminExportCatalog) selectors.adminExportCatalog.hidden = !canAdmin('catalog.export');
+  if (selectors.adminExportCatalogPdf) selectors.adminExportCatalogPdf.hidden = !canAdmin('catalog.export');
+  const rolePill = document.querySelector('.admin-role-pill');
+  if (rolePill) {
+    const label = state.adminUser?.role === 'master'
+      ? 'Administradora maestra'
+      : state.adminUser?.role === 'bootstrap' ? 'Acceso temporal de transición' : 'Perfil de empleado';
+    rolePill.innerHTML = `<i data-lucide="shield-check"></i>Rol: ${escapeHtml(label)}`;
+  }
 }
 
 function getAdminCustomers() {
@@ -2043,12 +2330,13 @@ function renderAdminOperations() {
   const lowStockProducts = getLowStockProducts().slice(0, 4);
   const recentOrders = state.adminOrders.slice(0, 5);
   const customers = getAdminCustomers().slice(0, 5);
-  const paymentCounts = state.adminOrders.reduce((counts, order) => {
+  const paymentCounts = state.adminAnalytics?.paymentStatusCounts || state.adminOrders.reduce((counts, order) => {
     counts[order.status] = (counts[order.status] || 0) + 1;
     return counts;
   }, {});
 
   selectors.adminOperations.innerHTML = `
+    ${canAdmin('orders.manage') ? `
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
         <div><span class="eyebrow">Pedidos</span><h2>Órdenes recientes</h2></div>
@@ -2081,8 +2369,9 @@ function renderAdminOperations() {
               </article>`).join('')
           : '<article><strong>Sin compradores registrados</strong><span>Los datos aparecerán después de la primera orden.</span><small>Historial vacío</small></article>'}
       </div>
-    </section>
+    </section>` : ''}
 
+    ${canAdmin('catalog.manage') ? `
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
         <div><span class="eyebrow">Inventario</span><h2>Alertas de stock</h2></div>
@@ -2098,8 +2387,9 @@ function renderAdminOperations() {
               </article>`).join('')
           : '<article><strong>Inventario estable</strong><span>No hay alertas de stock bajo.</span><small>Seguimiento activo</small></article>'}
       </div>
-    </section>
+    </section>` : ''}
 
+    ${canAdmin('financials.view') ? `
     <section class="admin-ops-card">
       <div class="admin-panel-title compact">
         <div><span class="eyebrow">Bold</span><h2>Estados de pago</h2></div>
@@ -2109,7 +2399,7 @@ function renderAdminOperations() {
         <article><strong>${paymentCounts.PAID || 0} pagos aprobados</strong><span>${formatCurrency(state.adminSummary?.paidRevenue || 0)}</span><small>Confirmados por webhook</small></article>
         <article><strong>${paymentCounts.CREATED || 0} pagos pendientes</strong><span>${paymentCounts.REJECTED || 0} rechazados / ${paymentCounts.VOIDED || 0} anulados</span><small>${paymentCounts.REVIEW_REQUIRED || 0} requieren revisión</small></article>
       </div>
-    </section>
+    </section>` : ''}
 
     <section class="admin-ops-card wide">
       <div class="admin-panel-title compact">
@@ -2138,13 +2428,17 @@ function renderAdminProducts() {
           const image = getProductImages(product)[0];
           const stock = getProductStock(product);
           const imageCount = getProductImages(product).length;
+          const pricing = getProductPricing(product);
+          const priceLabel = pricing.requiresSelection
+            ? `Prenda: ${formatCurrency(product.price)} / Público desde: ${formatCurrency(pricing.startingPrice)}`
+            : formatCurrency(pricing.startingPrice);
           return `
             <article class="admin-product-item${product.premium ? ' premium-admin-item' : ''}">
               <img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}" loading="lazy" />
               <div>
                 <strong>${escapeHtml(product.name)}</strong>
                 <span>${escapeHtml(getCategoryLabel(product.category))} / ${escapeHtml(product.material)}</span>
-                <small>${escapeHtml(product.value)} / ${stock === 0 ? 'Agotado' : `${stock} und.`} / ${imageCount} fotos${product.featured ? ' / Destacado' : ''}${product.premium ? ' / Premium' : ''}</small>
+                <small>${escapeHtml(priceLabel)} / ${stock === 0 ? 'Agotado' : `${stock} und.`} / ${imageCount} fotos${product.featured ? ' / Destacado' : ''}${product.premium ? ' / Premium' : ''}</small>
               </div>
               <div class="admin-product-actions">
                 <button class="icon-button" type="button" data-admin-edit="${escapeHtml(product.id)}" aria-label="Editar ${escapeHtml(product.name)}">
@@ -2421,10 +2715,283 @@ async function cancelInternationalRequest() {
   }
 }
 
+function syncAdminCategories(settings = state.adminBusinessSettings) {
+  state.adminBusinessSettings = cloneData(settings);
+  categories = [
+    { slug: 'todos', label: 'Todas' },
+    ...(settings.categories || []).filter((category) => category.active !== false).map(({ slug, label }) => ({ slug, label })),
+  ];
+  if (!categories.some((category) => category.slug === state.activeFilter)) state.activeFilter = 'todos';
+  if (!categories.some((category) => category.slug === state.activePremiumFilter)) state.activePremiumFilter = 'todos';
+  populateAdminCategoryOptions();
+  renderCategories();
+  renderCategories({ premium: true });
+}
+
+function renderAdminGoldSettings() {
+  if (!selectors.adminGoldForm) return;
+  const gold = state.adminBusinessSettings.gold || {};
+  selectors.adminGoldPrice.value = gold.pricePerGram || '';
+  const weightedProducts = products.filter((product) => product.goldPricing && product.measurementWeights?.length).length;
+  selectors.adminGoldStatus.textContent = gold.enabled
+    ? `Valor vigente: ${formatCurrency(gold.pricePerGram)} por gramo. ${weightedProducts} productos se recalculan automáticamente.${gold.updatedAt ? ` Actualizado ${new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(gold.updatedAt))}.` : ''}`
+    : 'Define el precio por gramo para activar el cálculo automático en productos con peso por talla.';
+}
+
+async function saveAdminGoldSettings(event) {
+  event.preventDefault();
+  if (!selectors.adminGoldForm.checkValidity()) {
+    selectors.adminGoldForm.reportValidity();
+    return;
+  }
+  const button = selectors.adminGoldForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  selectors.adminGoldMessage.textContent = 'Actualizando precios del catálogo...';
+  selectors.adminGoldMessage.className = 'form-message';
+  try {
+    const result = await apiRequest('/api/admin/settings/gold', {
+      method: 'PUT',
+      body: JSON.stringify({ pricePerGram: Number(selectors.adminGoldPrice.value) }),
+    });
+    syncAdminCategories(result.settings);
+    selectors.adminGoldMessage.textContent = 'Precio del oro actualizado. Las joyas por peso ya reflejan el nuevo valor.';
+    selectors.adminGoldMessage.className = 'form-message success';
+    recordAdminActivity(`Actualización del oro: ${formatCurrency(result.settings.gold.pricePerGram)} por gramo.`);
+    await loadAdminDashboard();
+  } catch (error) {
+    selectors.adminGoldMessage.textContent = error.message;
+    selectors.adminGoldMessage.className = 'form-message error';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function readAdminTemplateFields() {
+  return [...selectors.adminTemplateFields.querySelectorAll('[data-template-field]')].map((row) => {
+    const label = row.querySelector('[data-template-label]').value.trim();
+    const keyInput = row.querySelector('[data-template-key]').value.trim();
+    const type = row.querySelector('[data-template-type]').value;
+    return {
+      label,
+      key: keyInput || slugify(label),
+      type,
+      required: row.querySelector('[data-template-required]').checked,
+      public: row.querySelector('[data-template-public]').checked,
+      options: type === 'select' ? normalizeMultilineList(row.querySelector('[data-template-options]').value) : [],
+    };
+  });
+}
+
+function renderAdminTemplateFields(fields = []) {
+  if (!selectors.adminTemplateFields) return;
+  selectors.adminTemplateFields.innerHTML = fields.length
+    ? fields.map((field, index) => `
+        <div class="admin-template-field" data-template-field="${index}">
+          <label>Nombre<input type="text" maxlength="80" value="${escapeHtml(field.label || '')}" data-template-label required /></label>
+          <label>Referencia<input type="text" maxlength="50" value="${escapeHtml(field.key || '')}" data-template-key pattern="[a-z][a-z0-9]*(?:-[a-z0-9]+)*" required /></label>
+          <label>Tipo<select data-template-type>
+            ${[['text', 'Texto corto'], ['textarea', 'Texto largo'], ['number', 'Número'], ['select', 'Lista de opciones'], ['boolean', 'Sí / No']].map(([value, label]) => `<option value="${value}"${field.type === value ? ' selected' : ''}>${label}</option>`).join('')}
+          </select></label>
+          <label class="admin-template-options"${field.type === 'select' ? '' : ' hidden'}>Opciones<input type="text" value="${escapeHtml((field.options || []).join(', '))}" data-template-options placeholder="Opción 1, Opción 2" /></label>
+          <label class="admin-check"><input type="checkbox" data-template-required${field.required ? ' checked' : ''} /><span>Obligatorio</span></label>
+          <label class="admin-check"><input type="checkbox" data-template-public${field.public !== false ? ' checked' : ''} /><span>Visible al cliente</span></label>
+          <button class="icon-button danger-button" type="button" data-template-remove="${index}" aria-label="Eliminar campo"><i data-lucide="trash-2"></i></button>
+        </div>`).join('')
+    : '<p class="admin-inline-note">No hay campos adicionales. Puedes agregar material, pureza, piedra u otra información propia de esta categoría.</p>';
+  refreshIcons();
+}
+
+function resetAdminCategoryForm() {
+  state.editingCategorySlug = null;
+  selectors.adminCategoryForm.reset();
+  selectors.adminCategoryEditSlug.value = '';
+  selectors.adminCategorySlug.readOnly = false;
+  selectors.adminCategoryActive.checked = true;
+  selectors.adminCategoryDelete.hidden = true;
+  selectors.adminCategoryMessage.textContent = '';
+  selectors.adminCategoryMessage.className = 'form-message';
+  renderAdminTemplateFields([
+    { key: 'material', label: 'Material', type: 'text', required: true, public: true, options: [] },
+    { key: 'metal', label: 'Metal principal', type: 'text', required: true, public: true, options: [] },
+    { key: 'purity', label: 'Pureza', type: 'text', required: true, public: true, options: [] },
+  ]);
+}
+
+function fillAdminCategoryForm(slug) {
+  const category = state.adminBusinessSettings.categories?.find((item) => item.slug === slug);
+  if (!category) return;
+  state.editingCategorySlug = slug;
+  selectors.adminCategoryEditSlug.value = slug;
+  selectors.adminCategoryName.value = category.label;
+  selectors.adminCategorySlug.value = category.slug;
+  selectors.adminCategorySlug.readOnly = true;
+  selectors.adminCategoryActive.checked = category.active !== false;
+  selectors.adminCategoryDelete.hidden = false;
+  selectors.adminCategoryMessage.textContent = '';
+  renderAdminTemplateFields(category.fields || []);
+}
+
+function renderAdminCategoriesManager() {
+  if (!selectors.adminCategoryList) return;
+  const categoryList = state.adminBusinessSettings.categories || [];
+  selectors.adminCategoryList.innerHTML = categoryList.map((category) => `
+    <button class="${state.editingCategorySlug === category.slug ? 'active' : ''}" type="button" data-admin-category-edit="${escapeHtml(category.slug)}">
+      <span><strong>${escapeHtml(category.label)}</strong><small>${category.fields?.length || 0} campos propios</small></span>
+      <i data-lucide="chevron-right"></i>
+    </button>`).join('');
+  refreshIcons();
+}
+
+async function saveAdminCategory(event) {
+  event.preventDefault();
+  if (!selectors.adminCategoryForm.checkValidity()) {
+    selectors.adminCategoryForm.reportValidity();
+    return;
+  }
+  const editingSlug = state.editingCategorySlug;
+  const category = {
+    label: selectors.adminCategoryName.value.trim(),
+    slug: selectors.adminCategorySlug.value.trim() || slugify(selectors.adminCategoryName.value),
+    active: selectors.adminCategoryActive.checked,
+    fields: readAdminTemplateFields(),
+  };
+  const button = selectors.adminCategoryForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  selectors.adminCategoryMessage.textContent = 'Guardando plantilla...';
+  try {
+    const result = await apiRequest(
+      editingSlug ? `/api/admin/categories/${encodeURIComponent(editingSlug)}` : '/api/admin/categories',
+      { method: editingSlug ? 'PUT' : 'POST', body: JSON.stringify(category) },
+    );
+    syncAdminCategories(result.settings);
+    state.editingCategorySlug = result.category.slug;
+    fillAdminCategoryForm(result.category.slug);
+    renderAdminCategoriesManager();
+    renderAdminDynamicFields({});
+    selectors.adminCategoryMessage.textContent = 'Categoría y plantilla guardadas correctamente.';
+    selectors.adminCategoryMessage.className = 'form-message success';
+    recordAdminActivity(`Actualización de categoría: ${result.category.label}.`);
+  } catch (error) {
+    selectors.adminCategoryMessage.textContent = error.message;
+    selectors.adminCategoryMessage.className = 'form-message error';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteAdminCategory() {
+  const slug = state.editingCategorySlug;
+  if (!slug || !window.confirm('¿Eliminar esta categoría y su plantilla?')) return;
+  try {
+    const result = await apiRequest(`/api/admin/categories/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+    syncAdminCategories(result.settings);
+    resetAdminCategoryForm();
+    renderAdminCategoriesManager();
+    renderAdminDynamicFields({});
+  } catch (error) {
+    selectors.adminCategoryMessage.textContent = error.message;
+    selectors.adminCategoryMessage.className = 'form-message error';
+  }
+}
+
+function renderAdminTeam() {
+  if (!selectors.adminTeamList) return;
+  const isMaster = state.adminUser?.role === 'master';
+  const isBootstrap = state.adminUser?.role === 'bootstrap';
+  selectors.adminMasterSetup.hidden = !isBootstrap;
+  selectors.adminTeamForm.hidden = !isMaster;
+  selectors.adminPermissionGrid.innerHTML = '<legend>Permisos del empleado</legend>' + state.adminPermissionOptions.map((permission) => `
+    <label class="admin-check"><input type="checkbox" name="permissions" value="${escapeHtml(permission.key)}"${['dashboard.view', 'catalog.manage', 'orders.manage'].includes(permission.key) ? ' checked' : ''} /><span>${escapeHtml(permission.label)}</span></label>
+  `).join('');
+  selectors.adminTeamList.innerHTML = state.adminUsers.length
+    ? state.adminUsers.map((user) => `
+        <article class="admin-team-user${user.active === false ? ' inactive' : ''}" data-admin-user="${escapeHtml(user.email)}">
+          <div class="admin-team-user-heading"><span>${escapeHtml((user.name || user.email).slice(0, 1).toUpperCase())}</span><div><strong>${escapeHtml(user.name)}</strong><small>${escapeHtml(user.email)} · ${user.role === 'master' ? 'Administradora maestra' : user.status === 'INVITED' ? 'Invitación pendiente' : 'Empleado'}</small></div></div>
+          ${user.role === 'employee' ? `<div class="admin-team-permissions">${state.adminPermissionOptions.map((permission) => `<label class="admin-check"><input type="checkbox" data-user-permission="${escapeHtml(permission.key)}"${user.permissions.includes(permission.key) ? ' checked' : ''} /><span>${escapeHtml(permission.label)}</span></label>`).join('')}</div>
+          <div class="admin-team-actions"><label class="admin-check"><input type="checkbox" data-user-active${user.active !== false ? ' checked' : ''} /><span>Perfil activo</span></label><button class="button button-secondary" type="button" data-admin-user-save="${escapeHtml(user.email)}">Guardar permisos<i data-lucide="save"></i></button></div>` : ''}
+        </article>`).join('')
+    : '<p class="admin-inline-note">Todavía no hay perfiles internos creados.</p>';
+  refreshIcons();
+}
+
+function showAdminInvitation(result) {
+  selectors.adminInvitationResult.hidden = false;
+  selectors.adminInvitationResult.innerHTML = `
+    <div><span>Código de activación para ${escapeHtml(result.user.email)}</span><strong>${escapeHtml(result.activationToken)}</strong><small>${escapeHtml(result.message)}</small></div>
+    <button class="button button-secondary" type="button" data-copy-activation="${escapeHtml(result.activationToken)}">Copiar código<i data-lucide="key-round"></i></button>`;
+  refreshIcons();
+}
+
+async function prepareMasterInvitation() {
+  selectors.adminMasterInvite.disabled = true;
+  try {
+    const result = await apiRequest('/api/admin/team/master-invitation', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Administradora principal' }),
+    });
+    showAdminInvitation(result);
+    await loadAdminTeam();
+    renderAdminTeam();
+  } catch (error) {
+    selectors.adminTeamMessage.textContent = error.message;
+    selectors.adminTeamMessage.className = 'form-message error';
+  } finally {
+    selectors.adminMasterInvite.disabled = false;
+  }
+}
+
+async function createEmployeeInvitation(event) {
+  event.preventDefault();
+  if (!selectors.adminTeamForm.checkValidity()) {
+    selectors.adminTeamForm.reportValidity();
+    return;
+  }
+  const permissions = [...selectors.adminTeamForm.querySelectorAll('[name="permissions"]:checked')].map((input) => input.value);
+  const button = selectors.adminTeamForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const result = await apiRequest('/api/admin/team/invitations', {
+      method: 'POST',
+      body: JSON.stringify({ name: selectors.adminTeamName.value, email: selectors.adminTeamEmail.value, permissions }),
+    });
+    showAdminInvitation(result);
+    selectors.adminTeamForm.reset();
+    await loadAdminTeam();
+    renderAdminTeam();
+  } catch (error) {
+    selectors.adminTeamMessage.textContent = error.message;
+    selectors.adminTeamMessage.className = 'form-message error';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function saveAdminTeamUser(email) {
+  const row = selectors.adminTeamList.querySelector(`[data-admin-user="${CSS.escape(email)}"]`);
+  if (!row) return;
+  const permissions = [...row.querySelectorAll('[data-user-permission]:checked')].map((input) => input.dataset.userPermission);
+  try {
+    const result = await apiRequest(`/api/admin/team/users/${encodeURIComponent(email)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ permissions, active: row.querySelector('[data-user-active]').checked }),
+    });
+    const index = state.adminUsers.findIndex((user) => user.email === email);
+    if (index >= 0) state.adminUsers[index] = result.user;
+    renderAdminTeam();
+    selectors.adminTeamMessage.textContent = 'Permisos actualizados correctamente.';
+    selectors.adminTeamMessage.className = 'form-message success';
+  } catch (error) {
+    selectors.adminTeamMessage.textContent = error.message;
+    selectors.adminTeamMessage.className = 'form-message error';
+  }
+}
+
 function renderAdminPanel() {
   if (!selectors.adminStats || !isAdminLoggedIn()) return;
 
+  updateAdminAccessVisibility();
   populateAdminCategoryOptions();
+  renderAdminDynamicFields(getAdminAttributeValues());
   renderAdminStats();
   renderAdminOverviewCharts();
   renderAdminOperations();
@@ -2432,8 +2999,11 @@ function renderAdminPanel() {
   renderAdminInternationalRequests();
   renderAdminOrderManagement();
   renderAdminProducts();
+  renderAdminGoldSettings();
+  renderAdminCategoriesManager();
+  renderAdminTeam();
   updateBackupState();
-  setAdminView(state.activeAdminView, { scroll: false });
+  setAdminView(state.activeAdminView, { scroll: false, closeSidebar: false });
   refreshIcons();
 }
 
@@ -2509,30 +3079,43 @@ function reorderAdminImage(fromIndex, toIndex) {
 
 function renderAdminMeasurements() {
   if (!selectors.adminMeasurements || !selectors.adminMeasurementList) return;
-  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  const measurements = state.adminMeasurementOptions;
+  selectors.adminMeasurements.value = JSON.stringify(measurements);
   selectors.adminMeasurementList.innerHTML = measurements.length
     ? measurements.map((measurement, index) => `
         <div class="admin-measurement-item">
-          <input type="text" maxlength="80" value="${escapeHtml(measurement)}" data-admin-measurement-index="${index}" aria-label="Editar medida ${index + 1}" />
-          <button class="icon-button danger-button" type="button" data-admin-measurement-remove="${index}" aria-label="Eliminar ${escapeHtml(measurement)}"><i data-lucide="trash-2"></i></button>
+          <input type="text" maxlength="80" value="${escapeHtml(measurement.measure)}" data-admin-measurement-label="${index}" aria-label="Editar medida ${index + 1}" />
+          <input type="number" min="0.001" max="100000" step="0.001" value="${escapeHtml(measurement.value ?? '')}" data-admin-measurement-weight="${index}" aria-label="Peso de ${escapeHtml(measurement.measure)}" placeholder="Peso" />
+          <select data-admin-measurement-unit="${index}" aria-label="Unidad del peso de ${escapeHtml(measurement.measure)}">
+            ${['g', 'mg', 'kg'].map((unit) => `<option value="${unit}"${measurement.unit === unit ? ' selected' : ''}>${unit}</option>`).join('')}
+          </select>
+          <button class="icon-button danger-button" type="button" data-admin-measurement-remove="${index}" aria-label="Eliminar ${escapeHtml(measurement.measure)}"><i data-lucide="trash-2"></i></button>
         </div>`).join('')
-    : '<p>Agrega por lo menos una medida o talla para publicar el producto.</p>';
+    : '<p>Agrega por lo menos una talla con su peso para publicar el producto.</p>';
   refreshIcons();
 }
 
-function setAdminMeasurements(measurements) {
-  selectors.adminMeasurements.value = measurements.map((item) => String(item).trim()).filter(Boolean).join(', ');
+function setAdminMeasurements(measurements = [], weights = []) {
+  const weightByMeasure = new Map((weights || []).map((entry) => [entry.measure, entry]));
+  state.adminMeasurementOptions = measurements.map((item) => {
+    const measure = typeof item === 'string' ? item : item.measure;
+    const weight = weightByMeasure.get(measure) || (typeof item === 'object' ? item : {});
+    return { measure: String(measure || '').trim(), value: weight.value ?? '', unit: weight.unit || 'g' };
+  }).filter((item) => item.measure);
   renderAdminMeasurements();
 }
 
 function addAdminMeasurement() {
   const value = selectors.adminMeasurementEntry.value.trim();
-  if (!value) {
+  const weight = Number(selectors.adminMeasurementWeight.value);
+  const unit = selectors.adminMeasurementUnit.value;
+  if (!value || !Number.isFinite(weight) || weight <= 0) {
+    setAdminFormMessage('Escribe la talla y un peso mayor que cero.', 'error');
     selectors.adminMeasurementEntry.focus();
     return;
   }
-  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
-  if (measurements.some((item) => normalizeText(item) === normalizeText(value))) {
+  const measurements = state.adminMeasurementOptions;
+  if (measurements.some((item) => normalizeText(item.measure) === normalizeText(value))) {
     setAdminFormMessage('Esa medida ya está incluida en el producto.', 'error');
     return;
   }
@@ -2540,30 +3123,35 @@ function addAdminMeasurement() {
     setAdminFormMessage('Cada producto admite un máximo de 30 medidas.', 'error');
     return;
   }
-  measurements.push(value);
+  measurements.push({ measure: value, value: weight, unit });
   selectors.adminMeasurementEntry.value = '';
-  setAdminMeasurements(measurements);
+  selectors.adminMeasurementWeight.value = '';
+  renderAdminMeasurements();
   setAdminFormMessage('Medida agregada. Guarda el producto para publicarla.');
   selectors.adminMeasurementEntry.focus();
 }
 
 function removeAdminMeasurement(index) {
-  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
-  measurements.splice(index, 1);
-  setAdminMeasurements(measurements);
+  state.adminMeasurementOptions.splice(index, 1);
+  renderAdminMeasurements();
 }
 
-function updateAdminMeasurement(index, value) {
-  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
-  if (!measurements[index]) return;
-  const cleaned = String(value).trim();
-  if (!cleaned) {
+function updateAdminMeasurement(index) {
+  const measurement = state.adminMeasurementOptions[index];
+  const row = selectors.adminMeasurementList.querySelector(`[data-admin-measurement-label="${index}"]`)?.closest('.admin-measurement-item');
+  if (!measurement || !row) return;
+  const label = row.querySelector('[data-admin-measurement-label]').value.trim();
+  const weight = Number(row.querySelector('[data-admin-measurement-weight]').value);
+  if (!label || !Number.isFinite(weight) || weight <= 0) {
+    setAdminFormMessage('Cada talla debe conservar un nombre y un peso mayor que cero.', 'error');
     renderAdminMeasurements();
     return;
   }
-  measurements[index] = cleaned;
-  setAdminMeasurements(measurements);
-  setAdminFormMessage('Medida actualizada. Guarda el producto para publicarla.');
+  measurement.measure = label;
+  measurement.value = weight;
+  measurement.unit = row.querySelector('[data-admin-measurement-unit]').value;
+  renderAdminMeasurements();
+  setAdminFormMessage('Talla y peso actualizados. Guarda el producto para publicarlos.');
 }
 
 function updateAdminImageUploadState() {
@@ -2751,6 +3339,64 @@ async function handleAdminImageFiles(files) {
   }
 }
 
+function getSelectedAdminCategoryTemplate() {
+  return state.adminBusinessSettings.categories?.find((category) => category.slug === selectors.adminCategory?.value) || null;
+}
+
+function getAdminAttributeValues() {
+  const values = {};
+  selectors.adminDynamicFields?.querySelectorAll('[data-admin-attribute]').forEach((field) => {
+    if (field.type === 'checkbox') values[field.dataset.adminAttribute] = field.checked;
+    else if (field.type === 'number') values[field.dataset.adminAttribute] = field.value === '' ? '' : Number(field.value);
+    else values[field.dataset.adminAttribute] = field.value.trim();
+  });
+  return values;
+}
+
+function renderAdminDynamicFields(values = getAdminAttributeValues()) {
+  if (!selectors.adminDynamicFields) return;
+  const legacyInputs = [selectors.adminMaterial, selectors.adminMetal, selectors.adminPurity, selectors.adminGemstone, selectors.adminEngraving];
+  legacyInputs.forEach((input) => {
+    if (input) {
+      input.disabled = true;
+      input.required = false;
+    }
+    const label = input?.closest('label');
+    if (label) label.hidden = true;
+  });
+  legacyInputs.forEach((input) => {
+    const row = input?.closest('.admin-form-row');
+    if (row && [...row.children].every((child) => child.hidden)) row.hidden = true;
+  });
+
+  const category = getSelectedAdminCategoryTemplate();
+  const defaults = {
+    material: 'Oro amarillo 18K',
+    metal: 'Oro amarillo',
+    purity: '18K',
+    gemstone: 'Sin piedra principal',
+    engraving: 'Disponible bajo solicitud',
+  };
+  selectors.adminDynamicFields.innerHTML = category?.fields?.length
+    ? category.fields.map((field) => {
+        const value = values[field.key] ?? defaults[field.key] ?? '';
+        const required = field.required ? ' required' : '';
+        const requiredLabel = field.required ? '<span class="admin-required">Obligatorio</span>' : '<span class="admin-optional">Opcional</span>';
+        if (field.type === 'select') {
+          return `<label>${escapeHtml(field.label)} ${requiredLabel}<select data-admin-attribute="${escapeHtml(field.key)}"${required}>${field.options.map((option) => `<option value="${escapeHtml(option)}"${String(value) === option ? ' selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label>`;
+        }
+        if (field.type === 'boolean') {
+          return `<label class="admin-check admin-dynamic-check"><input type="checkbox" data-admin-attribute="${escapeHtml(field.key)}"${value ? ' checked' : ''} /><span>${escapeHtml(field.label)} ${requiredLabel}</span></label>`;
+        }
+        const tag = field.type === 'textarea' ? 'textarea' : 'input';
+        const control = field.type === 'textarea'
+          ? `<textarea rows="3" maxlength="1200" data-admin-attribute="${escapeHtml(field.key)}"${required}>${escapeHtml(value)}</textarea>`
+          : `<input type="${field.type === 'number' ? 'number' : 'text'}" ${field.type === 'number' ? 'step="any" ' : ''}maxlength="200" value="${escapeHtml(value)}" data-admin-attribute="${escapeHtml(field.key)}"${required} />`;
+        return `<label>${escapeHtml(field.label)} ${requiredLabel}${control}</label>`;
+      }).join('')
+    : '<p class="admin-inline-note">Esta categoría usa únicamente los campos base del producto.</p>';
+}
+
 function resetAdminForm() {
   if (!selectors.adminProductForm) return;
 
@@ -2760,20 +3406,17 @@ function resetAdminForm() {
   selectors.adminProductForm.reset();
   selectors.adminEditId.value = '';
   selectors.adminFormTitle.textContent = 'Crear producto';
-  selectors.adminMaterial.value = 'Oro amarillo 18K';
   selectors.adminStock.value = '1';
-  selectors.adminMetal.value = 'Oro amarillo';
-  selectors.adminPurity.value = '18K';
-  selectors.adminGemstone.value = 'Sin piedra principal';
-  selectors.adminEngraving.value = 'Disponible bajo solicitud';
   selectors.adminImages.value = '';
-  selectors.adminMeasurements.value = '';
+  setAdminMeasurements([]);
   selectors.adminMeasurementEntry.value = '';
+  selectors.adminMeasurementWeight.value = '';
   selectors.adminDescription.value = '';
   selectors.adminFeatured.checked = false;
   selectors.adminFormMessage.textContent = '';
   selectors.adminFormMessage.classList.remove('error', 'success');
   populateAdminCategoryOptions();
+  renderAdminDynamicFields({});
   renderAdminImagePreview();
   renderAdminMeasurements();
 }
@@ -2789,15 +3432,19 @@ function fillAdminForm(productId) {
   selectors.adminFormTitle.textContent = 'Editar producto';
   selectors.adminName.value = product.name;
   selectors.adminCategory.value = product.category;
-  selectors.adminPrice.value = getProductPrice(product);
-  selectors.adminMaterial.value = product.material;
+  selectors.adminPrice.value = Number(product.price) || getProductPrice(product);
   selectors.adminStock.value = getProductStock(product);
   selectors.adminImages.value = getProductImages(product).join('\n');
-  selectors.adminMetal.value = getProductVariants(product).metal;
-  selectors.adminPurity.value = getProductVariants(product).purity;
-  selectors.adminGemstone.value = getProductVariants(product).gemstone;
-  selectors.adminEngraving.value = getProductVariants(product).engraving;
-  selectors.adminMeasurements.value = product.measurements.join(', ');
+  const variants = getProductVariants(product);
+  renderAdminDynamicFields({
+    material: product.material,
+    metal: variants.metal,
+    purity: variants.purity,
+    gemstone: variants.gemstone,
+    engraving: variants.engraving,
+    ...(product.attributes || {}),
+  });
+  setAdminMeasurements(product.measurements, product.measurementWeights);
   selectors.adminDescription.value = product.description;
   selectors.adminPremium.checked = Boolean(product.premium);
   selectors.adminFeatured.checked = Boolean(product.featured);
@@ -2813,17 +3460,19 @@ function buildProductFromAdminForm() {
   const category = selectors.adminCategory.value;
   const price = Number(selectors.adminPrice.value);
   const stock = Number(selectors.adminStock.value);
-  const material = selectors.adminMaterial.value.trim();
+  const attributes = getAdminAttributeValues();
+  const material = String(attributes.material || 'Oro amarillo 18K').trim();
   const images = normalizeMultilineList(selectors.adminImages.value);
-  const measurements = normalizeMeasurements(selectors.adminMeasurements.value);
+  const measurements = state.adminMeasurementOptions.map((item) => item.measure);
+  const measurementWeights = state.adminMeasurementOptions.map(({ measure, value, unit }) => ({ measure, value: Number(value), unit }));
   const description = selectors.adminDescription.value.trim();
   const premium = selectors.adminPremium.checked;
   const featured = selectors.adminFeatured.checked;
   const variants = {
-    metal: selectors.adminMetal.value,
-    purity: selectors.adminPurity.value,
-    gemstone: selectors.adminGemstone.value.trim() || 'Sin piedra principal',
-    engraving: selectors.adminEngraving.value,
+    metal: attributes.metal || 'Oro amarillo',
+    purity: attributes.purity || '18K',
+    gemstone: attributes.gemstone || 'Sin piedra principal',
+    engraving: attributes.engraving || 'Disponible bajo solicitud',
   };
   const existingId = selectors.adminEditId.value || state.editingProductId;
   const id = existingId || `${slugify(name || category)}-${Date.now()}`;
@@ -2840,6 +3489,9 @@ function buildProductFromAdminForm() {
     featured,
     description,
     measurements,
+    measurementWeights,
+    goldPricing: true,
+    attributes,
     stock,
     variants,
     details: buildProductDetails({ category, material, value, premium, stock, variants }),
@@ -2867,6 +3519,12 @@ async function saveAdminProduct(event) {
   if (!product.measurements.length) {
     selectors.adminFormMessage.textContent = 'Agrega por lo menos una medida disponible.';
     selectors.adminFormMessage.classList.add('error');
+    selectors.adminMeasurementEntry.focus();
+    return;
+  }
+
+  if (product.measurementWeights.some((item) => !Number.isFinite(item.value) || item.value <= 0)) {
+    setAdminFormMessage('Cada talla necesita un peso válido para calcular su precio.', 'error');
     selectors.adminMeasurementEntry.focus();
     return;
   }
@@ -2948,6 +3606,19 @@ async function deleteAdminProduct(productId) {
 async function handleAdminLogin(event) {
   event.preventDefault();
 
+  if (state.adminLoginMode === 'awaiting-invitation') {
+    selectors.adminLoginMessage.textContent = 'Primero debe prepararse el acceso maestro desde el perfil administrativo de transición.';
+    selectors.adminLoginMessage.classList.add('error');
+    return;
+  }
+
+  if (state.adminLoginMode === 'activate' && selectors.adminNewPassword.value !== selectors.adminConfirmPassword.value) {
+    selectors.adminLoginMessage.textContent = 'Las dos contraseñas no coinciden.';
+    selectors.adminLoginMessage.classList.add('error');
+    selectors.adminConfirmPassword.focus();
+    return;
+  }
+
   if (!selectors.adminLoginForm.checkValidity()) {
     selectors.adminLoginMessage.textContent = state.adminMfaRequired
       ? 'Completa el correo, la contraseña y el código del autenticador.'
@@ -2959,7 +3630,9 @@ async function handleAdminLogin(event) {
 
   const formData = new FormData(selectors.adminLoginForm);
   const email = String(formData.get('email') || '').trim();
-  const password = String(formData.get('password') || '');
+  const password = state.adminLoginMode === 'activate'
+    ? String(formData.get('newPassword') || '')
+    : String(formData.get('password') || '');
   const totpCode = String(formData.get('totpCode') || '').trim();
 
   const submitButton = selectors.adminLoginForm.querySelector('button[type="submit"]');
@@ -2968,9 +3641,14 @@ async function handleAdminLogin(event) {
   selectors.adminLoginMessage.classList.remove('error');
 
   try {
-    const result = await apiRequest('/api/admin/login', {
+    const result = await apiRequest(state.adminLoginMode === 'activate' ? '/api/admin/activate' : '/api/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, totpCode }),
+      body: JSON.stringify({
+        email,
+        password,
+        totpCode,
+        activationToken: String(formData.get('activationToken') || '').trim(),
+      }),
     });
     state.adminAuthenticated = true;
     state.adminSessionChecked = true;
@@ -2978,6 +3656,7 @@ async function handleAdminLogin(event) {
     state.adminCsrfToken = result.csrfToken || '';
     state.adminHeartbeatAt = Date.now();
     selectors.adminLoginForm.reset();
+    setAdminLoginMode('password');
     selectors.adminLoginMessage.textContent = '';
     selectors.adminLoginMessage.classList.remove('error');
     state.activeAdminView = 'overview';
@@ -2994,9 +3673,57 @@ async function handleAdminLogin(event) {
   }
 }
 
+function setAdminLoginMode(mode, { mfaRequired = false } = {}) {
+  state.adminLoginMode = mode;
+  const activation = mode === 'activate';
+  const awaiting = mode === 'awaiting-invitation';
+  const passwordLabel = document.querySelector('label[for="admin-password"]');
+  selectors.adminActivationFields.hidden = !activation;
+  selectors.adminPassword.hidden = activation || awaiting;
+  if (passwordLabel) passwordLabel.hidden = activation || awaiting;
+  selectors.adminPassword.disabled = activation || awaiting;
+  selectors.adminPassword.required = !activation && !awaiting;
+  selectors.adminActivationToken.disabled = !activation;
+  selectors.adminActivationToken.required = activation;
+  selectors.adminNewPassword.disabled = !activation;
+  selectors.adminNewPassword.required = activation;
+  selectors.adminConfirmPassword.disabled = !activation;
+  selectors.adminConfirmPassword.required = activation;
+  selectors.adminTotpField.hidden = activation || awaiting || !mfaRequired;
+  selectors.adminTotp.required = !activation && !awaiting && mfaRequired;
+  selectors.adminTotp.disabled = activation || awaiting || !mfaRequired;
+  selectors.adminLoginSubmitLabel.textContent = activation ? 'Crear contraseña e ingresar' : awaiting ? 'Acceso pendiente' : 'Ingresar';
+}
+
+async function inspectAdminAccountFlow() {
+  const email = selectors.adminEmail.value.trim();
+  if (!email || !selectors.adminEmail.checkValidity()) return;
+  try {
+    const result = await apiRequest('/api/admin/account-flow', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    setAdminLoginMode(result.mode, { mfaRequired: result.mfaRequired });
+    if (result.mode === 'activate') {
+      selectors.adminLoginMessage.textContent = 'Crea tu contraseña privada para completar el primer ingreso.';
+      selectors.adminLoginMessage.className = 'form-message';
+      selectors.adminActivationToken.focus();
+    } else if (result.mode === 'awaiting-invitation') {
+      selectors.adminLoginMessage.textContent = 'La cuenta maestra todavía no tiene un código de activación preparado.';
+      selectors.adminLoginMessage.className = 'form-message error';
+    } else {
+      selectors.adminLoginMessage.textContent = '';
+      selectors.adminLoginMessage.className = 'form-message';
+    }
+  } catch {
+    setAdminLoginMode('password', { mfaRequired: state.adminMfaRequired });
+  }
+}
+
 async function handleAdminLogout() {
-  await deleteR2Images([...state.pendingContentUploads]);
+  await deleteR2Images([...state.pendingContentUploads, ...state.pendingR2Uploads]);
   state.pendingContentUploads.clear();
+  state.pendingR2Uploads.clear();
   try {
     await apiRequest('/api/admin/logout', { method: 'POST' });
   } catch {
@@ -3006,9 +3733,7 @@ async function handleAdminLogout() {
   state.adminSessionChecked = true;
   state.adminUser = null;
   state.adminCsrfToken = '';
-  state.adminOrders = [];
-  state.adminInternationalRequests = [];
-  state.adminSummary = null;
+  clearAdminPrivateState();
   state.adminHeartbeatAt = 0;
   state.editingProductId = null;
   state.activeAdminView = 'overview';
@@ -3016,6 +3741,7 @@ async function handleAdminLogout() {
   closeAdminInternationalDialog();
   window.clearTimeout(state.adminTimeoutId);
   updateAdminViews();
+  await loadPublicCatalog();
 }
 
 function scheduleAdminTimeout() {
@@ -3361,10 +4087,29 @@ function setupEvents() {
   });
 
   selectors.adminLoginForm?.addEventListener('submit', handleAdminLogin);
+  selectors.adminEmail?.addEventListener('change', inspectAdminAccountFlow);
   selectors.adminLogout?.addEventListener('click', handleAdminLogout);
   selectors.adminExportCatalog?.addEventListener('click', exportCatalogExcel);
   selectors.adminExportCatalogPdf?.addEventListener('click', exportCatalogPdf);
   selectors.adminProductForm?.addEventListener('submit', saveAdminProduct);
+  selectors.adminGoldForm?.addEventListener('submit', saveAdminGoldSettings);
+  selectors.adminCategoryForm?.addEventListener('submit', saveAdminCategory);
+  selectors.adminCategoryNew?.addEventListener('click', () => {
+    resetAdminCategoryForm();
+    renderAdminCategoriesManager();
+  });
+  selectors.adminCategoryDelete?.addEventListener('click', deleteAdminCategory);
+  selectors.adminCategoryAddField?.addEventListener('click', () => {
+    const fields = readAdminTemplateFields();
+    fields.push({ key: `campo-${fields.length + 1}`, label: `Campo ${fields.length + 1}`, type: 'text', required: false, public: true, options: [] });
+    renderAdminTemplateFields(fields);
+  });
+  selectors.adminCategoryName?.addEventListener('input', () => {
+    if (!state.editingCategorySlug) selectors.adminCategorySlug.value = slugify(selectors.adminCategoryName.value);
+  });
+  selectors.adminCategory?.addEventListener('change', () => renderAdminDynamicFields({}));
+  selectors.adminTeamForm?.addEventListener('submit', createEmployeeInvitation);
+  selectors.adminMasterInvite?.addEventListener('click', prepareMasterInvitation);
   selectors.adminCommercialForm?.addEventListener('submit', saveAdminCommercialContent);
   selectors.adminOrderForm?.addEventListener('submit', saveAdminOrder);
   selectors.adminInternationalForm?.addEventListener('submit', saveInternationalConditions);
@@ -3449,8 +4194,10 @@ function setupEvents() {
     addAdminMeasurement();
   });
   selectors.adminMeasurementList?.addEventListener('change', (event) => {
-    const input = event.target.closest('[data-admin-measurement-index]');
-    if (input) updateAdminMeasurement(Number(input.dataset.adminMeasurementIndex), input.value);
+    const row = event.target.closest('.admin-measurement-item');
+    if (!row) return;
+    const input = row.querySelector('[data-admin-measurement-label]');
+    if (input) updateAdminMeasurement(Number(input.dataset.adminMeasurementLabel));
   });
   selectors.adminSearchInput?.addEventListener('input', (event) => {
     state.adminQuery = event.target.value;
@@ -3487,6 +4234,10 @@ function setupEvents() {
     const adminInternationalButton = event.target.closest('[data-admin-international]');
     const contentRemoveButton = event.target.closest('[data-content-remove]');
     const adminViewButton = event.target.closest('[data-admin-view-target]');
+    const adminCategoryEditButton = event.target.closest('[data-admin-category-edit]');
+    const templateRemoveButton = event.target.closest('[data-template-remove]');
+    const adminUserSaveButton = event.target.closest('[data-admin-user-save]');
+    const copyActivationButton = event.target.closest('[data-copy-activation]');
 
     if (routeLink) {
       event.preventDefault();
@@ -3498,6 +4249,30 @@ function setupEvents() {
 
     if (adminViewButton) {
       setAdminView(adminViewButton.dataset.adminViewTarget);
+      return;
+    }
+
+    if (adminCategoryEditButton) {
+      fillAdminCategoryForm(adminCategoryEditButton.dataset.adminCategoryEdit);
+      renderAdminCategoriesManager();
+      return;
+    }
+
+    if (templateRemoveButton) {
+      const fields = readAdminTemplateFields();
+      fields.splice(Number(templateRemoveButton.dataset.templateRemove), 1);
+      renderAdminTemplateFields(fields);
+      return;
+    }
+
+    if (adminUserSaveButton) {
+      await saveAdminTeamUser(adminUserSaveButton.dataset.adminUserSave);
+      return;
+    }
+
+    if (copyActivationButton) {
+      await navigator.clipboard.writeText(copyActivationButton.dataset.copyActivation);
+      copyActivationButton.firstChild.textContent = 'Código copiado';
       return;
     }
 
@@ -3553,8 +4328,16 @@ function setupEvents() {
     }
   });
 
+  selectors.adminTemplateFields?.addEventListener('change', (event) => {
+    const typeSelect = event.target.closest('[data-template-type]');
+    if (!typeSelect) return;
+    const options = typeSelect.closest('[data-template-field]').querySelector('.admin-template-options');
+    options.hidden = typeSelect.value !== 'select';
+  });
+
   selectors.detailMeasure.addEventListener('change', () => {
     selectors.detailWhatsapp.href = buildWhatsAppLink(state.activeProduct, selectors.detailMeasure.value);
+    renderDetailPrice();
     selectors.detailMessage.textContent = '';
     selectors.detailMessage.classList.remove('error', 'success');
   });
@@ -3620,6 +4403,8 @@ renderCategories({ premium: true });
 renderProducts({ premium: true });
 renderCart();
 updateAdminImageUploadState();
+resetAdminCategoryForm();
+setAdminLoginMode('password', { mfaRequired: state.adminMfaRequired });
 loadPublicCatalog();
 loadSiteContent();
 setupEvents();

@@ -113,6 +113,35 @@ async function createSchema(pool) {
         updated_at BIGINT NOT NULL
       )
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS querubim_business_settings (
+        id TEXT PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS querubim_admin_users (
+        email TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('master', 'employee')),
+        status TEXT NOT NULL CHECK (status IN ('INVITED', 'ACTIVE')),
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        password_hash TEXT,
+        permissions JSONB NOT NULL DEFAULT '[]'::jsonb,
+        invite_token_hash TEXT,
+        invite_expires_at BIGINT,
+        created_by TEXT,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        last_login_at BIGINT
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS querubim_admin_users_role_idx
+      ON querubim_admin_users (role, status, active)
+    `);
 
     for (const product of catalogSeed) {
       await client.query(

@@ -90,6 +90,16 @@ export async function hashAdminPassword(password) {
   return argon2.hash(normalized, ARGON2_OPTIONS);
 }
 
+export async function verifyAdminPasswordHash(password, passwordHash) {
+  const normalized = String(password || '');
+  if (!normalized || normalized.length > 512 || !String(passwordHash || '').startsWith('$argon2id$')) return false;
+  try {
+    return await argon2.verify(passwordHash, normalized);
+  } catch {
+    return false;
+  }
+}
+
 export async function verifyAdminCredentials(email, password, config) {
   if (!isAdminConfigured(config)) {
     throw new AdminAuthError('El acceso administrativo todavía no está configurado.', 503, 'ADMIN_NOT_CONFIGURED');
@@ -139,7 +149,7 @@ export function createAdminSession(email, config, now = Date.now(), sessionId = 
 }
 
 export function verifyAdminSession(token, config, now = Date.now()) {
-  if (!token || !isAdminConfigured(config)) return null;
+  if (!token || !config?.sessionSecret) return null;
   const [payload, signature, extra] = String(token).split('.');
   if (!payload || !signature || extra || !safeEqual(signature, sign(payload, config.sessionSecret))) return null;
 
@@ -148,7 +158,7 @@ export function verifyAdminSession(token, config, now = Date.now()) {
     if (
       session.ver !== 2
       || session.exp <= now
-      || session.sub !== config.email
+      || !session.sub
       || !/^[A-Za-z0-9_-]{40,60}$/.test(session.sid || '')
     ) return null;
     return session;
@@ -194,18 +204,24 @@ export function getAdminSession(request, config) {
   return verifyAdminSession(parseCookies(request.headers.cookie)[cookieName(config)], config);
 }
 
-export async function resolveAdminSession(request, config, securityStore, now = Date.now()) {
+export async function resolveAdminSession(request, config, securityStore, now = Date.now(), identityResolver) {
   const signedSession = getAdminSession(request, config);
   if (!signedSession) return null;
   const storedSession = await securityStore.getSession(signedSession.sid, now);
   if (!storedSession || storedSession.email !== signedSession.sub) return null;
-  return signedSession;
+  if (!identityResolver) {
+    if (signedSession.sub !== config.email) return null;
+    return signedSession;
+  }
+  const user = await identityResolver(signedSession.sub);
+  if (!user) return null;
+  return { ...signedSession, user };
 }
 
-export function requireAdmin(config, securityStore) {
+export function requireAdmin(config, securityStore, identityResolver) {
   return async (request, response, next) => {
     try {
-      const session = await resolveAdminSession(request, config, securityStore);
+      const session = await resolveAdminSession(request, config, securityStore, Date.now(), identityResolver);
       if (!session) {
         response.status(401).json({ error: 'La sesión administrativa no es válida o expiró.', code: 'ADMIN_UNAUTHORIZED' });
         return;

@@ -157,6 +157,7 @@ try {
   await page.locator('#admin-stats .admin-stat').first().waitFor();
   await page.locator('#admin-overview-charts .admin-chart-panel').first().waitFor();
   await page.waitForFunction(() => Number(document.querySelector('#admin-nav-orders-count')?.textContent || 0) > 0);
+  await page.waitForFunction(() => document.querySelector('#admin-reset-catalog')?.disabled === false);
   const adminButtonVisuals = await page.evaluate(() => {
     const background = (selector) => getComputedStyle(document.querySelector(selector)).backgroundColor;
     return {
@@ -186,6 +187,25 @@ try {
   const pdfDownload = await pdfDownloadPromise;
   const pdfExportVerified = pdfDownload.suggestedFilename().endsWith('.pdf');
   await page.screenshot({ path: 'test-results/admin-dashboard-desktop.png', fullPage: true });
+
+  await page.locator('[data-admin-view-target="gold"]').click();
+  await page.locator('[data-admin-view="gold"].active #admin-gold-price').waitFor();
+  const goldModuleVisible = await page.locator('[data-admin-view="gold"].active #admin-gold-form').isVisible();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/admin-gold-desktop.png', fullPage: true });
+
+  await page.locator('[data-admin-view-target="categories"]').click();
+  await page.locator('[data-admin-view="categories"].active #admin-category-list').waitFor();
+  const categoryModuleVisible = await page.locator('#admin-category-list button').count() > 0;
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/admin-categories-desktop.png', fullPage: true });
+
+  await page.locator('[data-admin-view-target="team"]').click();
+  await page.locator('[data-admin-view="team"].active #admin-team-panel').waitFor();
+  const teamModuleVisible = await page.locator('[data-admin-view="team"].active #admin-team-form').isVisible()
+    || await page.locator('[data-admin-view="team"].active #admin-master-setup').isVisible();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/admin-team-desktop.png', fullPage: true });
 
   await page.locator('[data-admin-view-target="content"]').click();
   await page.locator('.admin-commercial-panel').waitFor();
@@ -245,7 +265,7 @@ try {
   await page.locator('#admin-category').selectOption('anillos');
   await page.locator('#admin-price').fill('875000');
   await page.locator('#admin-stock').fill('2');
-  await page.locator('#admin-material').fill('Oro amarillo 18K');
+  await page.locator('[data-admin-attribute="material"]').fill('Oro amarillo 18K');
   await page.locator('#admin-image-files').setInputFiles([
     { name: 'imagen-producto-02.png', mimeType: 'image/png', buffer: tinyPng },
     { name: 'imagen-producto-03.png', mimeType: 'image/png', buffer: tinyPng },
@@ -254,12 +274,19 @@ try {
   await page.locator('[data-admin-image-move="0"][data-direction="1"]').click();
   const imageOrderVerified = (await page.locator('#admin-images').inputValue()).startsWith(productImageUrls[2]);
   await page.locator('#admin-measurement-entry').fill('Talla 6');
+  await page.locator('#admin-measurement-weight').fill('2.4');
   await page.locator('#admin-measurement-add').click();
   await page.locator('#admin-measurement-entry').fill('Talla 7');
+  await page.locator('#admin-measurement-weight').fill('2.7');
   await page.locator('#admin-measurement-add').click();
-  await page.locator('[data-admin-measurement-index="1"]').fill('Talla 8');
-  await page.locator('[data-admin-measurement-index="1"]').blur();
-  const measurementsVerified = (await page.locator('#admin-measurements').inputValue()) === 'Talla 6, Talla 8';
+  await page.locator('[data-admin-measurement-label="1"]').fill('Talla 8');
+  await page.locator('[data-admin-measurement-label="1"]').blur();
+  const measurementData = JSON.parse(await page.locator('#admin-measurements').inputValue());
+  const measurementsVerified = measurementData.length === 2
+    && measurementData[0].measure === 'Talla 6'
+    && measurementData[0].value === 2.4
+    && measurementData[1].measure === 'Talla 8'
+    && measurementData[1].value === 2.7;
   await page.locator('#admin-description').fill('Producto temporal para comprobar el panel administrativo.');
   await page.screenshot({ path: 'test-results/admin-product-editor-desktop.png', fullPage: true });
   await page.locator('#admin-product-form button[type="submit"]').click();
@@ -302,6 +329,24 @@ try {
   await page.locator('#admin-order-dialog').waitFor({ state: 'hidden' });
   const orderDeleteVerified = (await page.locator(`[data-admin-order="${order.id}"]`).count()) === 0;
 
+  await page.locator('#admin-sidebar-toggle').click();
+  await page.locator('#admin-app-sidebar.open [data-admin-view-target="categories"]').click();
+  await page.locator('[data-admin-view="categories"].active').waitFor();
+  await page.waitForTimeout(300);
+  const categoryMobileOverflow = await page.locator('[data-admin-view="categories"]').evaluate(
+    (element) => element.scrollWidth > element.clientWidth + 1,
+  );
+  await page.screenshot({ path: 'test-results/admin-categories-mobile.png', fullPage: true });
+
+  await page.locator('#admin-sidebar-toggle').click();
+  await page.locator('#admin-app-sidebar.open [data-admin-view-target="team"]').click();
+  await page.locator('[data-admin-view="team"].active').waitFor();
+  await page.waitForTimeout(300);
+  const teamMobileOverflow = await page.locator('[data-admin-view="team"]').evaluate(
+    (element) => element.scrollWidth > element.clientWidth + 1,
+  );
+  await page.screenshot({ path: 'test-results/admin-team-mobile.png', fullPage: true });
+
   const result = {
     authenticated: await page.locator('#admin-panel-view:not([hidden])').isVisible(),
     mfaVisibilityVerified: mfaFieldVisibleAtLogin === mfaExpected,
@@ -317,6 +362,11 @@ try {
     commercialSlotCount,
     commercialUploadVerified,
     internationalDialogVisible,
+    goldModuleVisible,
+    categoryModuleVisible,
+    teamModuleVisible,
+    categoryMobileOverflow,
+    teamMobileOverflow,
     adminButtonColorsVerified,
     adminButtonVisuals,
     dialogInsideViewport: Boolean(dialogBox && dialogBox.x >= 0 && dialogBox.x + dialogBox.width <= 390),
@@ -324,7 +374,7 @@ try {
     browserErrors,
   };
   console.log(JSON.stringify(result));
-  if (!result.authenticated || !result.mfaVisibilityVerified || result.statCount !== 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.adminButtonColorsVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
+  if (!result.authenticated || !result.mfaVisibilityVerified || result.statCount < 4 || result.productCount < 1 || !result.orderUpdated || !result.orderDeleteVerified || !result.uploadVerified || !result.imageOrderVerified || !result.measurementsVerified || !result.excelExportVerified || !result.pdfExportVerified || result.commercialSlotCount !== 4 || !result.commercialUploadVerified || !result.internationalDialogVisible || !result.goldModuleVisible || !result.categoryModuleVisible || !result.teamModuleVisible || result.categoryMobileOverflow || result.teamMobileOverflow || !result.adminButtonColorsVerified || !result.dialogInsideViewport || hasHorizontalOverflow || browserErrors.length) {
     throw new Error('La verificación visual del panel administrativo no fue satisfactoria.');
   }
 } finally {

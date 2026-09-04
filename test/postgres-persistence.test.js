@@ -3,9 +3,12 @@ import test from 'node:test';
 import { newDb } from 'pg-mem';
 import { PostgresCatalogRepository } from '../server/postgres-catalog-repository.js';
 import { PostgresAdminSecurityStore } from '../server/postgres-admin-security-store.js';
+import { PostgresAdminUserStore } from '../server/postgres-admin-user-store.js';
+import { PostgresBusinessSettingsRepository } from '../server/postgres-business-settings-repository.js';
 import { PostgresInternationalRequestStore } from '../server/postgres-international-request-store.js';
 import { PostgresOrderStore } from '../server/postgres-order-store.js';
 import { PostgresSiteContentRepository } from '../server/postgres-site-content-repository.js';
+import { hashInvitationToken } from '../server/admin-users.js';
 
 const ADMIN_EMAIL = 'admin@querubim.co';
 
@@ -171,4 +174,52 @@ test('persiste bloqueos, sesiones revocables y protección TOTP en PostgreSQL', 
   assert.equal(await security.consumeTotpStep(ADMIN_EMAIL, 12345, now), true);
   assert.equal(await security.consumeTotpStep(ADMIN_EMAIL, 12345, now + 1_000), false);
   assert.equal(await security.consumeTotpStep(ADMIN_EMAIL, 12346, now + 2_000), true);
+});
+
+test('persiste el precio del oro, las categorias y los perfiles administrativos en PostgreSQL', async (context) => {
+  const pool = createPool();
+  context.after(() => pool.end());
+  const settings = new PostgresBusinessSettingsRepository(pool);
+  const users = new PostgresAdminUserStore(pool);
+  const now = 1_800_000_000_000;
+  const activationToken = 'codigo-privado-de-activacion';
+
+  const currentSettings = await settings.get();
+  const savedSettings = await settings.save({
+    ...currentSettings,
+    gold: { pricePerGram: 450000, enabled: true },
+    categories: [
+      ...currentSettings.categories,
+      {
+        slug: 'ediciones-especiales',
+        label: 'Ediciones especiales',
+        active: true,
+        fields: [{ key: 'coleccion', label: 'Coleccion', type: 'text', required: true, public: true }],
+      },
+    ],
+  });
+  assert.equal(savedSettings.gold.pricePerGram, 450000);
+  assert.equal((await settings.get()).categories.at(-1).slug, 'ediciones-especiales');
+
+  const invited = await users.createInvitation({
+    email: 'adminmaster@querubim.com',
+    name: 'Administradora principal',
+    role: 'master',
+    tokenHash: hashInvitationToken(activationToken),
+    createdBy: ADMIN_EMAIL,
+    now,
+    expiresAt: now + 86_400_000,
+  });
+  assert.equal(invited.status, 'INVITED');
+  assert.equal(await users.hasActiveMaster(), false);
+
+  const activated = await users.activate(
+    invited.email,
+    activationToken,
+    '$argon2id$v=19$m=65536,t=3,p=1$hash-de-prueba',
+    now + 1_000,
+  );
+  assert.equal(activated.status, 'ACTIVE');
+  assert.equal(activated.inviteTokenHash, null);
+  assert.equal(await users.hasActiveMaster(), true);
 });

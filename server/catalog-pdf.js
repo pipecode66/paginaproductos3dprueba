@@ -179,8 +179,9 @@ function drawProduct(doc, product, image, y) {
     .text(`${product.premium ? 'PREMIUM · ' : ''}${categoryLabel(product.category).toUpperCase()}`, contentX, y + 18, { width: contentWidth, characterSpacing: 0.8 });
   doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(17)
     .text(product.name || 'Joya Querubim', contentX, y + 38, { width: contentWidth, height: 45, ellipsis: true });
+  const displayedPrice = `${product.pricing?.requiresSelection ? 'Desde ' : ''}${formatCurrency(product.price)}`;
   doc.fillColor(COLORS.gold).font('Helvetica-Bold').fontSize(13)
-    .text(formatCurrency(product.price), contentX, y + 88, { width: contentWidth });
+    .text(displayedPrice, contentX, y + 88, { width: contentWidth });
   doc.fillColor(COLORS.muted).font('Helvetica').fontSize(8.5)
     .text(product.description || 'Pieza seleccionada por Joyería Querubim.', contentX, y + 113, { width: contentWidth, height: 38, ellipsis: true, lineGap: 2 });
 

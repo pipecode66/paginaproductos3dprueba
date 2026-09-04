@@ -46,6 +46,7 @@ export function createRuntimeConfig(env = process.env, rootDir = process.cwd()) 
     },
     admin: {
       email: String(env.ADMIN_EMAIL || '').trim().toLowerCase(),
+      masterEmail: String(env.ADMIN_MASTER_EMAIL || 'adminmaster@querubim.com').trim().toLowerCase(),
       password: String(env.ADMIN_PASSWORD || ''),
       passwordHash: String(env.ADMIN_PASSWORD_HASH || ''),
       sessionSecret: String(env.ADMIN_SESSION_SECRET || ''),

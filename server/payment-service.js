@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { createIntegritySignature, mapBoldEventType, verifyWebhookSignature } from './bold.js';
 import { getDefaultFulfillmentStatus } from './order-management.js';
+import { getSelectedProductPrice } from './product-pricing.js';
 
 const ORDER_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const MAX_ITEMS = 20;
@@ -122,7 +123,15 @@ function publicOrder(order) {
     inventoryStatus: order.inventoryStatus,
     taxRate: order.taxRate,
     currency: order.currency,
-    items: order.items,
+    items: (order.items || []).map(({ productId, name, category, measure, quantity, unitPrice, subtotal }) => ({
+      productId,
+      name,
+      category,
+      measure,
+      quantity,
+      unitPrice,
+      subtotal,
+    })),
     createdAt: order.createdAt,
     expiresAt: order.expiresAt,
     paidAt: order.paidAt ?? null,
@@ -134,9 +143,17 @@ function publicOrder(order) {
 }
 
 export class PaymentService {
-  constructor({ catalogRepository, orderStore, boldConfig, clock = () => Date.now(), orderIdFactory = createOrderId }) {
+  constructor({
+    catalogRepository,
+    orderStore,
+    businessSettingsRepository,
+    boldConfig,
+    clock = () => Date.now(),
+    orderIdFactory = createOrderId,
+  }) {
     this.catalogRepository = catalogRepository;
     this.orderStore = orderStore;
+    this.businessSettingsRepository = businessSettingsRepository;
     this.boldConfig = boldConfig;
     this.clock = clock;
     this.orderIdFactory = orderIdFactory;
@@ -191,6 +208,9 @@ export class PaymentService {
     }));
     const productQuantities = new Map();
     const orderItems = [];
+    const businessSettings = this.businessSettingsRepository
+      ? await this.businessSettingsRepository.get()
+      : { gold: { enabled: false, pricePerGram: 0 } };
 
     for (const requested of requestedItems) {
       if (!requested.productId || !requested.measure) {
@@ -202,6 +222,12 @@ export class PaymentService {
 
       const product = await this.catalogRepository.findById(requested.productId);
       if (!product) throw new PaymentError('Uno de los productos ya no está disponible.', 409, 'PRODUCT_NOT_AVAILABLE');
+      if (
+        Array.isArray(businessSettings.categories)
+        && !businessSettings.categories.some((category) => category.slug === product.category && category.active !== false)
+      ) {
+        throw new PaymentError('Uno de los productos ya no está disponible.', 409, 'PRODUCT_NOT_AVAILABLE');
+      }
       if (!product.measurements.includes(requested.measure)) {
         throw new PaymentError(`La medida seleccionada para ${product.name} no está disponible.`, 409, 'MEASURE_NOT_AVAILABLE');
       }
@@ -211,17 +237,25 @@ export class PaymentService {
       if (accumulatedQuantity > product.stock) {
         throw new PaymentError(`No hay existencias suficientes de ${product.name}.`, 409, 'INSUFFICIENT_STOCK');
       }
-      if (!Number.isSafeInteger(product.price) || product.price < 1000) {
+      const selectedPrice = getSelectedProductPrice(product, requested.measure, businessSettings.gold);
+      if (!selectedPrice || !Number.isSafeInteger(selectedPrice.price) || selectedPrice.price < 1000) {
         throw new PaymentError(`El precio de ${product.name} requiere revisión.`, 409, 'INVALID_CATALOG_PRICE');
       }
 
       orderItems.push({
         productId: product.id,
         name: product.name,
+        category: product.category,
         measure: requested.measure,
         quantity: requested.quantity,
-        unitPrice: product.price,
-        subtotal: product.price * requested.quantity,
+        unitPrice: selectedPrice.price,
+        subtotal: selectedPrice.price * requested.quantity,
+        pricingMode: selectedPrice.mode,
+        garmentPriceSnapshot: product.price,
+        goldPricePerGramSnapshot: selectedPrice.mode === 'gold_by_weight' ? businessSettings.gold.pricePerGram : null,
+        weightGramsSnapshot: selectedPrice.mode === 'gold_by_weight'
+          ? product.measurementWeights?.find((entry) => entry.measure === requested.measure)?.weightGrams ?? null
+          : null,
       });
     }
 

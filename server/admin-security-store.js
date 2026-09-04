@@ -107,6 +107,32 @@ export class AdminSecurityStore {
     });
   }
 
+  async revokeSessionsByEmail(email, now = Date.now()) {
+    return this.store.transaction((state) => {
+      let revoked = 0;
+      Object.values(state.sessions).forEach((session) => {
+        if (session.email === email && !session.revokedAt) {
+          session.revokedAt = now;
+          revoked += 1;
+        }
+      });
+      return revoked;
+    });
+  }
+
+  async revokeAllSessions(now = Date.now()) {
+    return this.store.transaction((state) => {
+      let revoked = 0;
+      Object.values(state.sessions).forEach((session) => {
+        if (!session.revokedAt) {
+          session.revokedAt = now;
+          revoked += 1;
+        }
+      });
+      return revoked;
+    });
+  }
+
   async getLastTotpStep(email) {
     const state = await this.store.read();
     return Number.isInteger(Number(state.totpSteps[email])) ? Number(state.totpSteps[email]) : undefined;

@@ -483,8 +483,18 @@
               />
             </div>
 
+            <div class="admin-activation-fields" id="admin-activation-fields" hidden>
+              <p>Este perfil está listo para su primer ingreso. Crea una contraseña que solo tú conozcas.</p>
+              <label for="admin-activation-token">Código privado de activación</label>
+              <input id="admin-activation-token" name="activationToken" type="text" autocomplete="one-time-code" maxlength="64" />
+              <label for="admin-new-password">Nueva contraseña</label>
+              <input id="admin-new-password" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="512" />
+              <label for="admin-confirm-password">Confirmar contraseña</label>
+              <input id="admin-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="512" />
+            </div>
+
             <button class="button button-primary" type="submit">
-              Ingresar
+              <span id="admin-login-submit-label">Ingresar</span>
               <i data-lucide="arrow-right"></i>
             </button>
             <p class="form-message" id="admin-login-message" role="status" aria-live="polite"></p>
@@ -726,7 +736,7 @@
 
                 <div class="admin-form-row">
                   <label for="admin-price">
-                    Precio COP <span class="admin-required">Obligatorio</span>
+                    Precio de la prenda COP <span class="admin-required">Obligatorio</span>
                     <input id="admin-price" name="price" type="number" min="1000" step="1000" required />
                   </label>
                   <label for="admin-stock">
@@ -777,6 +787,8 @@
                   </select>
                 </label>
 
+                <div class="admin-dynamic-fields" id="admin-dynamic-fields"></div>
+
                 <div class="admin-field-heading">
                   <strong>Galería de imágenes <span class="admin-required">Obligatorio</span></strong>
                   <small>La primera imagen será la portada. Arrastra las miniaturas para cambiar el orden.</small>
@@ -812,10 +824,17 @@
                   </div>
                   <div class="admin-measurement-add">
                     <input id="admin-measurement-entry" type="text" maxlength="80" placeholder="Ejemplo: Talla 7 o 18 cm" />
+                    <input id="admin-measurement-weight" type="number" min="0.001" max="100000" step="0.001" placeholder="Peso" aria-label="Peso de la talla" />
+                    <select id="admin-measurement-unit" aria-label="Unidad del peso">
+                      <option value="g">g</option>
+                      <option value="mg">mg</option>
+                      <option value="kg">kg</option>
+                    </select>
                     <button class="button button-secondary" id="admin-measurement-add" type="button">Agregar<i data-lucide="plus"></i></button>
                   </div>
                   <div class="admin-measurement-list" id="admin-measurement-list" aria-live="polite"></div>
                   <textarea id="admin-measurements" name="measurements" hidden></textarea>
+                  <p class="admin-inline-note">El peso se usa únicamente para calcular el precio; nunca se muestra al comprador.</p>
                 </div>
 
                 <label for="admin-description">Descripción <span class="admin-required">Obligatorio</span></label>
@@ -846,6 +865,90 @@
               </form>
             </section>
           </div>
+
+          <section class="admin-gold-panel" id="admin-gold-panel" aria-labelledby="admin-gold-title">
+            <div class="admin-panel-title">
+              <div>
+                <span class="eyebrow">Precio automático</span>
+                <h2 id="admin-gold-title">Valor del oro por gramo</h2>
+                <p>Actualiza un solo valor para recalcular las joyas que ya tengan peso por talla.</p>
+              </div>
+              <i data-lucide="gem"></i>
+            </div>
+            <form class="admin-gold-form" id="admin-gold-form" novalidate>
+              <label for="admin-gold-price">Precio actual por gramo en COP <span class="admin-required">Obligatorio</span></label>
+              <div class="admin-gold-control">
+                <span>$</span>
+                <input id="admin-gold-price" name="pricePerGram" type="number" min="1" max="100000000" step="1000" required />
+                <button class="button button-primary" type="submit">Actualizar precio<i data-lucide="save"></i></button>
+              </div>
+              <p class="admin-inline-note" id="admin-gold-status">Aún no se ha definido el precio del oro.</p>
+              <p class="form-message" id="admin-gold-message" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <section class="admin-categories-panel" id="admin-categories-panel" aria-labelledby="admin-categories-title">
+            <div class="admin-panel-title">
+              <div>
+                <span class="eyebrow">Estructura del catálogo</span>
+                <h2 id="admin-categories-title">Categorías y plantillas</h2>
+                <p>Cada producto hereda los campos definidos en su categoría.</p>
+              </div>
+              <i data-lucide="tags"></i>
+            </div>
+            <div class="admin-category-workspace">
+              <div class="admin-category-list" id="admin-category-list"></div>
+              <form class="admin-category-form" id="admin-category-form" novalidate>
+                <input id="admin-category-edit-slug" type="hidden" />
+                <label for="admin-category-name">Nombre <span class="admin-required">Obligatorio</span></label>
+                <input id="admin-category-name" type="text" maxlength="60" required />
+                <label for="admin-category-slug">Referencia interna <span class="admin-required">Obligatorio</span></label>
+                <input id="admin-category-slug" type="text" maxlength="60" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required />
+                <div class="admin-core-fields">
+                  <strong>Campos base obligatorios</strong>
+                  <p>Nombre, descripción, precio de la prenda, inventario, galería y tallas con peso.</p>
+                </div>
+                <div class="admin-field-heading">
+                  <strong>Campos propios de la categoría</strong>
+                  <button class="button button-secondary" id="admin-category-add-field" type="button">Agregar campo<i data-lucide="plus"></i></button>
+                </div>
+                <div class="admin-template-fields" id="admin-template-fields"></div>
+                <label class="admin-check"><input id="admin-category-active" type="checkbox" checked /><span>Categoría visible y disponible</span></label>
+                <p class="form-message" id="admin-category-message" role="status" aria-live="polite"></p>
+                <div class="admin-form-actions">
+                  <button class="button button-primary" type="submit">Guardar categoría<i data-lucide="save"></i></button>
+                  <button class="button button-secondary" id="admin-category-new" type="button">Nueva<i data-lucide="plus"></i></button>
+                  <button class="button button-danger" id="admin-category-delete" type="button" hidden>Eliminar<i data-lucide="trash-2"></i></button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="admin-team-panel" id="admin-team-panel" aria-labelledby="admin-team-title">
+            <div class="admin-panel-title">
+              <div>
+                <span class="eyebrow">Accesos privados</span>
+                <h2 id="admin-team-title">Equipo y permisos</h2>
+                <p>La administradora maestra decide qué puede consultar o modificar cada integrante.</p>
+              </div>
+              <i data-lucide="user-round"></i>
+            </div>
+            <div class="admin-master-setup" id="admin-master-setup" hidden>
+              <div><strong>Transferir el control a la administradora</strong><p>Prepara el primer acceso para adminmaster@querubim.com. Al activarlo, el acceso anterior quedará revocado.</p></div>
+              <button class="button button-primary" id="admin-master-invite" type="button">Preparar acceso maestro<i data-lucide="key-round"></i></button>
+            </div>
+            <form class="admin-team-form" id="admin-team-form" novalidate>
+              <div class="admin-form-row">
+                <label for="admin-team-name">Nombre <span class="admin-required">Obligatorio</span><input id="admin-team-name" type="text" maxlength="100" required /></label>
+                <label for="admin-team-email">Correo <span class="admin-required">Obligatorio</span><input id="admin-team-email" type="email" maxlength="160" required /></label>
+              </div>
+              <fieldset class="admin-permission-grid" id="admin-permission-grid"><legend>Permisos del empleado</legend></fieldset>
+              <button class="button button-primary" type="submit">Crear invitación<i data-lucide="key-round"></i></button>
+            </form>
+            <div class="admin-invitation-result" id="admin-invitation-result" hidden></div>
+            <p class="form-message" id="admin-team-message" role="status" aria-live="polite"></p>
+            <div class="admin-team-list" id="admin-team-list"></div>
+          </section>
         </div>
       </section>
 
@@ -1050,6 +1153,10 @@
         <div class="detail-info">
           <p id="detail-description"></p>
           <dl class="detail-specs" id="detail-specs"></dl>
+          <div class="detail-live-price" id="detail-live-price" aria-live="polite">
+            <span>Precio de la joya</span>
+            <strong>Selecciona una talla para conocer el precio</strong>
+          </div>
           <label class="measure-field" for="detail-measure">
             <span class="measure-label">Medida para la joya <b>*</b></span>
             <span class="measure-select-wrap">

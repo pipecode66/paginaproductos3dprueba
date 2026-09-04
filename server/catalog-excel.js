@@ -14,11 +14,26 @@ function getCategoryLabel(category) {
 
 function productRow(product) {
   const variants = product.variants || {};
+  const priceOptions = new Map((product.pricing?.options || []).map((option) => [option.measure, option.price]));
+  const weights = new Map((product.measurementWeights || []).map((entry) => [entry.measure, entry]));
+  const measurementDetails = (product.measurements || []).map((measure) => {
+    const weight = weights.get(measure);
+    const finalPrice = priceOptions.get(measure);
+    const parts = [measure];
+    if (weight) parts.push(`${weight.value} ${weight.unit}`);
+    if (Number.isSafeInteger(finalPrice)) parts.push(new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(finalPrice));
+    return parts.join(' · ');
+  });
   return [
     product.id,
     product.name,
     getCategoryLabel(product.category),
     Number(product.price || 0),
+    Number(product.pricing?.startingPrice ?? product.price ?? 0),
     Number(product.stock || 0),
     Number(product.stock || 0) > 0 ? 'Disponible' : 'Agotado',
     product.material,
@@ -28,7 +43,7 @@ function productRow(product) {
     variants.engraving || '',
     product.premium ? 'Premium' : 'Catálogo general',
     product.featured ? 'Sí' : 'No',
-    (product.measurements || []).join(', '),
+    measurementDetails.join('\n'),
     (product.images || []).length,
     product.description,
   ];
@@ -59,7 +74,8 @@ export async function createCatalogExcel(products, generatedAt = new Date()) {
     { key: 'id', width: 28 },
     { key: 'name', width: 32 },
     { key: 'category', width: 22 },
-    { key: 'price', width: 18 },
+    { key: 'garmentPrice', width: 20 },
+    { key: 'startingPrice', width: 20 },
     { key: 'stock', width: 12 },
     { key: 'availability', width: 16 },
     { key: 'material', width: 24 },
@@ -74,7 +90,7 @@ export async function createCatalogExcel(products, generatedAt = new Date()) {
     { key: 'description', width: 60 },
   ];
 
-  sheet.mergeCells('A1:P1');
+  sheet.mergeCells('A1:Q1');
   const title = sheet.getCell('A1');
   title.value = 'CATÁLOGO DE PRODUCTOS · JOYERÍA QUERUBIM';
   title.font = { bold: true, size: 16, color: { argb: 'FF211B17' } };
@@ -82,14 +98,14 @@ export async function createCatalogExcel(products, generatedAt = new Date()) {
   title.alignment = { vertical: 'middle', horizontal: 'left' };
   sheet.getRow(1).height = 38;
 
-  sheet.mergeCells('A2:P2');
+  sheet.mergeCells('A2:Q2');
   const generated = sheet.getCell('A2');
   generated.value = `Generado el ${new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeStyle: 'short' }).format(generatedAt)}`;
   generated.font = { italic: true, color: { argb: 'FF6D665F' } };
   sheet.getRow(3).height = 8;
 
   const headers = [
-    'Referencia', 'Producto', 'Categoría', 'Precio COP', 'Stock', 'Disponibilidad', 'Material',
+    'Referencia', 'Producto', 'Categoría', 'Precio de la prenda COP', 'Precio público desde COP', 'Stock', 'Disponibilidad', 'Material',
     'Metal', 'Pureza', 'Piedra o gema', 'Grabado', 'Línea', 'Destacado', 'Medidas o tallas',
     'Cantidad de imágenes', 'Descripción',
   ];
@@ -106,13 +122,15 @@ export async function createCatalogExcel(products, generatedAt = new Date()) {
       if (index % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_FILL } };
     });
     row.getCell(4).numFmt = '$#,##0';
+    row.getCell(5).numFmt = '$#,##0';
     row.getCell(4).alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell(5).alignment = { vertical: 'middle', horizontal: 'center' };
-    row.getCell(15).alignment = { vertical: 'middle', horizontal: 'center' };
+    row.getCell(5).alignment = { vertical: 'middle', horizontal: 'right' };
+    row.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' };
+    row.getCell(16).alignment = { vertical: 'middle', horizontal: 'center' };
   });
 
   const lastRow = Math.max(4, sheet.rowCount);
-  sheet.autoFilter = { from: 'A4', to: `P${lastRow}` };
+  sheet.autoFilter = { from: 'A4', to: `Q${lastRow}` };
   sheet.getColumn(2).font = { bold: true, color: { argb: 'FF211B17' } };
 
   const imageSheet = workbook.addWorksheet('Imágenes');

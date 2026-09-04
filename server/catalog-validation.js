@@ -1,3 +1,5 @@
+import { normalizeMeasurementWeights } from './product-pricing.js';
+
 const MAX_IMAGES = 4;
 const MAX_MEASUREMENTS = 30;
 
@@ -20,7 +22,41 @@ function textList(value, { maxItems, maxLength }) {
   return value.slice(0, maxItems).map((item) => text(item, maxLength)).filter(Boolean);
 }
 
-export function validateCatalogProduct(input, forcedId) {
+function sanitizeAttribute(value, field) {
+  if (field.type === 'boolean') return Boolean(value);
+  if (field.type === 'number') {
+    if (value === '' || value == null) return '';
+    const number = Number(value);
+    return Number.isFinite(number) ? number : '';
+  }
+  const result = text(value, field.type === 'textarea' ? 1200 : 200);
+  if (field.type === 'select' && result && !field.options.includes(result)) return '';
+  return result;
+}
+
+function buildAttributes(input, category) {
+  const legacy = {
+    material: input?.material,
+    metal: input?.variants?.metal,
+    purity: input?.variants?.purity,
+    gemstone: input?.variants?.gemstone,
+    engraving: input?.variants?.engraving,
+  };
+  if (!category?.fields) return { ...(input?.attributes || {}), ...legacy };
+
+  const attributes = {};
+  category.fields.forEach((field) => {
+    const value = sanitizeAttribute(input?.attributes?.[field.key] ?? legacy[field.key], field);
+    const missing = field.type === 'boolean' ? false : value === '' || value == null;
+    if (field.required && missing) {
+      throw new CatalogValidationError(`El campo “${field.label}” es obligatorio para esta categoría.`, 'CATEGORY_FIELD_REQUIRED');
+    }
+    if (!missing || field.type === 'boolean') attributes[field.key] = value;
+  });
+  return attributes;
+}
+
+export function validateCatalogProduct(input, forcedId, { category: categoryTemplate } = {}) {
   const id = text(forcedId || input?.id, 80).toLowerCase();
   const name = text(input?.name, 120);
   const category = text(input?.category, 60).toLowerCase();
@@ -28,7 +64,7 @@ export function validateCatalogProduct(input, forcedId) {
   const description = text(input?.description, 1200);
   const price = Number(input?.price);
   const stock = Number(input?.stock);
-  const measurements = textList(input?.measurements, { maxItems: MAX_MEASUREMENTS, maxLength: 80 });
+  const measurements = [...new Set(textList(input?.measurements, { maxItems: MAX_MEASUREMENTS, maxLength: 80 }))];
   const rawImages = Array.isArray(input?.images) ? input.images : [];
   if (rawImages.length > MAX_IMAGES) {
     throw new CatalogValidationError(`Cada producto admite un máximo de ${MAX_IMAGES} imágenes.`, 'TOO_MANY_IMAGES');
@@ -54,12 +90,21 @@ export function validateCatalogProduct(input, forcedId) {
     throw new CatalogValidationError('Cada imagen debe usar una ruta pública o una URL HTTPS.', 'INVALID_IMAGES');
   }
 
+  const attributes = buildAttributes(input, categoryTemplate);
   const variants = {
-    metal: text(input?.variants?.metal, 80) || 'Oro amarillo',
-    purity: text(input?.variants?.purity, 30) || '18K',
-    gemstone: text(input?.variants?.gemstone, 100) || 'Sin piedra principal',
-    engraving: text(input?.variants?.engraving, 100) || 'Disponible bajo solicitud',
+    metal: text(attributes.metal ?? input?.variants?.metal, 80) || 'Oro amarillo',
+    purity: text(attributes.purity ?? input?.variants?.purity, 30) || '18K',
+    gemstone: text(attributes.gemstone ?? input?.variants?.gemstone, 100) || 'Sin piedra principal',
+    engraving: text(attributes.engraving ?? input?.variants?.engraving, 100) || 'Disponible bajo solicitud',
   };
+  const measurementWeights = normalizeMeasurementWeights(input?.measurementWeights, measurements);
+  const goldPricing = Boolean(input?.goldPricing);
+  if (goldPricing && measurementWeights.length !== measurements.length) {
+    throw new CatalogValidationError(
+      'Indica un peso válido para cada talla antes de activar el cálculo con oro.',
+      'MEASUREMENT_WEIGHTS_REQUIRED',
+    );
+  }
 
   return {
     id,
@@ -72,6 +117,16 @@ export function validateCatalogProduct(input, forcedId) {
     images,
     description,
     variants,
+    attributes: {
+      ...attributes,
+      material: text(attributes.material ?? material, 100),
+      metal: variants.metal,
+      purity: variants.purity,
+      gemstone: variants.gemstone,
+      engraving: variants.engraving,
+    },
+    measurementWeights,
+    goldPricing,
     premium: Boolean(input?.premium),
     featured: Boolean(input?.featured),
     active: input?.active !== false,

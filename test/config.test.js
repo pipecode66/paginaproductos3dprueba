@@ -9,6 +9,7 @@ test('usa PostgreSQL cuando Vercel entrega DATABASE_URL', () => {
   const config = createRuntimeConfig({ VERCEL: '1', DATABASE_URL: 'postgresql://example.test/querubim' }, 'C:/app');
   assert.equal(config.storage.mode, 'postgresql');
   assert.equal(config.storage.databaseUrl, 'postgresql://example.test/querubim');
+  assert.equal(config.admin.masterEmail, 'adminmaster@querubim.com');
 });
 
 test('deshabilita el almacenamiento temporal en Vercel sin base de datos', () => {

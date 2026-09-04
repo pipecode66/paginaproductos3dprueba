@@ -137,6 +137,24 @@ export class PostgresAdminSecurityStore {
     return result.rowCount > 0;
   }
 
+  async revokeSessionsByEmail(email, now = Date.now()) {
+    await ensurePostgresSchema(this.pool);
+    const result = await this.pool.query(
+      'UPDATE querubim_admin_sessions SET revoked_at = $2 WHERE email = $1 AND revoked_at IS NULL',
+      [email, now],
+    );
+    return result.rowCount;
+  }
+
+  async revokeAllSessions(now = Date.now()) {
+    await ensurePostgresSchema(this.pool);
+    const result = await this.pool.query(
+      'UPDATE querubim_admin_sessions SET revoked_at = $1 WHERE revoked_at IS NULL',
+      [now],
+    );
+    return result.rowCount;
+  }
+
   async getLastTotpStep(email) {
     await ensurePostgresSchema(this.pool);
     const result = await this.pool.query(

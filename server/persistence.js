@@ -1,10 +1,14 @@
 import path from 'node:path';
 import { AdminSecurityStore } from './admin-security-store.js';
+import { AdminUserStore } from './admin-user-store.js';
+import { BusinessSettingsRepository } from './business-settings-repository.js';
 import { CatalogRepository } from './catalog-repository.js';
 import { InternationalRequestStore } from './international-request-store.js';
 import { OrderStore } from './order-store.js';
 import { PostgresCatalogRepository } from './postgres-catalog-repository.js';
 import { PostgresAdminSecurityStore } from './postgres-admin-security-store.js';
+import { PostgresAdminUserStore } from './postgres-admin-user-store.js';
+import { PostgresBusinessSettingsRepository } from './postgres-business-settings-repository.js';
 import { PostgresInternationalRequestStore } from './postgres-international-request-store.js';
 import { PostgresOrderStore } from './postgres-order-store.js';
 import { PostgresSiteContentRepository } from './postgres-site-content-repository.js';
@@ -98,11 +102,39 @@ class UnavailableRepository {
     throw new StorageConfigurationError();
   }
 
+  async revokeSessionsByEmail() {
+    throw new StorageConfigurationError();
+  }
+
+  async revokeAllSessions() {
+    throw new StorageConfigurationError();
+  }
+
   async getLastTotpStep() {
     throw new StorageConfigurationError();
   }
 
   async consumeTotpStep() {
+    throw new StorageConfigurationError();
+  }
+
+  async hasActiveMaster() {
+    throw new StorageConfigurationError();
+  }
+
+  async findByEmail() {
+    throw new StorageConfigurationError();
+  }
+
+  async createInvitation() {
+    throw new StorageConfigurationError();
+  }
+
+  async activate() {
+    throw new StorageConfigurationError();
+  }
+
+  async recordLogin() {
     throw new StorageConfigurationError();
   }
 }
@@ -117,6 +149,8 @@ export function createPersistence(config) {
       siteContentRepository: new PostgresSiteContentRepository(pool),
       internationalRequestStore: new PostgresInternationalRequestStore(pool),
       adminSecurityStore: new PostgresAdminSecurityStore(pool),
+      adminUserStore: new PostgresAdminUserStore(pool),
+      businessSettingsRepository: new PostgresBusinessSettingsRepository(pool),
       storage: {
         mode: 'postgresql',
         configured: true,
@@ -133,6 +167,8 @@ export function createPersistence(config) {
       siteContentRepository: unavailable,
       internationalRequestStore: unavailable,
       adminSecurityStore: unavailable,
+      adminUserStore: unavailable,
+      businessSettingsRepository: unavailable,
       storage: { mode: 'unconfigured', configured: false, ready: () => Promise.resolve(false) },
     };
   }
@@ -144,6 +180,8 @@ export function createPersistence(config) {
     siteContentRepository: new SiteContentRepository(path.join(config.runtimeDir, 'site-content.json')),
     internationalRequestStore: new InternationalRequestStore(path.join(config.runtimeDir, 'international-requests.json')),
     adminSecurityStore: new AdminSecurityStore(path.join(config.runtimeDir, 'admin-security.json')),
+    adminUserStore: new AdminUserStore(path.join(config.runtimeDir, 'admin-users.json')),
+    businessSettingsRepository: new BusinessSettingsRepository(path.join(config.runtimeDir, 'business-settings.json')),
     storage: { mode: 'json', configured: true, ready: () => Promise.resolve(true) },
   };
 }
